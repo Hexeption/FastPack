@@ -3,10 +3,13 @@ use std::hash::Hasher;
 use image::DynamicImage;
 use rustc_hash::FxHasher;
 
-use crate::types::{
-    config::{SpriteConfig, TrimMode},
-    rect::SourceRect,
-    sprite::Sprite,
+use crate::{
+    algorithms::polygon::compute_convex_hull,
+    types::{
+        config::{SpriteConfig, TrimMode},
+        rect::SourceRect,
+        sprite::Sprite,
+    },
 };
 
 /// Trim transparent borders from a sprite's image.
@@ -15,8 +18,9 @@ use crate::types::{
 /// `sprite.polygon` in place. `sprite.original_size` is left unchanged.
 ///
 /// For `TrimMode::None` the function is a no-op. For all other modes the image
-/// is cropped to the opaque bounding box (plus `trim_margin`). Polygon hull
-/// computation is deferred to Phase 3; until then `Polygon` behaves like `Trim`.
+/// is cropped to the opaque bounding box (plus `trim_margin`). For
+/// `TrimMode::Polygon` the convex hull of all opaque pixels is also computed
+/// and stored in `sprite.polygon` (vertices in trimmed-image pixel space).
 pub fn trim(sprite: &mut Sprite, config: &SpriteConfig) {
     if matches!(config.trim_mode, TrimMode::None) {
         return;
@@ -51,6 +55,11 @@ pub fn trim(sprite: &mut Sprite, config: &SpriteConfig) {
     });
 
     let cropped = image::imageops::crop_imm(rgba, x1, y1, tw, th).to_image();
+
+    if matches!(config.trim_mode, TrimMode::Polygon) {
+        sprite.polygon = Some(compute_convex_hull(&cropped, config.trim_threshold));
+    }
+
     // Rehash with the trimmed pixels so alias detection compares the actual
     // packed content, not the (possibly differently-bordered) original.
     let mut h = FxHasher::default();

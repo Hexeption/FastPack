@@ -12,7 +12,7 @@ Trimming removes transparent borders from sprites before packing. Smaller packed
 
 **crop-keep-pos** — Same crop, but the trim offset in the data file may be negative. Used when the sprite's registration point must be held fixed relative to the original canvas even after cropping.
 
-**polygon** — Crops to the bounding box of the convex hull of opaque pixels. The hull vertices are stored in the data file for engines that support tight mesh trimming. *(Hull computation is a Phase 3 feature; the current build crops to the bounding box only.)*
+**polygon** — Crops to the bounding box of the convex hull of opaque pixels. The hull vertices are stored in the `polygon` field of each frame in the data file. Engines that support tight mesh rendering can use the hull polygon for collision detection or draw-call culling. Engines that only need the bounding box can ignore the polygon field and treat this mode like `trim`.
 
 ## `.fpsheet` Fields
 
@@ -57,6 +57,8 @@ common_divisor_y = 4
 The bounding box scan visits every pixel once. For each pixel, the alpha channel is compared against `trim_threshold`. Pixels with alpha strictly greater than the threshold are considered opaque.
 
 After the bounding box is found, `trim_margin` is added on all four sides and the result is clamped to the image dimensions. `common_divisor_x/y` then expands the width/height to the next valid multiple, expanding toward the right/bottom edge and clamping again.
+
+For `polygon` mode, after the image is cropped to the bounding box, all opaque pixels are collected into a point set and the convex hull is computed via the `geo` crate. Hull vertices are in the trimmed image's local pixel space (origin at the top-left of the packed frame). The hull is stored in `Sprite::polygon` and copied verbatim into `AtlasFrame::polygon` in the data output.
 
 The `Sprite::original_size` field records the pre-trim dimensions and is never changed by this stage.
 

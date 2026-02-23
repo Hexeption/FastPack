@@ -355,6 +355,40 @@ fn trim_records_original_size_unchanged() {
     assert_eq!(sprite.original_size, Size { w: 12, h: 12 });
 }
 
+#[test]
+fn trim_polygon_mode_computes_hull() {
+    // 10×10 with a 2px transparent border; inner 6×6 is opaque.
+    let mut sprite = make_bordered_sprite("s", 10, 10, 2);
+    let cfg = SpriteConfig {
+        trim_mode: TrimMode::Polygon,
+        trim_threshold: 0,
+        ..SpriteConfig::default()
+    };
+    trim(&mut sprite, &cfg);
+    // Image should still be cropped to the opaque bbox.
+    assert_eq!(sprite.image.width(), 6);
+    assert_eq!(sprite.image.height(), 6);
+    // Hull must be populated.
+    let hull = sprite
+        .polygon
+        .expect("TrimMode::Polygon must set sprite.polygon");
+    assert!(!hull.is_empty(), "hull must have at least one vertex");
+}
+
+#[test]
+fn trim_polygon_mode_none_trim_mode_leaves_polygon_empty() {
+    let mut sprite = make_bordered_sprite("s", 10, 10, 2);
+    let cfg = SpriteConfig {
+        trim_mode: TrimMode::Trim,
+        ..SpriteConfig::default()
+    };
+    trim(&mut sprite, &cfg);
+    assert!(
+        sprite.polygon.is_none(),
+        "non-polygon mode must not set polygon"
+    );
+}
+
 // extrude
 
 #[test]
