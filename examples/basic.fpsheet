@@ -1,0 +1,43 @@
+# FastPack project file — basic example
+# Run: fastpack pack --project examples/basic.fpsheet
+
+[meta]
+version = "1"
+
+[output]
+name           = "atlas"
+directory      = "output/"
+texture_format = "png"
+pixel_format   = "rgba8888"
+data_format    = "json_hash"
+quality        = 95
+
+[layout]
+max_width       = 4096
+max_height      = 4096
+size_constraint = "pot"
+force_square    = false
+allow_rotation  = true
+pack_mode       = "good"
+border_padding  = 2
+shape_padding   = 2
+
+[sprites]
+trim_mode      = "trim"
+trim_threshold = 1
+trim_margin    = 0
+extrude        = 0
+detect_aliases = true
+
+[algorithm]
+type      = "max_rects"
+heuristic = "best_short_side_fit"
+
+[[variants]]
+scale  = 1.0
+suffix = "@1x"
+mode   = "smooth"
+
+[[sources]]
+path   = "sprites/"
+filter = "**/*.png"
