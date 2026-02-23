@@ -10,6 +10,9 @@ pub struct CompressInput<'a> {
 
     /// Controls the compression effort level.
     pub pack_mode: PackMode,
+
+    /// Quality for lossy codecs (0–100). Ignored by lossless encoders (PNG).
+    pub quality: u8,
 }
 
 /// Raw encoded bytes returned by a compression backend.

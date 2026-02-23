@@ -126,6 +126,7 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
         .compress(&CompressInput {
             image: &atlas_image,
             pack_mode: args.pack_mode,
+            quality: 95,
         })
         .context("png compression failed")?;
 
