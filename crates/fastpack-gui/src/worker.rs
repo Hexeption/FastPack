@@ -9,6 +9,7 @@ use fastpack_core::{
     imaging::{alias::detect_aliases, extrude, loader, trim},
     types::{config::Project, sprite::Sprite},
 };
+use rayon::prelude::*;
 use walkdir::WalkDir;
 
 /// A single packed frame returned to the UI thread.
@@ -97,30 +98,33 @@ pub fn run_pack(project: &Project) -> Result<WorkerOutput> {
         anyhow::bail!("no images found in the configured sources");
     }
 
-    // 2. Load
-    let mut sprites: Vec<Sprite> = Vec::with_capacity(paths.len());
-    for (path, id) in &paths {
-        match loader::load(path, id.clone()) {
-            Ok(s) => sprites.push(s),
-            Err(e) => tracing::warn!("failed to load {}: {e}", path.display()),
-        }
-    }
+    // 2. Load (parallel)
+    let mut sprites: Vec<Sprite> = paths
+        .par_iter()
+        .filter_map(|(path, id)| match loader::load(path, id.clone()) {
+            Ok(s) => Some(s),
+            Err(e) => {
+                tracing::warn!("failed to load {}: {e}", path.display());
+                None
+            }
+        })
+        .collect();
     if sprites.is_empty() {
         anyhow::bail!("all images failed to load");
     }
 
     let sprite_cfg = &project.config.sprites;
 
-    // 3. Trim
-    for s in &mut sprites {
-        trim::trim(s, sprite_cfg);
-    }
+    // 3. Trim (parallel)
+    sprites
+        .par_iter_mut()
+        .for_each(|s| trim::trim(s, sprite_cfg));
 
-    // 3.5 Extrude
+    // 3.5 Extrude (parallel)
     if sprite_cfg.extrude > 0 {
-        for s in &mut sprites {
-            extrude::extrude(s, sprite_cfg.extrude);
-        }
+        sprites
+            .par_iter_mut()
+            .for_each(|s| extrude::extrude(s, sprite_cfg.extrude));
     }
 
     let sprite_count = sprites.len();

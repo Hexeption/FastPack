@@ -61,15 +61,6 @@ pub struct FrameInfo {
     pub alias_of: Option<String>,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Default)]
-pub enum SettingsTab {
-    #[default]
-    Layout,
-    Sprites,
-    Output,
-    Variants,
-}
-
 /// One-shot flags set by menus/toolbar and consumed by the app's update loop.
 #[derive(Default)]
 pub struct PendingActions {
@@ -104,8 +95,6 @@ pub struct AppState {
     /// True while a pack is running in the background.
     pub packing: bool,
 
-    /// Which tab is active in the settings panel.
-    pub settings_tab: SettingsTab,
     /// Index into `self.frames` of the highlighted frame, if any.
     pub selected_frame: Option<usize>,
 
@@ -134,7 +123,6 @@ impl Default for AppState {
             alias_count: 0,
             overflow_count: 0,
             packing: false,
-            settings_tab: SettingsTab::default(),
             selected_frame: None,
             atlas_pan: [0.0, 0.0],
             atlas_zoom: 1.0,
@@ -178,7 +166,7 @@ impl AppState {
         self.log.push(LogEntry::info("New project created."));
     }
 
-    /// Add a source directory.
+    /// Add a source directory and schedule an auto-pack.
     pub fn add_source_path(&mut self, path: PathBuf) {
         let display = path.display().to_string();
         self.project.sources.push(SourceSpec {
@@ -186,6 +174,7 @@ impl AppState {
             filter: "**/*.png".to_string(),
         });
         self.dirty = true;
+        self.pending.pack = true;
         self.log_info(format!("Added source: {display}"));
     }
 

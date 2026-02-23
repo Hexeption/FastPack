@@ -10,20 +10,11 @@ use crate::{
     worker::{WorkerMessage, run_pack},
 };
 
+#[derive(Default)]
 pub struct FastPackApp {
     pub state: AppState,
     pub atlas_texture: Option<egui::TextureHandle>,
     worker_rx: Option<mpsc::Receiver<WorkerMessage>>,
-}
-
-impl Default for FastPackApp {
-    fn default() -> Self {
-        Self {
-            state: AppState::default(),
-            atlas_texture: None,
-            worker_rx: None,
-        }
-    }
 }
 
 impl eframe::App for FastPackApp {

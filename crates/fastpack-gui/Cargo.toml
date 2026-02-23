@@ -19,6 +19,7 @@ anyhow.workspace            = true
 serde.workspace             = true
 tracing.workspace           = true
 image.workspace             = true
+rayon.workspace             = true
 walkdir                     = "2"
 toml                        = "0.8"
 rfd                         = "0.15"

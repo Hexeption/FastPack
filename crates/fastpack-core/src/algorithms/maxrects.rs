@@ -1,3 +1,5 @@
+use rayon::prelude::*;
+
 use crate::{
     error::CoreError,
     types::{
@@ -120,19 +122,19 @@ fn binary_search_width(
         }
     }
 
-    let mut best: Option<PackOutput> = None;
-    for cw in candidates {
-        let result = pack_at_width(sprites, cfg, heuristic, cw);
-        if result.overflow.is_empty() {
-            let area = result.atlas_size.w * result.atlas_size.h;
-            let best_area = best
-                .as_ref()
-                .map_or(u32::MAX, |b: &PackOutput| b.atlas_size.w * b.atlas_size.h);
-            if area < best_area {
-                best = Some(result);
+    let best = candidates
+        .par_iter()
+        .filter_map(|&cw| {
+            let result = pack_at_width(sprites, cfg, heuristic, cw);
+            if result.overflow.is_empty() {
+                let area = result.atlas_size.w * result.atlas_size.h;
+                Some((area, result))
+            } else {
+                None
             }
-        }
-    }
+        })
+        .min_by_key(|(area, _)| *area)
+        .map(|(_, result)| result);
 
     best.unwrap_or_else(|| pack_at_width(sprites, cfg, heuristic, cfg.max_width))
 }
@@ -152,14 +154,24 @@ fn exhaustive_width_search(
     let sweep_hi = (best_w + best_w / 8).min(cfg.max_width);
 
     let mut best = good;
-    for w in sweep_lo..=sweep_hi {
-        let candidate = pack_at_width(sprites, cfg, heuristic, w);
-        if candidate.overflow.is_empty() {
-            let candidate_area = candidate.atlas_size.w * candidate.atlas_size.h;
-            let best_area = best.atlas_size.w * best.atlas_size.h;
-            if candidate_area < best_area {
-                best = candidate;
+    if let Some(candidate) = (sweep_lo..=sweep_hi)
+        .into_par_iter()
+        .filter_map(|w| {
+            let candidate = pack_at_width(sprites, cfg, heuristic, w);
+            if candidate.overflow.is_empty() {
+                let area = candidate.atlas_size.w * candidate.atlas_size.h;
+                Some((area, candidate))
+            } else {
+                None
             }
+        })
+        .min_by_key(|(area, _)| *area)
+        .map(|(_, c)| c)
+    {
+        if candidate.atlas_size.w * candidate.atlas_size.h
+            < best.atlas_size.w * best.atlas_size.h
+        {
+            best = candidate;
         }
     }
     best

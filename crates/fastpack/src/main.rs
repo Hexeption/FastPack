@@ -17,11 +17,11 @@ fn main() -> Result<()> {
     let cli = cli::Cli::parse();
     match cli.command {
         None | Some(cli::Commands::Gui(cli::GuiArgs { project: None })) => {
-            return fastpack_gui::run(None);
+            fastpack_gui::run(None)
         }
 
         Some(cli::Commands::Gui(cli::GuiArgs { project })) => {
-            return fastpack_gui::run(project);
+            fastpack_gui::run(project)
         }
 
         Some(cli::Commands::Pack(args)) => {

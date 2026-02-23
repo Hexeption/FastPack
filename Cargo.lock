@@ -1678,6 +1678,7 @@ dependencies = [
  "fastpack-core",
  "fastpack-formats",
  "image",
+ "rayon",
  "rfd",
  "serde",
  "thiserror 2.0.18",
