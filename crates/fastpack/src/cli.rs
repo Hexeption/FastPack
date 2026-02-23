@@ -8,7 +8,7 @@ use fastpack_core::types::config::{PackMode, ScaleMode};
 #[command(name = "fastpack", about = "Texture atlas packer")]
 pub struct Cli {
     #[command(subcommand)]
-    pub command: Commands,
+    pub command: Option<Commands>,
 }
 
 /// Top-level subcommands.
@@ -22,6 +22,16 @@ pub enum Commands {
     Init(InitArgs),
     /// Split a packed atlas back into individual sprite files.
     Split(SplitArgs),
+    /// Open the graphical user interface (default when no subcommand is given).
+    Gui(GuiArgs),
+}
+
+/// Arguments for the `gui` subcommand.
+#[derive(Debug, Args)]
+pub struct GuiArgs {
+    /// Optional .fpsheet project file to open on startup.
+    #[arg(value_name = "PROJECT")]
+    pub project: Option<PathBuf>,
 }
 
 /// Arguments shared by the `pack` and `watch` subcommands.

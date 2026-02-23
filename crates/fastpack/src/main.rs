@@ -16,7 +16,15 @@ use fastpack_core::types::{
 fn main() -> Result<()> {
     let cli = cli::Cli::parse();
     match cli.command {
-        cli::Commands::Pack(args) => {
+        None | Some(cli::Commands::Gui(cli::GuiArgs { project: None })) => {
+            return fastpack_gui::run(None);
+        }
+
+        Some(cli::Commands::Gui(cli::GuiArgs { project })) => {
+            return fastpack_gui::run(project);
+        }
+
+        Some(cli::Commands::Pack(args)) => {
             let (
                 inputs,
                 output_dir,
@@ -121,7 +129,7 @@ fn main() -> Result<()> {
             Ok(())
         }
 
-        cli::Commands::Watch(args) => {
+        Some(cli::Commands::Watch(args)) => {
             let (
                 inputs,
                 output_dir,
@@ -194,14 +202,14 @@ fn main() -> Result<()> {
             Ok(())
         }
 
-        cli::Commands::Init(args) => {
+        Some(cli::Commands::Init(args)) => {
             let proj = Project::default();
             project::save(&proj, &args.output)?;
             println!("Wrote {}", args.output.display());
             Ok(())
         }
 
-        cli::Commands::Split(args) => {
+        Some(cli::Commands::Split(args)) => {
             let result = split::run_split(split::SplitArgs {
                 atlas_path: args.atlas,
                 data_path: args.data,
