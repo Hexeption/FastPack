@@ -50,6 +50,12 @@ fn export_json_hash(input: &ExportInput<'_>) -> Result<String, FormatError> {
                 h: frame.source_size.h,
             },
             pivot: frame.pivot.map(|p| XY { x: p.x, y: p.y }),
+            nine_patch: frame.nine_patch.map(|np| JsonNinePatch {
+                top: np.top,
+                right: np.right,
+                bottom: np.bottom,
+                left: np.left,
+            }),
             alias_of: frame.alias_of.clone(),
         };
         frames.insert(frame.id.clone(), serde_json::to_value(f)?);
@@ -90,6 +96,8 @@ struct JsonFrame {
     #[serde(skip_serializing_if = "Option::is_none")]
     pivot: Option<XY>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    nine_patch: Option<JsonNinePatch>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     alias_of: Option<String>,
 }
 
@@ -119,6 +127,14 @@ struct WH {
 struct XY {
     x: f32,
     y: f32,
+}
+
+#[derive(Serialize)]
+struct JsonNinePatch {
+    top: u32,
+    right: u32,
+    bottom: u32,
+    left: u32,
 }
 
 #[derive(Serialize)]

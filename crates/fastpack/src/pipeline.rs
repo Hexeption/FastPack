@@ -131,6 +131,9 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
                 if ov.pivot.is_some() {
                     sprite.pivot = ov.pivot;
                 }
+                if ov.nine_patch.is_some() {
+                    sprite.nine_patch = ov.nine_patch;
+                }
             }
         }
     }
@@ -347,7 +350,7 @@ fn build_packed_atlas(
                 sprite_source_size,
                 source_size: sprite.original_size,
                 polygon: None,
-                nine_patch: None,
+                nine_patch: sprite.nine_patch,
                 pivot: sprite.pivot.or(default_pivot),
                 alias_of: None,
             }
@@ -387,7 +390,7 @@ fn build_packed_atlas(
                 sprite_source_size,
                 source_size: alias.original_size,
                 polygon: None,
-                nine_patch: None,
+                nine_patch: alias.nine_patch,
                 pivot: alias.pivot.or(default_pivot),
                 alias_of: alias.alias_of.clone(),
             });
