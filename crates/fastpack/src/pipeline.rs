@@ -22,7 +22,11 @@ use fastpack_formats::{
     exporter::{ExportInput, Exporter},
     formats::json_hash::JsonHashExporter,
 };
+use indicatif::{MultiProgress, ParallelProgressIterator};
+use rayon::prelude::*;
 use walkdir::WalkDir;
+
+use crate::progress;
 
 static IMAGE_EXTENSIONS: &[&str] = &[
     "png", "jpg", "jpeg", "bmp", "tga", "webp", "tiff", "tif", "gif",
@@ -53,6 +57,8 @@ pub struct PackResult {
 
 /// Run the full pack pipeline and write output files to disk.
 pub fn run_pack(args: PackArgs) -> Result<PackResult> {
+    let mp = MultiProgress::new();
+
     // 1. Collect
     let paths = collect_images(&args.inputs);
     if paths.is_empty() {
@@ -60,12 +66,20 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
     }
 
     // 2. Load
-    let sprites: Vec<Sprite> = loader::load_many(&paths)
+    let load_bar = progress::count_bar(&mp, paths.len() as u64, "Loading ");
+    let load_results: Vec<_> = paths
+        .par_iter()
+        .map(|(path, id)| loader::load(path, id.clone()))
+        .progress_with(load_bar.clone())
+        .collect();
+    load_bar.finish_and_clear();
+
+    let sprites: Vec<Sprite> = load_results
         .into_iter()
         .filter_map(|r| match r {
             Ok(s) => Some(s),
             Err(e) => {
-                eprintln!("warning: {e}");
+                let _ = mp.println(format!("warning: {e}"));
                 None
             }
         })
@@ -100,6 +114,7 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
     let alias_count = aliases.len();
 
     // 5. Pack
+    let pack_pb = progress::spinner(&mp, "Packing...");
     let layout = LayoutConfig {
         max_width: args.max_width,
         max_height: args.max_height,
@@ -112,6 +127,7 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
             sprite_config: SpriteConfig::default(),
         })
         .context("packing failed")?;
+    pack_pb.finish_and_clear();
 
     let overflow_count = pack_output.overflow.len();
 
@@ -122,6 +138,7 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
     let packed = build_packed_atlas(&pack_output, &aliases, &args.name);
 
     // 8. Compress
+    let compress_pb = progress::spinner(&mp, "Compressing...");
     let compressed = PngCompressor
         .compress(&CompressInput {
             image: &atlas_image,
@@ -129,6 +146,7 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
             quality: 95,
         })
         .context("png compression failed")?;
+    compress_pb.finish_and_clear();
 
     // 9. Export
     let texture_filename = format!("{}.png", args.name);
