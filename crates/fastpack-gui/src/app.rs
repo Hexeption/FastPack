@@ -30,6 +30,7 @@ impl eframe::App for FastPackApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.poll_worker(ctx);
         self.handle_pending(ctx);
+        self.handle_dropped_files(ctx);
 
         ctx.send_viewport_cmd(egui::ViewportCommand::Title(self.state.window_title()));
 
@@ -64,6 +65,23 @@ impl eframe::App for FastPackApp {
 
         egui::CentralPanel::default().show(ctx, |ui| {
             atlas_preview::show(ui, &mut self.state, self.atlas_texture.as_ref());
+
+            let hovering = ctx.input(|i| !i.raw.hovered_files.is_empty());
+            if hovering {
+                let overlay_rect = ui.max_rect();
+                ui.painter().rect_filled(
+                    overlay_rect,
+                    0.0,
+                    egui::Color32::from_rgba_unmultiplied(20, 80, 160, 120),
+                );
+                ui.painter().text(
+                    overlay_rect.center(),
+                    egui::Align2::CENTER_CENTER,
+                    "Drop folders or .fpsheet here",
+                    egui::FontId::proportional(18.0),
+                    egui::Color32::WHITE,
+                );
+            }
         });
     }
 }
@@ -236,6 +254,38 @@ impl FastPackApp {
     fn do_add_source(&mut self) {
         if let Some(path) = rfd::FileDialog::new().pick_folder() {
             self.state.add_source_path(path);
+        }
+    }
+
+    fn handle_dropped_files(&mut self, ctx: &egui::Context) {
+        let dropped = ctx.input(|i| i.raw.dropped_files.clone());
+        for file in dropped {
+            let Some(path) = file.path else { continue };
+
+            if path.extension().and_then(|e| e.to_str()) == Some("fpsheet") {
+                match std::fs::read_to_string(&path) {
+                    Ok(text) => match toml::from_str(&text) {
+                        Ok(project) => {
+                            self.state.project = project;
+                            self.state.project_path = Some(path.clone());
+                            self.state.dirty = false;
+                            self.state.frames.clear();
+                            self.atlas_texture = None;
+                            self.state.log_info(format!("Opened {}", path.display()));
+                        }
+                        Err(e) => self
+                            .state
+                            .log_error(format!("Failed to parse project: {e}")),
+                    },
+                    Err(e) => self.state.log_error(format!("Failed to read file: {e}")),
+                }
+            } else if path.is_dir() {
+                self.state.add_source_path(path);
+            } else if path.is_file() {
+                if let Some(parent) = path.parent() {
+                    self.state.add_source_path(parent.to_path_buf());
+                }
+            }
         }
     }
 }
