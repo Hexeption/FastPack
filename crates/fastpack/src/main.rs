@@ -20,11 +20,18 @@ fn main() -> Result<()> {
                 max_width: args.max_width,
                 max_height: args.max_height,
                 pack_mode: args.pack_mode.into(),
+                detect_aliases: true,
             })?;
 
+            let alias_note = if result.alias_count > 0 {
+                format!(" ({} aliases)", result.alias_count)
+            } else {
+                String::new()
+            };
             println!(
-                "Packed {} sprites → {}×{} atlas → {} ({:.1} KB)",
+                "Packed {} sprites{} → {}×{} atlas → {} ({:.1} KB)",
                 result.sprite_count,
+                alias_note,
                 result.atlas_size.w,
                 result.atlas_size.h,
                 result.texture_path.display(),

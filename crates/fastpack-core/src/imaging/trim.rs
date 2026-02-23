@@ -1,4 +1,7 @@
+use std::hash::Hasher;
+
 use image::DynamicImage;
+use rustc_hash::FxHasher;
 
 use crate::types::{
     config::{SpriteConfig, TrimMode},
@@ -48,6 +51,11 @@ pub fn trim(sprite: &mut Sprite, config: &SpriteConfig) {
     });
 
     let cropped = image::imageops::crop_imm(rgba, x1, y1, tw, th).to_image();
+    // Rehash with the trimmed pixels so alias detection compares the actual
+    // packed content, not the (possibly differently-bordered) original.
+    let mut h = FxHasher::default();
+    h.write(cropped.as_raw());
+    sprite.content_hash = h.finish();
     sprite.image = DynamicImage::ImageRgba8(cropped);
 }
 

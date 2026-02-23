@@ -49,6 +49,7 @@ fn export_json_hash(input: &ExportInput<'_>) -> Result<String, FormatError> {
                 w: frame.source_size.w,
                 h: frame.source_size.h,
             },
+            alias_of: frame.alias_of.clone(),
         };
         frames.insert(frame.id.clone(), serde_json::to_value(f)?);
     }
@@ -85,6 +86,8 @@ struct JsonFrame {
     trimmed: bool,
     sprite_source_size: IRect,
     source_size: WH,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    alias_of: Option<String>,
 }
 
 #[derive(Serialize)]

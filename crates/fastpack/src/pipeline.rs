@@ -10,7 +10,7 @@ use fastpack_core::{
         maxrects::MaxRects,
         packer::{PackInput, PackOutput, Packer, PlacedSprite},
     },
-    imaging::{loader, trim},
+    imaging::{alias::detect_aliases, loader, trim},
     types::{
         atlas::{AtlasFrame, PackedAtlas},
         config::{LayoutConfig, PackMode, SpriteConfig},
@@ -36,11 +36,13 @@ pub struct PackArgs {
     pub max_width: u32,
     pub max_height: u32,
     pub pack_mode: PackMode,
+    pub detect_aliases: bool,
 }
 
 /// Summary produced by a successful pack run.
 pub struct PackResult {
     pub sprite_count: usize,
+    pub alias_count: usize,
     pub atlas_size: Size,
     pub overflow_count: usize,
     pub texture_bytes: usize,
@@ -80,8 +82,17 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
         trim::trim(s, &sprite_cfg);
     }
 
-    // 4. Pack
     let sprite_count = sprites.len();
+
+    // 4. Alias detection
+    let (sprites, aliases) = if args.detect_aliases {
+        detect_aliases(sprites)
+    } else {
+        (sprites, Vec::new())
+    };
+    let alias_count = aliases.len();
+
+    // 5. Pack
     let layout = LayoutConfig {
         max_width: args.max_width,
         max_height: args.max_height,
@@ -97,13 +108,13 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
 
     let overflow_count = pack_output.overflow.len();
 
-    // 5. Compose
+    // 6. Compose
     let atlas_image = compose(&pack_output.placed, &pack_output.atlas_size);
 
-    // 6. Build packed atlas metadata
-    let packed = build_packed_atlas(&pack_output, &args.name);
+    // 7. Build packed atlas metadata (includes alias frames)
+    let packed = build_packed_atlas(&pack_output, &aliases, &args.name);
 
-    // 7. Compress
+    // 8. Compress
     let compressed = PngCompressor
         .compress(&CompressInput {
             image: &atlas_image,
@@ -111,7 +122,7 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
         })
         .context("png compression failed")?;
 
-    // 8. Export
+    // 9. Export
     let texture_filename = format!("{}.png", args.name);
     let json_str = JsonHashExporter
         .export(&ExportInput {
@@ -121,7 +132,7 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
         })
         .context("json export failed")?;
 
-    // 9. Write
+    // 10. Write
     std::fs::create_dir_all(&args.output_dir).context("failed to create output directory")?;
     let texture_path = args.output_dir.join(&texture_filename);
     let data_path = args.output_dir.join(format!("{}.json", args.name));
@@ -130,6 +141,7 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
 
     Ok(PackResult {
         sprite_count,
+        alias_count,
         atlas_size: pack_output.atlas_size,
         overflow_count,
         texture_bytes: compressed.data.len(),
@@ -202,8 +214,8 @@ fn compose(placed: &[PlacedSprite], atlas_size: &Size) -> image::DynamicImage {
     canvas
 }
 
-fn build_packed_atlas(pack_output: &PackOutput, name: &str) -> PackedAtlas {
-    let frames: Vec<AtlasFrame> = pack_output
+fn build_packed_atlas(pack_output: &PackOutput, aliases: &[Sprite], name: &str) -> PackedAtlas {
+    let mut frames: Vec<AtlasFrame> = pack_output
         .placed
         .iter()
         .map(|ps| {
@@ -246,6 +258,48 @@ fn build_packed_atlas(pack_output: &PackOutput, name: &str) -> PackedAtlas {
             }
         })
         .collect();
+
+    // Build id → index map so alias frames can reference the canonical atlas rect.
+    let frame_by_id: std::collections::HashMap<String, usize> = frames
+        .iter()
+        .enumerate()
+        .map(|(i, f)| (f.id.clone(), i))
+        .collect();
+
+    for alias in aliases {
+        let canon_id = alias.alias_of.as_deref().unwrap_or("");
+        if let Some(&ci) = frame_by_id.get(canon_id) {
+            let (canon_frame, canon_rotated) = (frames[ci].frame, frames[ci].rotated);
+            let trim_w = alias.image.width();
+            let trim_h = alias.image.height();
+            let sprite_source_size = match &alias.trim_rect {
+                Some(tr) => SourceRect {
+                    x: tr.x,
+                    y: tr.y,
+                    w: trim_w,
+                    h: trim_h,
+                },
+                None => SourceRect {
+                    x: 0,
+                    y: 0,
+                    w: trim_w,
+                    h: trim_h,
+                },
+            };
+            frames.push(AtlasFrame {
+                id: alias.id.clone(),
+                frame: canon_frame,
+                rotated: canon_rotated,
+                trimmed: alias.trim_rect.is_some(),
+                sprite_source_size,
+                source_size: alias.original_size,
+                polygon: None,
+                nine_patch: None,
+                pivot: None,
+                alias_of: alias.alias_of.clone(),
+            });
+        }
+    }
 
     PackedAtlas {
         frames,
