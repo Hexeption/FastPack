@@ -49,6 +49,7 @@ fn export_json_hash(input: &ExportInput<'_>) -> Result<String, FormatError> {
                 w: frame.source_size.w,
                 h: frame.source_size.h,
             },
+            pivot: frame.pivot.map(|p| XY { x: p.x, y: p.y }),
             alias_of: frame.alias_of.clone(),
         };
         frames.insert(frame.id.clone(), serde_json::to_value(f)?);
@@ -87,6 +88,8 @@ struct JsonFrame {
     sprite_source_size: IRect,
     source_size: WH,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pivot: Option<XY>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     alias_of: Option<String>,
 }
 
@@ -110,6 +113,12 @@ struct IRect {
 struct WH {
     w: u32,
     h: u32,
+}
+
+#[derive(Serialize)]
+struct XY {
+    x: f32,
+    y: f32,
 }
 
 #[derive(Serialize)]

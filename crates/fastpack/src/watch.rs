@@ -1,7 +1,10 @@
 use std::{path::PathBuf, sync::mpsc, time::Duration};
 
 use anyhow::Result;
-use fastpack_core::types::config::PackMode;
+use fastpack_core::types::{
+    config::{PackMode, SpriteOverride},
+    rect::Point,
+};
 use notify_debouncer_mini::new_debouncer;
 use notify_debouncer_mini::notify::RecursiveMode;
 
@@ -17,6 +20,8 @@ pub struct WatchArgs {
     pub pack_mode: PackMode,
     pub detect_aliases: bool,
     pub multipack: bool,
+    pub default_pivot: Option<Point>,
+    pub sprite_overrides: Vec<SpriteOverride>,
 }
 
 /// Watch input directories and repack on any change.
@@ -70,6 +75,8 @@ fn run_once(args: &WatchArgs) -> Result<()> {
         pack_mode: args.pack_mode,
         detect_aliases: args.detect_aliases,
         multipack: args.multipack,
+        default_pivot: args.default_pivot,
+        sprite_overrides: args.sprite_overrides.clone(),
     })?;
 
     let alias_note = if result.alias_count > 0 {

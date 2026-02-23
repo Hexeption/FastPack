@@ -55,6 +55,14 @@ pub struct PackArgs {
     /// Emit additional sheets when sprites overflow the first atlas.
     #[arg(long)]
     pub multipack: bool,
+
+    /// Default pivot X coordinate (0.0–1.0). Requires --pivot-y.
+    #[arg(long, value_name = "X")]
+    pub pivot_x: Option<f32>,
+
+    /// Default pivot Y coordinate (0.0–1.0). Requires --pivot-x.
+    #[arg(long, value_name = "Y")]
+    pub pivot_y: Option<f32>,
 }
 
 #[derive(Debug, Args)]

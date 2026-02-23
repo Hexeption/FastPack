@@ -13,8 +13,8 @@ use fastpack_core::{
     imaging::{alias::detect_aliases, extrude, loader, trim},
     types::{
         atlas::{AtlasFrame, PackedAtlas},
-        config::{LayoutConfig, PackMode, SpriteConfig},
-        rect::{Rect, Size, SourceRect},
+        config::{LayoutConfig, PackMode, SpriteConfig, SpriteOverride},
+        rect::{Point, Rect, Size, SourceRect},
         sprite::Sprite,
     },
 };
@@ -24,6 +24,7 @@ use fastpack_formats::{
 };
 use indicatif::{MultiProgress, ParallelProgressIterator};
 use rayon::prelude::*;
+use std::collections::HashMap;
 use walkdir::WalkDir;
 
 use crate::progress;
@@ -43,6 +44,11 @@ pub struct PackArgs {
     pub detect_aliases: bool,
     /// Emit additional sheets when sprites overflow the first atlas.
     pub multipack: bool,
+    /// Pivot applied to every frame that has no per-sprite override.
+    /// `None` means no pivot is written to the data file.
+    pub default_pivot: Option<Point>,
+    /// Per-sprite metadata (pivot, nine-patch) read from the project file.
+    pub sprite_overrides: Vec<SpriteOverride>,
 }
 
 /// Per-sheet output produced by a pack run.
@@ -113,6 +119,22 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
 
     let sprite_count = sprites.len();
 
+    // 3.75. Apply per-sprite overrides from the project file.
+    if !args.sprite_overrides.is_empty() {
+        let overrides: HashMap<&str, &SpriteOverride> = args
+            .sprite_overrides
+            .iter()
+            .map(|ov| (ov.id.as_str(), ov))
+            .collect();
+        for sprite in &mut sprites {
+            if let Some(ov) = overrides.get(sprite.id.as_str()) {
+                if ov.pivot.is_some() {
+                    sprite.pivot = ov.pivot;
+                }
+            }
+        }
+    }
+
     // 4. Alias detection
     let (sprites, aliases) = if args.detect_aliases {
         detect_aliases(sprites)
@@ -153,7 +175,8 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
 
         // 7. Build packed atlas metadata (aliases only on the first sheet)
         let sheet_aliases = if sheet_index == 0 { &aliases[..] } else { &[] };
-        let packed = build_packed_atlas(&pack_output, sheet_aliases, &args.name);
+        let packed =
+            build_packed_atlas(&pack_output, sheet_aliases, &args.name, args.default_pivot);
 
         // 8. Compress
         let compress_pb = progress::spinner(&mp, "Compressing...");
@@ -283,7 +306,12 @@ fn compose(placed: &[PlacedSprite], atlas_size: &Size) -> image::DynamicImage {
     canvas
 }
 
-fn build_packed_atlas(pack_output: &PackOutput, aliases: &[Sprite], name: &str) -> PackedAtlas {
+fn build_packed_atlas(
+    pack_output: &PackOutput,
+    aliases: &[Sprite],
+    name: &str,
+    default_pivot: Option<Point>,
+) -> PackedAtlas {
     let mut frames: Vec<AtlasFrame> = pack_output
         .placed
         .iter()
@@ -320,7 +348,7 @@ fn build_packed_atlas(pack_output: &PackOutput, aliases: &[Sprite], name: &str) 
                 source_size: sprite.original_size,
                 polygon: None,
                 nine_patch: None,
-                pivot: None,
+                pivot: sprite.pivot.or(default_pivot),
                 alias_of: None,
             }
         })
@@ -360,7 +388,7 @@ fn build_packed_atlas(pack_output: &PackOutput, aliases: &[Sprite], name: &str) 
                 source_size: alias.original_size,
                 polygon: None,
                 nine_patch: None,
-                pivot: None,
+                pivot: alias.pivot.or(default_pivot),
                 alias_of: alias.alias_of.clone(),
             });
         }

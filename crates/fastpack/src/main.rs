@@ -8,13 +8,13 @@ mod watch;
 
 use anyhow::{Result, bail};
 use clap::Parser;
-use fastpack_core::types::config::Project;
+use fastpack_core::types::{config::Project, rect::Point};
 
 fn main() -> Result<()> {
     let cli = cli::Cli::parse();
     match cli.command {
         cli::Commands::Pack(args) => {
-            let (inputs, output_dir, name, max_width, max_height, pack_mode) =
+            let (inputs, output_dir, name, max_width, max_height, pack_mode, sprite_overrides) =
                 if let Some(proj_path) = &args.project {
                     let proj = project::load(proj_path)?;
                     let inputs = if args.inputs.is_empty() {
@@ -29,6 +29,7 @@ fn main() -> Result<()> {
                         proj.config.layout.max_width,
                         proj.config.layout.max_height,
                         proj.config.layout.pack_mode,
+                        proj.config.sprite_overrides.clone(),
                     )
                 } else {
                     if args.inputs.is_empty() {
@@ -41,8 +42,14 @@ fn main() -> Result<()> {
                         args.max_width,
                         args.max_height,
                         args.pack_mode.into(),
+                        Vec::new(),
                     )
                 };
+
+            let default_pivot = match (args.pivot_x, args.pivot_y) {
+                (Some(x), Some(y)) => Some(Point { x, y }),
+                _ => None,
+            };
 
             let result = pipeline::run_pack(pipeline::PackArgs {
                 inputs,
@@ -53,6 +60,8 @@ fn main() -> Result<()> {
                 pack_mode,
                 detect_aliases: true,
                 multipack: args.multipack,
+                default_pivot,
+                sprite_overrides,
             })?;
 
             let alias_note = if result.alias_count > 0 {
@@ -88,7 +97,7 @@ fn main() -> Result<()> {
         }
 
         cli::Commands::Watch(args) => {
-            let (inputs, output_dir, name, max_width, max_height, pack_mode) =
+            let (inputs, output_dir, name, max_width, max_height, pack_mode, sprite_overrides) =
                 if let Some(proj_path) = &args.project {
                     let proj = project::load(proj_path)?;
                     let inputs = if args.inputs.is_empty() {
@@ -103,6 +112,7 @@ fn main() -> Result<()> {
                         proj.config.layout.max_width,
                         proj.config.layout.max_height,
                         proj.config.layout.pack_mode,
+                        proj.config.sprite_overrides.clone(),
                     )
                 } else {
                     if args.inputs.is_empty() {
@@ -115,8 +125,14 @@ fn main() -> Result<()> {
                         args.max_width,
                         args.max_height,
                         args.pack_mode.into(),
+                        Vec::new(),
                     )
                 };
+
+            let default_pivot = match (args.pivot_x, args.pivot_y) {
+                (Some(x), Some(y)) => Some(Point { x, y }),
+                _ => None,
+            };
 
             watch::run_watch(watch::WatchArgs {
                 inputs,
@@ -127,6 +143,8 @@ fn main() -> Result<()> {
                 pack_mode,
                 detect_aliases: true,
                 multipack: args.multipack,
+                default_pivot,
+                sprite_overrides,
             })?;
             Ok(())
         }
