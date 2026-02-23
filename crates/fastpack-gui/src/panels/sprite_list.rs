@@ -31,7 +31,11 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
         });
     }
     if state.project.sources.is_empty() {
-        ui.label(egui::RichText::new("No sources — add a folder.").weak().small());
+        ui.label(
+            egui::RichText::new("No sources — add a folder.")
+                .weak()
+                .small(),
+        );
     }
     if let Some(i) = remove_idx {
         state.remove_source(i);
@@ -60,8 +64,7 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
                 } else {
                     frame.id.clone()
                 };
-                let response =
-                    ui.selectable_label(selected, egui::RichText::new(&label).small());
+                let response = ui.selectable_label(selected, egui::RichText::new(&label).small());
                 if response.clicked() {
                     state.selected_frame = if selected { None } else { Some(i) };
                 }
@@ -106,19 +109,17 @@ fn show_sprite_detail(ui: &mut egui::Ui, state: &mut AppState) {
     if let Some(idx) = ovr_idx {
         let (np_chg, pv_chg) = {
             let ovr = &mut state.project.config.sprite_overrides[idx];
-            let np = crate::widgets::nine_patch_editor::show(
-                ui,
-                &mut ovr.nine_patch,
-                frame_w,
-                frame_h,
-            );
+            let np =
+                crate::widgets::nine_patch_editor::show(ui, &mut ovr.nine_patch, frame_w, frame_h);
             let pv = crate::widgets::pivot_editor::show(ui, &mut ovr.pivot);
             (np, pv)
         };
         if np_chg || pv_chg {
             state.dirty = true;
         }
-        let empty = state.project.config.sprite_overrides[idx].nine_patch.is_none()
+        let empty = state.project.config.sprite_overrides[idx]
+            .nine_patch
+            .is_none()
             && state.project.config.sprite_overrides[idx].pivot.is_none();
         if empty {
             state.project.config.sprite_overrides.remove(idx);

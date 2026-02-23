@@ -12,7 +12,12 @@ pub fn show(
     let mut enabled = nine_patch.is_some();
     if ui.checkbox(&mut enabled, "Nine-patch").changed() {
         *nine_patch = if enabled {
-            Some(NinePatch { top: 0, right: 0, bottom: 0, left: 0 })
+            Some(NinePatch {
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 0,
+            })
         } else {
             None
         };
@@ -35,31 +40,63 @@ pub fn show(
     let color = egui::Color32::from_rgb(80, 180, 255);
     let stroke = egui::Stroke::new(1.0, color);
 
-    painter.hline(rect.min.x..=rect.max.x, rect.min.y + np.top as f32 * sy, stroke);
-    painter.hline(rect.min.x..=rect.max.x, rect.max.y - np.bottom as f32 * sy, stroke);
-    painter.vline(rect.min.x + np.left as f32 * sx, rect.min.y..=rect.max.y, stroke);
-    painter.vline(rect.max.x - np.right as f32 * sx, rect.min.y..=rect.max.y, stroke);
-    painter.rect_stroke(rect, 0.0, egui::Stroke::new(1.0, egui::Color32::from_gray(100)));
+    painter.hline(
+        rect.min.x..=rect.max.x,
+        rect.min.y + np.top as f32 * sy,
+        stroke,
+    );
+    painter.hline(
+        rect.min.x..=rect.max.x,
+        rect.max.y - np.bottom as f32 * sy,
+        stroke,
+    );
+    painter.vline(
+        rect.min.x + np.left as f32 * sx,
+        rect.min.y..=rect.max.y,
+        stroke,
+    );
+    painter.vline(
+        rect.max.x - np.right as f32 * sx,
+        rect.min.y..=rect.max.y,
+        stroke,
+    );
+    painter.rect_stroke(
+        rect,
+        0.0,
+        egui::Stroke::new(1.0, egui::Color32::from_gray(100)),
+    );
 
     egui::Grid::new("nine_patch_values")
         .num_columns(4)
         .spacing([4.0, 4.0])
         .show(ui, |ui| {
             ui.label("T");
-            if ui.add(egui::DragValue::new(&mut np.top).range(0..=sprite_h)).changed() {
+            if ui
+                .add(egui::DragValue::new(&mut np.top).range(0..=sprite_h))
+                .changed()
+            {
                 changed = true;
             }
             ui.label("B");
-            if ui.add(egui::DragValue::new(&mut np.bottom).range(0..=sprite_h)).changed() {
+            if ui
+                .add(egui::DragValue::new(&mut np.bottom).range(0..=sprite_h))
+                .changed()
+            {
                 changed = true;
             }
             ui.end_row();
             ui.label("L");
-            if ui.add(egui::DragValue::new(&mut np.left).range(0..=sprite_w)).changed() {
+            if ui
+                .add(egui::DragValue::new(&mut np.left).range(0..=sprite_w))
+                .changed()
+            {
                 changed = true;
             }
             ui.label("R");
-            if ui.add(egui::DragValue::new(&mut np.right).range(0..=sprite_w)).changed() {
+            if ui
+                .add(egui::DragValue::new(&mut np.right).range(0..=sprite_w))
+                .changed()
+            {
                 changed = true;
             }
             ui.end_row();

@@ -23,7 +23,11 @@ pub fn show(ui: &mut egui::Ui, pivot: &mut Option<Point>) -> bool {
     let rect = response.rect;
 
     draw_checker(&painter, rect);
-    painter.rect_stroke(rect, 0.0, egui::Stroke::new(1.0, egui::Color32::from_gray(100)));
+    painter.rect_stroke(
+        rect,
+        0.0,
+        egui::Stroke::new(1.0, egui::Color32::from_gray(100)),
+    );
 
     let cx = rect.min.x + pt.x * rect.width();
     let cy = rect.min.y + pt.y * rect.height();
@@ -35,7 +39,9 @@ pub fn show(ui: &mut egui::Ui, pivot: &mut Option<Point>) -> bool {
     painter.circle_stroke(egui::pos2(cx, cy), 3.0, cross_stroke);
 
     if response.dragged() {
-        let pos = response.interact_pointer_pos().unwrap_or(egui::pos2(cx, cy));
+        let pos = response
+            .interact_pointer_pos()
+            .unwrap_or(egui::pos2(cx, cy));
         pt.x = ((pos.x - rect.min.x) / rect.width()).clamp(0.0, 1.0);
         pt.y = ((pos.y - rect.min.y) / rect.height()).clamp(0.0, 1.0);
         changed = true;

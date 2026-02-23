@@ -62,8 +62,7 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, atlas: Option<&egui::Textur
             let fy = img_origin.y + frame.y as f32 * zoom;
             let fw = frame.w as f32 * zoom;
             let fh = frame.h as f32 * zoom;
-            let frame_rect =
-                egui::Rect::from_min_size(egui::pos2(fx, fy), egui::vec2(fw, fh));
+            let frame_rect = egui::Rect::from_min_size(egui::pos2(fx, fy), egui::vec2(fw, fh));
             painter.rect_stroke(
                 frame_rect,
                 0.0,

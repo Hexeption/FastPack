@@ -103,7 +103,11 @@ fn show_layout(ui: &mut egui::Ui, state: &mut AppState) {
                 })
                 .show_ui(ui, |ui| {
                     ui.selectable_value(&mut cfg.size_constraint, SizeConstraint::AnySize, "Any");
-                    ui.selectable_value(&mut cfg.size_constraint, SizeConstraint::Pot, "Power of 2");
+                    ui.selectable_value(
+                        &mut cfg.size_constraint,
+                        SizeConstraint::Pot,
+                        "Power of 2",
+                    );
                     ui.selectable_value(
                         &mut cfg.size_constraint,
                         SizeConstraint::MultipleOf4,
@@ -167,10 +171,7 @@ fn show_layout(ui: &mut egui::Ui, state: &mut AppState) {
         .selected_text(algo_label)
         .show_ui(ui, |ui| {
             if ui
-                .selectable_label(
-                    matches!(algo, AlgorithmConfig::Grid { .. }),
-                    "Grid",
-                )
+                .selectable_label(matches!(algo, AlgorithmConfig::Grid { .. }), "Grid")
                 .clicked()
             {
                 new_algo = Some(AlgorithmConfig::Grid {
@@ -461,7 +462,10 @@ fn show_output(ui: &mut egui::Ui, state: &mut AppState) {
             ui.end_row();
 
             ui.label("Texture prefix");
-            if ui.text_edit_singleline(&mut cfg.texture_path_prefix).changed() {
+            if ui
+                .text_edit_singleline(&mut cfg.texture_path_prefix)
+                .changed()
+            {
                 *dirty = true;
             }
             ui.end_row();
@@ -508,7 +512,11 @@ fn show_variants(ui: &mut egui::Ui, state: &mut AppState) {
                             _ => "Other",
                         })
                         .show_ui(ui, |ui| {
-                            ui.selectable_value(&mut variant.scale_mode, ScaleMode::Smooth, "Smooth");
+                            ui.selectable_value(
+                                &mut variant.scale_mode,
+                                ScaleMode::Smooth,
+                                "Smooth",
+                            );
                             ui.selectable_value(&mut variant.scale_mode, ScaleMode::Fast, "Fast");
                             ui.selectable_value(
                                 &mut variant.scale_mode,
