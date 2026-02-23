@@ -21,6 +21,9 @@ jobs:
           components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "ci"
+          cache-on-failure: "true"
 
       - name: install system deps
         run: |
@@ -51,6 +54,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "ci"
+          cache-on-failure: "true"
 
       - name: install system deps
         if: runner.os == 'Linux'
