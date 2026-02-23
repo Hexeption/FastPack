@@ -14,6 +14,8 @@ pub struct Cli {
 pub enum Commands {
     /// Pack sprites from one or more directories or files into a texture atlas.
     Pack(PackArgs),
+    /// Watch input directories and repack on any change.
+    Watch(PackArgs),
     /// Write a default .fpsheet project file to disk.
     Init(InitArgs),
 }

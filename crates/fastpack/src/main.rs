@@ -84,6 +84,49 @@ fn main() -> Result<()> {
             Ok(())
         }
 
+        cli::Commands::Watch(args) => {
+            let (inputs, output_dir, name, max_width, max_height, pack_mode) =
+                if let Some(proj_path) = &args.project {
+                    let proj = project::load(proj_path)?;
+                    let inputs = if args.inputs.is_empty() {
+                        proj.sources.iter().map(|s| s.path.clone()).collect()
+                    } else {
+                        args.inputs.clone()
+                    };
+                    (
+                        inputs,
+                        args.output.clone(),
+                        proj.config.output.name.clone(),
+                        proj.config.layout.max_width,
+                        proj.config.layout.max_height,
+                        proj.config.layout.pack_mode,
+                    )
+                } else {
+                    if args.inputs.is_empty() {
+                        bail!("no inputs specified; provide input paths or --project <file>");
+                    }
+                    (
+                        args.inputs.clone(),
+                        args.output.clone(),
+                        args.name.clone(),
+                        args.max_width,
+                        args.max_height,
+                        args.pack_mode.into(),
+                    )
+                };
+
+            watch::run_watch(watch::WatchArgs {
+                inputs,
+                output_dir,
+                name,
+                max_width,
+                max_height,
+                pack_mode,
+                detect_aliases: true,
+            })?;
+            Ok(())
+        }
+
         cli::Commands::Init(args) => {
             let proj = Project::default();
             project::save(&proj, &args.output)?;
