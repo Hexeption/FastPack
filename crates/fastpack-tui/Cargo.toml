@@ -1,0 +1,18 @@
+[package]
+name             = "fastpack-tui"
+description      = "Interactive terminal TUI for FastPack"
+version.workspace      = true
+edition.workspace      = true
+rust-version.workspace = true
+license.workspace      = true
+
+[dependencies]
+fastpack-core.workspace    = true
+fastpack-formats.workspace = true
+thiserror.workspace        = true
+anyhow.workspace           = true
+tracing.workspace          = true
+tokio.workspace            = true
+
+ratatui   = "0.29"
+crossterm = "0.28"

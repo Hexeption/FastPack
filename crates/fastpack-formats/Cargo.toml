@@ -1,0 +1,19 @@
+[package]
+name             = "fastpack-formats"
+description      = "Export format writers for FastPack"
+version.workspace      = true
+edition.workspace      = true
+rust-version.workspace = true
+license.workspace      = true
+
+[dependencies]
+fastpack-core.workspace = true
+thiserror.workspace     = true
+anyhow.workspace        = true
+serde.workspace         = true
+serde_json.workspace    = true
+tracing.workspace       = true
+
+
+[dev-dependencies]
+insta = { version = "1", features = ["json"] }

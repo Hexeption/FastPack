@@ -1,0 +1,47 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/fastpack-core",
+    "crates/fastpack-formats",
+    "crates/fastpack-compress",
+    "crates/fastpack-gui",
+    "crates/fastpack-tui",
+    "crates/fastpack",
+]
+
+[workspace.package]
+version      = "0.1.0"
+edition      = "2024"
+rust-version = "1.85"
+license      = "MIT OR Apache-2.0"
+
+[workspace.dependencies]
+# Internal crates
+fastpack-core     = { path = "crates/fastpack-core" }
+fastpack-formats  = { path = "crates/fastpack-formats" }
+fastpack-compress = { path = "crates/fastpack-compress" }
+fastpack-gui      = { path = "crates/fastpack-gui" }
+fastpack-tui      = { path = "crates/fastpack-tui" }
+
+# Error handling
+thiserror = "2"
+anyhow    = "1"
+
+# Serialization
+serde      = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Image processing
+image = { version = "0.25", default-features = false, features = [
+    "png", "jpeg", "bmp", "tga", "webp", "tiff",
+] }
+
+# Parallelism
+rayon = "1"
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# Logging
+tracing            = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }

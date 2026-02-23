@@ -1,0 +1,20 @@
+[package]
+name             = "fastpack-gui"
+description      = "Native desktop GUI for FastPack (primary interface)"
+version.workspace      = true
+edition.workspace      = true
+rust-version.workspace = true
+license.workspace      = true
+
+[dependencies]
+fastpack-core.workspace     = true
+fastpack-formats.workspace  = true
+fastpack-compress.workspace = true
+thiserror.workspace         = true
+anyhow.workspace            = true
+serde.workspace             = true
+tracing.workspace           = true
+
+egui        = "0.29"
+eframe      = "0.29"
+egui_extras = { version = "0.29", features = ["image"] }

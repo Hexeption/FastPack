@@ -1,0 +1,37 @@
+[package]
+name             = "fastpack-compress"
+description      = "Image compression backends for FastPack"
+version.workspace      = true
+edition.workspace      = true
+rust-version.workspace = true
+license.workspace      = true
+
+[features]
+default     = ["png"]
+png         = ["dep:oxipng", "dep:imagequant"]
+jpeg-turbo  = ["dep:mozjpeg"]
+webp-encode = ["dep:webp"]
+
+[dependencies]
+fastpack-core.workspace = true
+thiserror.workspace     = true
+anyhow.workspace        = true
+image.workspace         = true
+rayon.workspace         = true
+tracing.workspace       = true
+
+[dependencies.oxipng]
+version  = "9"
+optional = true
+
+[dependencies.imagequant]
+version  = "4"
+optional = true
+
+[dependencies.mozjpeg]
+version  = "0.10"
+optional = true
+
+[dependencies.webp]
+version  = "0.3"
+optional = true
