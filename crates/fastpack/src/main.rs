@@ -133,5 +133,19 @@ fn main() -> Result<()> {
             println!("Wrote {}", args.output.display());
             Ok(())
         }
+
+        cli::Commands::Split(args) => {
+            let result = split::run_split(split::SplitArgs {
+                atlas_path: args.atlas,
+                data_path: args.data,
+                output_dir: args.output_dir,
+            })?;
+            println!(
+                "Split {} sprite(s) → {}",
+                result.sprite_count,
+                result.output_dir.display()
+            );
+            Ok(())
+        }
     }
 }

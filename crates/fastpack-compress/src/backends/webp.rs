@@ -36,13 +36,15 @@ fn compress_webp(input: &CompressInput<'_>) -> Result<CompressOutput, CompressEr
             PackMode::Best => encoder.encode_lossless(),
             _ => encoder.encode(input.quality as f32),
         };
-        return Ok(CompressOutput {
+        Ok(CompressOutput {
             data: output.to_vec(),
-        });
+        })
     }
-
     #[cfg(not(feature = "webp-encode"))]
-    Err(CompressError::Other(
-        "webp-encode feature is not enabled; rebuild with --features webp-encode".to_string(),
-    ))
+    {
+        let _ = input;
+        Err(CompressError::Other(
+            "webp-encode feature is not enabled; rebuild with --features webp-encode".to_string(),
+        ))
+    }
 }

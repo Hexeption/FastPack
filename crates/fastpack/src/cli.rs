@@ -18,6 +18,8 @@ pub enum Commands {
     Watch(PackArgs),
     /// Write a default .fpsheet project file to disk.
     Init(InitArgs),
+    /// Split a packed atlas back into individual sprite files.
+    Split(SplitArgs),
 }
 
 #[derive(Debug, Args)]
@@ -56,6 +58,21 @@ pub struct InitArgs {
     /// Path to write the project file.
     #[arg(default_value = "project.fpsheet")]
     pub output: PathBuf,
+}
+
+#[derive(Debug, Args)]
+pub struct SplitArgs {
+    /// Path to the packed atlas PNG.
+    #[arg(value_name = "ATLAS")]
+    pub atlas: PathBuf,
+
+    /// Path to the JSON Hash data file produced by fastpack.
+    #[arg(value_name = "DATA")]
+    pub data: PathBuf,
+
+    /// Output directory for extracted sprite files.
+    #[arg(short, long, default_value = "sprites")]
+    pub output_dir: PathBuf,
 }
 
 /// Clap-facing pack mode enum; converts to `fastpack_core::types::config::PackMode`.

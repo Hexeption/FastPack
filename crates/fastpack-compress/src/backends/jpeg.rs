@@ -1,5 +1,7 @@
+#[cfg(not(feature = "jpeg-turbo"))]
 use std::io::Cursor;
 
+#[cfg(not(feature = "jpeg-turbo"))]
 use image::codecs::jpeg::JpegEncoder;
 
 use crate::{
@@ -34,18 +36,21 @@ fn compress_jpeg(input: &CompressInput<'_>) -> Result<CompressOutput, CompressEr
     #[cfg(feature = "jpeg-turbo")]
     return compress_mozjpeg(input.image, quality);
 
-    let rgb = input.image.to_rgb8();
-    let mut buf = Cursor::new(Vec::new());
-    let mut encoder = JpegEncoder::new_with_quality(&mut buf, quality);
-    encoder.encode(
-        rgb.as_raw(),
-        rgb.width(),
-        rgb.height(),
-        image::ExtendedColorType::Rgb8,
-    )?;
-    Ok(CompressOutput {
-        data: buf.into_inner(),
-    })
+    #[cfg(not(feature = "jpeg-turbo"))]
+    {
+        let rgb = input.image.to_rgb8();
+        let mut buf = Cursor::new(Vec::new());
+        let mut encoder = JpegEncoder::new_with_quality(&mut buf, quality);
+        encoder.encode(
+            rgb.as_raw(),
+            rgb.width(),
+            rgb.height(),
+            image::ExtendedColorType::Rgb8,
+        )?;
+        Ok(CompressOutput {
+            data: buf.into_inner(),
+        })
+    }
 }
 
 #[cfg(feature = "jpeg-turbo")]
@@ -60,13 +65,14 @@ fn compress_mozjpeg(
     let mut comp = mozjpeg::Compress::new(mozjpeg::ColorSpace::JCS_RGB);
     comp.set_size(width as usize, height as usize);
     comp.set_quality(quality as f32);
-    comp.set_mem_dest();
-    comp.start_compress();
-    if !comp.write_scanlines(raw) {
-        return Err(CompressError::Other(
-            "mozjpeg write_scanlines failed: unexpected data length".to_string(),
-        ));
-    }
-    let data = comp.finish_compress();
-    Ok(CompressOutput { data })
+
+    let mut buf = Vec::new();
+    let mut comp = comp
+        .start_compress(&mut buf)
+        .map_err(|e| CompressError::Other(e.to_string()))?;
+    comp.write_scanlines(raw)
+        .map_err(|e| CompressError::Other(e.to_string()))?;
+    comp.finish()
+        .map_err(|e| CompressError::Other(e.to_string()))?;
+    Ok(CompressOutput { data: buf })
 }
