@@ -16,4 +16,6 @@ tracing.workspace       = true
 
 
 [dev-dependencies]
-insta = { version = "1", features = ["json"] }
+insta                   = { version = "1", features = ["json"] }
+fastpack-core.workspace = true
+serde_json.workspace    = true
