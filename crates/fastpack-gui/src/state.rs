@@ -114,6 +114,9 @@ pub struct AppState {
     /// Zoom scale for the atlas preview (1.0 = pixel-perfect).
     pub atlas_zoom: f32,
 
+    /// True for the custom dark theme, false for light.
+    pub dark_mode: bool,
+
     /// One-shot actions queued by menus and toolbar, processed at frame start.
     pub pending: PendingActions,
 }
@@ -135,6 +138,7 @@ impl Default for AppState {
             selected_frame: None,
             atlas_pan: [0.0, 0.0],
             atlas_zoom: 1.0,
+            dark_mode: true,
             pending: PendingActions::default(),
         }
     }
@@ -168,7 +172,9 @@ impl AppState {
 
     /// Discard all state and start fresh.
     pub fn new_project(&mut self) {
+        let dark_mode = self.dark_mode;
         *self = AppState::default();
+        self.dark_mode = dark_mode;
         self.log.push(LogEntry::info("New project created."));
     }
 

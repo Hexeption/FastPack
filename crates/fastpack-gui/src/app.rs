@@ -28,6 +28,7 @@ impl Default for FastPackApp {
 
 impl eframe::App for FastPackApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        crate::theme::apply(ctx, self.state.dark_mode);
         self.poll_worker(ctx);
         self.handle_pending(ctx);
         self.handle_dropped_files(ctx);

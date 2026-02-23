@@ -4,6 +4,7 @@ pub mod app;
 pub mod menu;
 pub mod panels;
 pub mod state;
+pub mod theme;
 pub mod toolbar;
 pub mod widgets;
 pub mod worker;
@@ -28,6 +29,13 @@ pub fn run(project_path: Option<PathBuf>) -> anyhow::Result<()> {
         }
     }
     let options = eframe::NativeOptions::default();
-    eframe::run_native("FastPack", options, Box::new(|_cc| Ok(Box::new(app))))
-        .map_err(|e| anyhow::anyhow!("eframe error: {e}"))
+    eframe::run_native(
+        "FastPack",
+        options,
+        Box::new(|cc| {
+            theme::apply(&cc.egui_ctx, app.state.dark_mode);
+            Ok(Box::new(app))
+        }),
+    )
+    .map_err(|e| anyhow::anyhow!("eframe error: {e}"))
 }

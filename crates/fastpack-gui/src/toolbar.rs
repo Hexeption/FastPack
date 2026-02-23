@@ -105,6 +105,11 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
                 "{count} source{}",
                 if count == 1 { "" } else { "s" }
             ));
+            ui.separator();
+            let theme_label = if state.dark_mode { "Light" } else { "Dark" };
+            if ui.small_button(theme_label).clicked() {
+                state.dark_mode = !state.dark_mode;
+            }
         });
     });
 }
