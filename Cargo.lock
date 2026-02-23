@@ -1581,6 +1581,7 @@ dependencies = [
  "imagequant",
  "mozjpeg",
  "oxipng",
+ "png 0.17.16",
  "rayon",
  "thiserror 2.0.18",
  "tracing",
