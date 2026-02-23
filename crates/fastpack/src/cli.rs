@@ -14,13 +14,19 @@ pub struct Cli {
 pub enum Commands {
     /// Pack sprites from one or more directories or files into a texture atlas.
     Pack(PackArgs),
+    /// Write a default .fpsheet project file to disk.
+    Init(InitArgs),
 }
 
 #[derive(Debug, Args)]
 pub struct PackArgs {
     /// Input directories or files to search for sprites.
-    #[arg(required = true, value_name = "INPUT")]
+    #[arg(value_name = "INPUT")]
     pub inputs: Vec<PathBuf>,
+
+    /// Load settings from a .fpsheet project file.
+    #[arg(long, value_name = "FILE")]
+    pub project: Option<PathBuf>,
 
     /// Output directory for the generated atlas and data file.
     #[arg(short, long, default_value = "output")]
@@ -41,6 +47,13 @@ pub struct PackArgs {
     /// Compression effort level.
     #[arg(long, value_enum, default_value = "good")]
     pub pack_mode: PackModeArg,
+}
+
+#[derive(Debug, Args)]
+pub struct InitArgs {
+    /// Path to write the project file.
+    #[arg(default_value = "project.fpsheet")]
+    pub output: PathBuf,
 }
 
 /// Clap-facing pack mode enum; converts to `fastpack_core::types::config::PackMode`.

@@ -438,6 +438,7 @@ impl Default for SourceSpec {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Project {
     /// Packer configuration for this project.
+    #[serde(flatten)]
     pub config: PackerConfig,
     /// Input directories and glob filters.
     pub sources: Vec<SourceSpec>,
