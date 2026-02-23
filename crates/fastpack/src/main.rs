@@ -52,6 +52,7 @@ fn main() -> Result<()> {
                 max_height,
                 pack_mode,
                 detect_aliases: true,
+                multipack: args.multipack,
             })?;
 
             let alias_note = if result.alias_count > 0 {
@@ -59,20 +60,22 @@ fn main() -> Result<()> {
             } else {
                 String::new()
             };
-            println!(
-                "Packed {} sprites{} → {}×{} atlas → {} ({:.1} KB)",
-                result.sprite_count,
-                alias_note,
-                result.atlas_size.w,
-                result.atlas_size.h,
-                result.texture_path.display(),
-                result.texture_bytes as f64 / 1024.0,
-            );
-            println!(
-                "Saved {} ({} bytes)",
-                result.data_path.display(),
-                result.data_bytes
-            );
+            for sheet in &result.sheets {
+                println!(
+                    "Packed {} sprites{} → {}×{} atlas → {} ({:.1} KB)",
+                    result.sprite_count,
+                    alias_note,
+                    sheet.atlas_size.w,
+                    sheet.atlas_size.h,
+                    sheet.texture_path.display(),
+                    sheet.texture_bytes as f64 / 1024.0,
+                );
+                println!(
+                    "Saved {} ({} bytes)",
+                    sheet.data_path.display(),
+                    sheet.data_bytes
+                );
+            }
 
             if result.overflow_count > 0 {
                 eprintln!(
@@ -123,6 +126,7 @@ fn main() -> Result<()> {
                 max_height,
                 pack_mode,
                 detect_aliases: true,
+                multipack: args.multipack,
             })?;
             Ok(())
         }

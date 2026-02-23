@@ -41,18 +41,26 @@ pub struct PackArgs {
     pub max_height: u32,
     pub pack_mode: PackMode,
     pub detect_aliases: bool,
+    /// Emit additional sheets when sprites overflow the first atlas.
+    pub multipack: bool,
+}
+
+/// Per-sheet output produced by a pack run.
+pub struct SheetResult {
+    pub atlas_size: Size,
+    pub texture_bytes: usize,
+    pub data_bytes: usize,
+    pub texture_path: PathBuf,
+    pub data_path: PathBuf,
 }
 
 /// Summary produced by a successful pack run.
 pub struct PackResult {
     pub sprite_count: usize,
     pub alias_count: usize,
-    pub atlas_size: Size,
+    /// Sprites that did not fit on any sheet (only non-zero when multipack is disabled).
     pub overflow_count: usize,
-    pub texture_bytes: usize,
-    pub data_bytes: usize,
-    pub texture_path: PathBuf,
-    pub data_path: PathBuf,
+    pub sheets: Vec<SheetResult>,
 }
 
 /// Run the full pack pipeline and write output files to disk.
@@ -113,68 +121,103 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
     };
     let alias_count = aliases.len();
 
-    // 5. Pack
-    let pack_pb = progress::spinner(&mp, "Packing...");
     let layout = LayoutConfig {
         max_width: args.max_width,
         max_height: args.max_height,
         ..LayoutConfig::default()
     };
-    let pack_output: PackOutput = MaxRects::default()
-        .pack(PackInput {
-            sprites,
-            config: layout,
-            sprite_config: SpriteConfig::default(),
-        })
-        .context("packing failed")?;
-    pack_pb.finish_and_clear();
 
-    let overflow_count = pack_output.overflow.len();
-
-    // 6. Compose
-    let atlas_image = compose(&pack_output.placed, &pack_output.atlas_size);
-
-    // 7. Build packed atlas metadata (includes alias frames)
-    let packed = build_packed_atlas(&pack_output, &aliases, &args.name);
-
-    // 8. Compress
-    let compress_pb = progress::spinner(&mp, "Compressing...");
-    let compressed = PngCompressor
-        .compress(&CompressInput {
-            image: &atlas_image,
-            pack_mode: args.pack_mode,
-            quality: 95,
-        })
-        .context("png compression failed")?;
-    compress_pb.finish_and_clear();
-
-    // 9. Export
-    let texture_filename = format!("{}.png", args.name);
-    let json_str = JsonHashExporter
-        .export(&ExportInput {
-            atlas: &packed,
-            texture_filename: texture_filename.clone(),
-            pixel_format: "RGBA8888".to_string(),
-        })
-        .context("json export failed")?;
-
-    // 10. Write
     std::fs::create_dir_all(&args.output_dir).context("failed to create output directory")?;
-    let texture_path = args.output_dir.join(&texture_filename);
-    let data_path = args.output_dir.join(format!("{}.json", args.name));
-    std::fs::write(&texture_path, &compressed.data).context("failed to write texture")?;
-    std::fs::write(&data_path, json_str.as_bytes()).context("failed to write data file")?;
+
+    // 5–9. Multipack loop: pack remaining sprites, write each sheet, repeat with overflow.
+    let mut remaining = sprites;
+    let mut sheets: Vec<SheetResult> = Vec::new();
+    let mut overflow_count = 0;
+
+    loop {
+        let sheet_index = sheets.len();
+
+        // 5. Pack
+        let pack_pb = progress::spinner(&mp, "Packing...");
+        let pack_output: PackOutput = MaxRects::default()
+            .pack(PackInput {
+                sprites: remaining,
+                config: layout.clone(),
+                sprite_config: SpriteConfig::default(),
+            })
+            .context("packing failed")?;
+        pack_pb.finish_and_clear();
+
+        // 6. Compose
+        let atlas_image = compose(&pack_output.placed, &pack_output.atlas_size);
+
+        // 7. Build packed atlas metadata (aliases only on the first sheet)
+        let sheet_aliases = if sheet_index == 0 { &aliases[..] } else { &[] };
+        let packed = build_packed_atlas(&pack_output, sheet_aliases, &args.name);
+
+        // 8. Compress
+        let compress_pb = progress::spinner(&mp, "Compressing...");
+        let compressed = PngCompressor
+            .compress(&CompressInput {
+                image: &atlas_image,
+                pack_mode: args.pack_mode,
+                quality: 95,
+            })
+            .context("png compression failed")?;
+        compress_pb.finish_and_clear();
+
+        // 9. Export + Write
+        let (texture_filename, base_name) = sheet_filename(&args.name, sheet_index);
+        let json_str = JsonHashExporter
+            .export(&ExportInput {
+                atlas: &packed,
+                texture_filename: texture_filename.clone(),
+                pixel_format: "RGBA8888".to_string(),
+            })
+            .context("json export failed")?;
+
+        let texture_path = args.output_dir.join(&texture_filename);
+        let data_path = args.output_dir.join(format!("{base_name}.json"));
+        std::fs::write(&texture_path, &compressed.data).context("failed to write texture")?;
+        std::fs::write(&data_path, json_str.as_bytes()).context("failed to write data file")?;
+
+        let atlas_size = pack_output.atlas_size;
+        sheets.push(SheetResult {
+            atlas_size,
+            texture_bytes: compressed.data.len(),
+            data_bytes: json_str.len(),
+            texture_path,
+            data_path,
+        });
+
+        // Extract overflow last so all pack_output borrows above are satisfied.
+        remaining = pack_output.overflow;
+
+        if remaining.is_empty() {
+            break;
+        }
+        if !args.multipack {
+            overflow_count = remaining.len();
+            break;
+        }
+    }
 
     Ok(PackResult {
         sprite_count,
         alias_count,
-        atlas_size: pack_output.atlas_size,
         overflow_count,
-        texture_bytes: compressed.data.len(),
-        data_bytes: json_str.len(),
-        texture_path,
-        data_path,
+        sheets,
     })
+}
+
+/// Returns `(texture_filename, base_name_without_ext)` for a sheet index.
+/// Sheet 0 uses `<name>.png`; subsequent sheets use `<name>{index}.png`.
+fn sheet_filename(name: &str, index: usize) -> (String, String) {
+    if index == 0 {
+        (format!("{name}.png"), name.to_string())
+    } else {
+        (format!("{name}{index}.png"), format!("{name}{index}"))
+    }
 }
 
 fn collect_images(inputs: &[PathBuf]) -> Vec<(PathBuf, String)> {

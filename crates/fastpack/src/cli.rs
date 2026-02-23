@@ -51,6 +51,10 @@ pub struct PackArgs {
     /// Compression effort level.
     #[arg(long, value_enum, default_value = "good")]
     pub pack_mode: PackModeArg,
+
+    /// Emit additional sheets when sprites overflow the first atlas.
+    #[arg(long)]
+    pub multipack: bool,
 }
 
 #[derive(Debug, Args)]

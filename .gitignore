@@ -3,3 +3,4 @@
 *.log
 tmp*
 examples/output/
+examples/sprites/

@@ -16,6 +16,7 @@ pub struct WatchArgs {
     pub max_height: u32,
     pub pack_mode: PackMode,
     pub detect_aliases: bool,
+    pub multipack: bool,
 }
 
 /// Watch input directories and repack on any change.
@@ -68,6 +69,7 @@ fn run_once(args: &WatchArgs) -> Result<()> {
         max_height: args.max_height,
         pack_mode: args.pack_mode,
         detect_aliases: args.detect_aliases,
+        multipack: args.multipack,
     })?;
 
     let alias_note = if result.alias_count > 0 {
@@ -75,15 +77,18 @@ fn run_once(args: &WatchArgs) -> Result<()> {
     } else {
         String::new()
     };
-    println!(
-        "Packed {} sprites{} → {}×{} → {} ({:.1} KB)",
-        result.sprite_count,
-        alias_note,
-        result.atlas_size.w,
-        result.atlas_size.h,
-        result.texture_path.display(),
-        result.texture_bytes as f64 / 1024.0,
-    );
+
+    for sheet in &result.sheets {
+        println!(
+            "Packed {} sprites{} → {}×{} → {} ({:.1} KB)",
+            result.sprite_count,
+            alias_note,
+            sheet.atlas_size.w,
+            sheet.atlas_size.h,
+            sheet.texture_path.display(),
+            sheet.texture_bytes as f64 / 1024.0,
+        );
+    }
 
     if result.overflow_count > 0 {
         eprintln!(
