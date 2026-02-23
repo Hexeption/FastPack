@@ -10,18 +10,18 @@ members = [
 ]
 
 [workspace.package]
-version      = "0.1.1"
+version      = "0.1.2"
 edition      = "2024"
 rust-version = "1.85"
 license      = "MIT OR Apache-2.0"
 
 [workspace.dependencies]
 # Internal crates
-fastpack-core     = { path = "crates/fastpack-core",     version = "0.1.1" }
-fastpack-formats  = { path = "crates/fastpack-formats",  version = "0.1.1" }
-fastpack-compress = { path = "crates/fastpack-compress", version = "0.1.1" }
-fastpack-gui      = { path = "crates/fastpack-gui",      version = "0.1.1" }
-fastpack-tui      = { path = "crates/fastpack-tui",      version = "0.1.1" }
+fastpack-core     = { path = "crates/fastpack-core",     version = "0.1.2" }
+fastpack-formats  = { path = "crates/fastpack-formats",  version = "0.1.2" }
+fastpack-compress = { path = "crates/fastpack-compress", version = "0.1.2" }
+fastpack-gui      = { path = "crates/fastpack-gui",      version = "0.1.2" }
+fastpack-tui      = { path = "crates/fastpack-tui",      version = "0.1.2" }
 
 # Error handling
 thiserror = "2"
