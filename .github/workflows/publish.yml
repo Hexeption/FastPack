@@ -1,0 +1,45 @@
+name: publish
+
+on:
+  push:
+    tags: ["v*"]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  publish:
+    name: publish
+    runs-on: ubuntu-latest
+    env:
+      CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: install system deps
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y \
+            libgtk-3-dev \
+            libxcb-render0-dev \
+            libxcb-shape0-dev \
+            libxcb-xfixes0-dev \
+            libxkbcommon-dev \
+            libssl-dev
+
+      - run: cargo publish --package fastpack-core
+      - run: sleep 30
+
+      - run: cargo publish --package fastpack-formats
+      - run: cargo publish --package fastpack-compress
+      - run: sleep 30
+
+      - run: cargo publish --package fastpack-gui
+      - run: cargo publish --package fastpack-tui
+      - run: sleep 30
+
+      - run: cargo publish --package fastpack
