@@ -4,12 +4,18 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum PixelFormat {
+    /// 32-bit RGBA (8 bits per channel). Default.
     #[default]
     Rgba8888,
+    /// 24-bit RGB (8 bits per channel, no alpha).
     Rgb888,
+    /// 16-bit RGB (5 red, 6 green, 5 blue; no alpha).
     Rgb565,
+    /// 16-bit RGBA (4 bits per channel).
     Rgba4444,
+    /// 16-bit RGBA (5 red, 5 green, 5 blue, 1-bit alpha).
     Rgba5551,
+    /// 8-bit alpha-only channel.
     Alpha8,
 }
 
@@ -45,17 +51,28 @@ impl std::str::FromStr for PixelFormat {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum TextureFormat {
+    /// Lossless PNG. Default.
     #[default]
     Png,
+    /// Lossy JPEG; no alpha channel.
     Jpeg,
+    /// WebP (lossless or lossy depending on the quality setting).
     WebP,
+    /// ETC1 hardware compression; requires an external encoder.
     Etc1,
+    /// ETC2 hardware compression; requires an external encoder.
     Etc2,
+    /// PVRTC1 hardware compression (PowerVR); requires an external encoder.
     Pvrtc1,
+    /// PVRTC2 hardware compression (PowerVR); requires an external encoder.
     Pvrtc2,
+    /// DXT1 / BC1 hardware compression; no alpha.
     Dxt1,
+    /// DXT5 / BC3 hardware compression; full alpha.
     Dxt5,
+    /// ASTC hardware compression; requires an external encoder.
     Astc,
+    /// Basis Universal transcoding format.
     Basis,
 }
 

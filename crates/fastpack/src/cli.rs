@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use clap::{Args, Parser, Subcommand};
 use fastpack_core::types::config::{PackMode, ScaleMode};
 
+/// Root CLI entry point parsed by clap.
 #[derive(Debug, Parser)]
 #[command(name = "fastpack", about = "Texture atlas packer")]
 pub struct Cli {
@@ -10,6 +11,7 @@ pub struct Cli {
     pub command: Commands,
 }
 
+/// Top-level subcommands.
 #[derive(Debug, Subcommand)]
 pub enum Commands {
     /// Pack sprites from one or more directories or files into a texture atlas.
@@ -22,6 +24,7 @@ pub enum Commands {
     Split(SplitArgs),
 }
 
+/// Arguments shared by the `pack` and `watch` subcommands.
 #[derive(Debug, Args)]
 pub struct PackArgs {
     /// Input directories or files to search for sprites.
@@ -81,6 +84,7 @@ pub struct PackArgs {
     pub data_format: String,
 }
 
+/// Arguments for the `init` subcommand.
 #[derive(Debug, Args)]
 pub struct InitArgs {
     /// Path to write the project file.
@@ -88,6 +92,7 @@ pub struct InitArgs {
     pub output: PathBuf,
 }
 
+/// Arguments for the `split` subcommand.
 #[derive(Debug, Args)]
 pub struct SplitArgs {
     /// Path to the packed atlas PNG.
@@ -106,8 +111,11 @@ pub struct SplitArgs {
 /// Clap-facing pack mode enum; converts to `fastpack_core::types::config::PackMode`.
 #[derive(Debug, Clone, clap::ValueEnum)]
 pub enum PackModeArg {
+    /// Single-pass basic strip packer; fastest, largest atlas.
     Fast,
+    /// MaxRects single-pass; good density, moderate speed. Default.
     Good,
+    /// MaxRects width search; densest atlas, slowest.
     Best,
 }
 
@@ -124,7 +132,9 @@ impl From<PackModeArg> for PackMode {
 /// Clap-facing scale mode enum; converts to `fastpack_core::types::config::ScaleMode`.
 #[derive(Debug, Clone, clap::ValueEnum)]
 pub enum ScaleModeArg {
+    /// Lanczos3 resampling; high quality. Default.
     Smooth,
+    /// Nearest-neighbour; crisp pixel art, no blurring.
     Fast,
 }
 

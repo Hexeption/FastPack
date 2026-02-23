@@ -35,12 +35,19 @@ static IMAGE_EXTENSIONS: &[&str] = &[
 
 /// Arguments for a single headless pack run.
 pub struct PackArgs {
+    /// Input directories or individual image files to pack.
     pub inputs: Vec<PathBuf>,
+    /// Directory where atlas texture and data files are written.
     pub output_dir: PathBuf,
+    /// Base name for output files (no extension).
     pub name: String,
+    /// Maximum atlas width in pixels.
     pub max_width: u32,
+    /// Maximum atlas height in pixels.
     pub max_height: u32,
+    /// Packing effort level; controls speed vs. atlas density trade-off.
     pub pack_mode: PackMode,
+    /// When `true`, pixel-identical sprites share a single atlas frame.
     pub detect_aliases: bool,
     /// Emit additional sheets when sprites overflow the first atlas.
     pub multipack: bool,
@@ -57,19 +64,27 @@ pub struct PackArgs {
 
 /// Per-sheet output produced by a pack run.
 pub struct SheetResult {
+    /// Pixel dimensions of the packed atlas texture.
     pub atlas_size: Size,
+    /// Compressed texture file size in bytes.
     pub texture_bytes: usize,
+    /// Data file size in bytes.
     pub data_bytes: usize,
+    /// Path to the written texture file.
     pub texture_path: PathBuf,
+    /// Path to the written data file.
     pub data_path: PathBuf,
 }
 
 /// Summary produced by a successful pack run.
 pub struct PackResult {
+    /// Total number of unique sprites packed (excluding aliases).
     pub sprite_count: usize,
+    /// Number of sprites deduplicated as aliases of another sprite.
     pub alias_count: usize,
     /// Sprites that did not fit on any sheet (only non-zero when multipack is disabled).
     pub overflow_count: usize,
+    /// One entry per output sheet across all scale variants.
     pub sheets: Vec<SheetResult>,
 }
 

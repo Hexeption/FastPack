@@ -12,17 +12,29 @@ use crate::pipeline::{PackArgs, run_pack};
 
 /// Arguments for watch mode; mirrors `PackArgs`.
 pub struct WatchArgs {
+    /// Input directories or individual image files to watch.
     pub inputs: Vec<PathBuf>,
+    /// Directory where atlas texture and data files are written.
     pub output_dir: PathBuf,
+    /// Base name for output files (no extension).
     pub name: String,
+    /// Maximum atlas width in pixels.
     pub max_width: u32,
+    /// Maximum atlas height in pixels.
     pub max_height: u32,
+    /// Packing effort level; controls speed vs. atlas density trade-off.
     pub pack_mode: PackMode,
+    /// When `true`, pixel-identical sprites share a single atlas frame.
     pub detect_aliases: bool,
+    /// Emit additional sheets when sprites overflow the first atlas.
     pub multipack: bool,
+    /// Pivot applied to every frame that has no per-sprite override.
     pub default_pivot: Option<Point>,
+    /// Per-sprite metadata (pivot, nine-patch) read from the project file.
     pub sprite_overrides: Vec<SpriteOverride>,
+    /// Scale variants to produce. An empty list is treated as a single @1x variant.
     pub variants: Vec<ScaleVariant>,
+    /// Export data format identifier (e.g. `"json_hash"`, `"phaser3"`).
     pub data_format: String,
 }
 

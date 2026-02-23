@@ -7,14 +7,21 @@ use anyhow::{Context, Result};
 use image::{DynamicImage, GenericImage, GenericImageView};
 use serde::Deserialize;
 
+/// Arguments for a `split` run.
 pub struct SplitArgs {
+    /// Path to the packed atlas PNG.
     pub atlas_path: PathBuf,
+    /// Path to the JSON Hash data file that describes the atlas frames.
     pub data_path: PathBuf,
+    /// Directory where extracted sprite PNGs are written.
     pub output_dir: PathBuf,
 }
 
+/// Summary produced by a successful split run.
 pub struct SplitResult {
+    /// Number of sprite files written.
     pub sprite_count: usize,
+    /// Directory where the extracted sprites were written.
     pub output_dir: PathBuf,
 }
 

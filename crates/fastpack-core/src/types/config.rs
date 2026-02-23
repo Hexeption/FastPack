@@ -340,9 +340,21 @@ impl Default for OutputConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum AlgorithmConfig {
-    Grid { cell_width: u32, cell_height: u32 },
+    /// Equal-size grid placement. `cell_width` and `cell_height` set cell dimensions (0 = auto).
+    Grid {
+        /// Cell width in pixels. 0 sizes to the widest sprite in the set.
+        cell_width: u32,
+        /// Cell height in pixels. 0 sizes to the tallest sprite in the set.
+        cell_height: u32,
+    },
+    /// Top-to-bottom row-strip placement (fast, no width search).
     Basic,
-    MaxRects { heuristic: MaxRectsHeuristic },
+    /// MaxRects bin-packing with a configurable placement heuristic.
+    MaxRects {
+        /// Heuristic used to score candidate free-rect placements.
+        heuristic: MaxRectsHeuristic,
+    },
+    /// Tight polygon-level packing (requires engine support for hull meshes).
     Polygon,
 }
 
