@@ -14,6 +14,7 @@ path = "src/main.rs"
 fastpack-core.workspace     = true
 fastpack-formats.workspace  = true
 fastpack-compress.workspace = true
+image.workspace             = true
 fastpack-gui.workspace      = true
 fastpack-tui.workspace      = true
 thiserror.workspace         = true
