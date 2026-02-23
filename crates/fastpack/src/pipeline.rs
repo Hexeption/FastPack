@@ -20,7 +20,7 @@ use fastpack_core::{
 };
 use fastpack_formats::{
     exporter::{ExportInput, Exporter},
-    formats::json_hash::JsonHashExporter,
+    formats::{json_hash::JsonHashExporter, phaser3::Phaser3Exporter},
 };
 use indicatif::{MultiProgress, ParallelProgressIterator};
 use rayon::prelude::*;
@@ -51,6 +51,8 @@ pub struct PackArgs {
     pub sprite_overrides: Vec<SpriteOverride>,
     /// Scale variants to produce. An empty list is treated as a single @1x variant.
     pub variants: Vec<ScaleVariant>,
+    /// Export data format identifier (e.g. `"json_hash"`, `"phaser3"`).
+    pub data_format: String,
 }
 
 /// Per-sheet output produced by a pack run.
@@ -187,6 +189,13 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
                 .context("alias scaling failed")?
         };
 
+        // Vectors accumulate per-sheet data across the inner multipack loop so
+        // data files can be written after all sheets are known (required by formats
+        // like Phaser 3 that combine all sheets into one JSON file).
+        let mut variant_atlases: Vec<PackedAtlas> = Vec::new();
+        let mut variant_tex_filenames: Vec<String> = Vec::new();
+        let variant_sheet_start = all_sheets.len();
+
         // Inner multipack loop for this variant.
         let mut remaining = variant_sprites;
         let mut variant_sheet_index = 0usize;
@@ -226,30 +235,22 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
                 .context("png compression failed")?;
             compress_pb.finish_and_clear();
 
-            // 9. Export + Write
-            let (texture_filename, base_name) =
+            // 9. Write texture; accumulate atlas for deferred data export.
+            let (texture_filename, _) =
                 sheet_filename(&args.name, &variant.suffix, variant_sheet_index);
-            let json_str = JsonHashExporter
-                .export(&ExportInput {
-                    atlas: &packed,
-                    texture_filename: texture_filename.clone(),
-                    pixel_format: "RGBA8888".to_string(),
-                })
-                .context("json export failed")?;
-
             let texture_path = args.output_dir.join(&texture_filename);
-            let data_path = args.output_dir.join(format!("{base_name}.json"));
             std::fs::write(&texture_path, &compressed.data).context("failed to write texture")?;
-            std::fs::write(&data_path, json_str.as_bytes()).context("failed to write data file")?;
 
             let atlas_size = pack_output.atlas_size;
             all_sheets.push(SheetResult {
                 atlas_size,
                 texture_bytes: compressed.data.len(),
-                data_bytes: json_str.len(),
+                data_bytes: 0,
                 texture_path,
-                data_path,
+                data_path: PathBuf::new(),
             });
+            variant_atlases.push(packed);
+            variant_tex_filenames.push(texture_filename);
 
             // Extract overflow last so all pack_output borrows above are satisfied.
             remaining = pack_output.overflow;
@@ -261,6 +262,44 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
             if !args.multipack {
                 overflow_count = remaining.len();
                 break;
+            }
+        }
+
+        // 10. Export data files for this variant.
+        let exporter = select_exporter(&args.data_format);
+        let export_inputs: Vec<ExportInput<'_>> = variant_atlases
+            .iter()
+            .zip(&variant_tex_filenames)
+            .map(|(atlas, fname)| ExportInput {
+                atlas,
+                texture_filename: fname.clone(),
+                pixel_format: "RGBA8888".to_string(),
+            })
+            .collect();
+
+        let n = variant_atlases.len();
+        match exporter.combine(&export_inputs) {
+            Some(result) => {
+                let content = result.context("combined data export failed")?;
+                let base = format!("{}{}", args.name, variant.suffix);
+                let data_path = args.output_dir.join(format!("{base}.json"));
+                std::fs::write(&data_path, content.as_bytes())
+                    .context("failed to write data file")?;
+                for i in 0..n {
+                    all_sheets[variant_sheet_start + i].data_path = data_path.clone();
+                }
+                all_sheets[variant_sheet_start].data_bytes = content.len();
+            }
+            None => {
+                for (i, input) in export_inputs.iter().enumerate() {
+                    let content = exporter.export(input).context("data export failed")?;
+                    let (_, base_name) = sheet_filename(&args.name, &variant.suffix, i);
+                    let data_path = args.output_dir.join(format!("{base_name}.json"));
+                    std::fs::write(&data_path, content.as_bytes())
+                        .context("failed to write data file")?;
+                    all_sheets[variant_sheet_start + i].data_path = data_path;
+                    all_sheets[variant_sheet_start + i].data_bytes = content.len();
+                }
             }
         }
     }
@@ -283,6 +322,13 @@ fn sheet_filename(name: &str, suffix: &str, index: usize) -> (String, String) {
             format!("{name}{suffix}{index}.png"),
             format!("{name}{suffix}{index}"),
         )
+    }
+}
+
+fn select_exporter(data_format: &str) -> Box<dyn Exporter> {
+    match data_format {
+        "phaser3" => Box::new(Phaser3Exporter),
+        _ => Box::new(JsonHashExporter),
     }
 }
 

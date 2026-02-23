@@ -24,4 +24,14 @@ pub trait Exporter: Send + Sync {
 
     /// File extension for the output data file, without leading dot (e.g. `"json"`).
     fn file_extension(&self) -> &'static str;
+
+    /// Combine multiple sheets into one data file where the format supports it.
+    ///
+    /// Returns `Some(content)` when this exporter can write all sheets as a single
+    /// file (e.g. Phaser 3 multi-atlas `textures` array). Returns `None` to fall back
+    /// to calling `export()` once per sheet.
+    fn combine(&self, inputs: &[ExportInput<'_>]) -> Option<Result<String, FormatError>> {
+        let _ = inputs;
+        None
+    }
 }

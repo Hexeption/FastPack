@@ -23,6 +23,7 @@ pub struct WatchArgs {
     pub default_pivot: Option<Point>,
     pub sprite_overrides: Vec<SpriteOverride>,
     pub variants: Vec<ScaleVariant>,
+    pub data_format: String,
 }
 
 /// Watch input directories and repack on any change.
@@ -79,6 +80,7 @@ fn run_once(args: &WatchArgs) -> Result<()> {
         default_pivot: args.default_pivot,
         sprite_overrides: args.sprite_overrides.clone(),
         variants: args.variants.clone(),
+        data_format: args.data_format.clone(),
     })?;
 
     let alias_note = if result.alias_count > 0 {

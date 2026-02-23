@@ -75,6 +75,10 @@ pub struct PackArgs {
     /// Resampling filter used when scaling.
     #[arg(long, value_enum, default_value = "smooth")]
     pub scale_mode: ScaleModeArg,
+
+    /// Output data format (e.g. json_hash, phaser3).
+    #[arg(long, default_value = "json_hash")]
+    pub data_format: String,
 }
 
 #[derive(Debug, Args)]

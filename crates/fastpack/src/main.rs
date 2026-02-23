@@ -26,6 +26,7 @@ fn main() -> Result<()> {
                 pack_mode,
                 sprite_overrides,
                 variants,
+                data_format,
             ) = if let Some(proj_path) = &args.project {
                 let proj = project::load(proj_path)?;
                 let inputs = if args.inputs.is_empty() {
@@ -42,6 +43,7 @@ fn main() -> Result<()> {
                     proj.config.layout.pack_mode,
                     proj.config.sprite_overrides.clone(),
                     proj.config.variants.clone(),
+                    proj.config.output.data_format.clone(),
                 )
             } else {
                 if args.inputs.is_empty() {
@@ -61,6 +63,7 @@ fn main() -> Result<()> {
                     args.pack_mode.into(),
                     Vec::new(),
                     vec![variant],
+                    args.data_format.clone(),
                 )
             };
 
@@ -81,6 +84,7 @@ fn main() -> Result<()> {
                 default_pivot,
                 sprite_overrides,
                 variants,
+                data_format,
             })?;
 
             let alias_note = if result.alias_count > 0 {
@@ -98,11 +102,13 @@ fn main() -> Result<()> {
                     sheet.texture_path.display(),
                     sheet.texture_bytes as f64 / 1024.0,
                 );
-                println!(
-                    "Saved {} ({} bytes)",
-                    sheet.data_path.display(),
-                    sheet.data_bytes
-                );
+                if sheet.data_bytes > 0 {
+                    println!(
+                        "Saved {} ({} bytes)",
+                        sheet.data_path.display(),
+                        sheet.data_bytes
+                    );
+                }
             }
 
             if result.overflow_count > 0 {
@@ -125,6 +131,7 @@ fn main() -> Result<()> {
                 pack_mode,
                 sprite_overrides,
                 variants,
+                data_format,
             ) = if let Some(proj_path) = &args.project {
                 let proj = project::load(proj_path)?;
                 let inputs = if args.inputs.is_empty() {
@@ -141,6 +148,7 @@ fn main() -> Result<()> {
                     proj.config.layout.pack_mode,
                     proj.config.sprite_overrides.clone(),
                     proj.config.variants.clone(),
+                    proj.config.output.data_format.clone(),
                 )
             } else {
                 if args.inputs.is_empty() {
@@ -160,6 +168,7 @@ fn main() -> Result<()> {
                     args.pack_mode.into(),
                     Vec::new(),
                     vec![variant],
+                    args.data_format.clone(),
                 )
             };
 
@@ -180,6 +189,7 @@ fn main() -> Result<()> {
                 default_pivot,
                 sprite_overrides,
                 variants,
+                data_format,
             })?;
             Ok(())
         }
