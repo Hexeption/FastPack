@@ -3,7 +3,6 @@
 [![crates.io](https://img.shields.io/crates/v/fastpack.svg)](https://crates.io/crates/fastpack)
 [![CI](https://github.com/Hexeption/FastPack/actions/workflows/ci.yml/badge.svg)](https://github.com/Hexeption/FastPack/actions/workflows/ci.yml)
 [![rustc 1.85+](https://img.shields.io/badge/rustc-1.85%2B-orange.svg)](https://www.rust-lang.org)
-[![license](https://img.shields.io/crates/l/fastpack.svg)](LICENSE-MIT)
 
 Texture atlas packer written in Rust 2024. Replaces TexturePacker with a native GUI as the primary interface, plus a full-featured CLI and TUI.
 
