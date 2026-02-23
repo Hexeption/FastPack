@@ -78,6 +78,32 @@ impl std::str::FromStr for SizeConstraint {
     }
 }
 
+impl SizeConstraint {
+    /// Round `size` up to satisfy this constraint.
+    pub fn apply(self, size: u32) -> u32 {
+        match self {
+            Self::AnySize => size,
+            Self::Pot => {
+                if size <= 1 {
+                    1
+                } else if size.is_power_of_two() {
+                    size
+                } else {
+                    size.next_power_of_two()
+                }
+            }
+            Self::MultipleOf4 => {
+                let r = size % 4;
+                if r == 0 { size } else { size + (4 - r) }
+            }
+            Self::WordAligned => {
+                let r = size % 2;
+                if r == 0 { size } else { size + 1 }
+            }
+        }
+    }
+}
+
 /// Speed vs. density trade-off for the packing search.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]

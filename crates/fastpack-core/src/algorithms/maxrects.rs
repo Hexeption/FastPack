@@ -1,7 +1,7 @@
 use crate::{
     error::CoreError,
     types::{
-        config::{LayoutConfig, MaxRectsHeuristic, SizeConstraint},
+        config::{LayoutConfig, MaxRectsHeuristic},
         rect::{Rect, Size},
         sprite::Sprite,
     },
@@ -348,8 +348,8 @@ fn compute_atlas_size(placed: &[PlacedSprite], border_padding: u32, cfg: &Layout
         max_y = max_y.max(ps.placement.dest.bottom());
     }
 
-    let w = constrain(max_x + border_padding, cfg.size_constraint);
-    let h = constrain(max_y + border_padding, cfg.size_constraint);
+    let w = cfg.size_constraint.apply(max_x + border_padding);
+    let h = cfg.size_constraint.apply(max_y + border_padding);
 
     let (w, h) = if cfg.force_square {
         let side = w.max(h);
@@ -362,31 +362,4 @@ fn compute_atlas_size(placed: &[PlacedSprite], border_padding: u32, cfg: &Layout
         w: w.min(cfg.max_width),
         h: h.min(cfg.max_height),
     }
-}
-
-fn constrain(size: u32, constraint: SizeConstraint) -> u32 {
-    match constraint {
-        SizeConstraint::AnySize => size,
-        SizeConstraint::Pot => next_pot(size),
-        SizeConstraint::MultipleOf4 => round_up(size, 4),
-        SizeConstraint::WordAligned => round_up(size, 2),
-    }
-}
-
-fn next_pot(n: u32) -> u32 {
-    if n <= 1 {
-        return 1;
-    }
-    if n.is_power_of_two() {
-        return n;
-    }
-    n.next_power_of_two()
-}
-
-fn round_up(n: u32, multiple: u32) -> u32 {
-    if multiple <= 1 {
-        return n;
-    }
-    let r = n % multiple;
-    if r == 0 { n } else { n + (multiple - r) }
 }
