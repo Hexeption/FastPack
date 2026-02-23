@@ -10,7 +10,7 @@ use fastpack_core::{
         maxrects::MaxRects,
         packer::{PackInput, PackOutput, Packer, PlacedSprite},
     },
-    imaging::{alias::detect_aliases, loader, trim},
+    imaging::{alias::detect_aliases, extrude, loader, trim},
     types::{
         atlas::{AtlasFrame, PackedAtlas},
         config::{LayoutConfig, PackMode, SpriteConfig},
@@ -80,6 +80,13 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
     let mut sprites = sprites;
     for s in &mut sprites {
         trim::trim(s, &sprite_cfg);
+    }
+
+    // 3.5. Extrude
+    if sprite_cfg.extrude > 0 {
+        for s in &mut sprites {
+            extrude::extrude(s, sprite_cfg.extrude);
+        }
     }
 
     let sprite_count = sprites.len();
@@ -221,21 +228,19 @@ fn build_packed_atlas(pack_output: &PackOutput, aliases: &[Sprite], name: &str) 
         .map(|ps| {
             let dest = &ps.placement.dest;
             let sprite = &ps.sprite;
-            let trim_w = sprite.image.width();
-            let trim_h = sprite.image.height();
 
             let sprite_source_size = match &sprite.trim_rect {
                 Some(tr) => SourceRect {
                     x: tr.x,
                     y: tr.y,
-                    w: trim_w,
-                    h: trim_h,
+                    w: tr.w,
+                    h: tr.h,
                 },
                 None => SourceRect {
                     x: 0,
                     y: 0,
-                    w: trim_w,
-                    h: trim_h,
+                    w: sprite.original_size.w,
+                    h: sprite.original_size.h,
                 },
             };
 
@@ -270,20 +275,18 @@ fn build_packed_atlas(pack_output: &PackOutput, aliases: &[Sprite], name: &str) 
         let canon_id = alias.alias_of.as_deref().unwrap_or("");
         if let Some(&ci) = frame_by_id.get(canon_id) {
             let (canon_frame, canon_rotated) = (frames[ci].frame, frames[ci].rotated);
-            let trim_w = alias.image.width();
-            let trim_h = alias.image.height();
             let sprite_source_size = match &alias.trim_rect {
                 Some(tr) => SourceRect {
                     x: tr.x,
                     y: tr.y,
-                    w: trim_w,
-                    h: trim_h,
+                    w: tr.w,
+                    h: tr.h,
                 },
                 None => SourceRect {
                     x: 0,
                     y: 0,
-                    w: trim_w,
-                    h: trim_h,
+                    w: alias.original_size.w,
+                    h: alias.original_size.h,
                 },
             };
             frames.push(AtlasFrame {

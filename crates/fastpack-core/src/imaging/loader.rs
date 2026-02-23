@@ -34,6 +34,7 @@ pub fn load(path: &Path, id: impl Into<String>) -> Result<Sprite, CoreError> {
         nine_patch: None,
         pivot: None,
         content_hash,
+        extrude: 0,
         alias_of: None,
     })
 }

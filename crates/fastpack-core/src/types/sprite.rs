@@ -54,6 +54,10 @@ pub struct Sprite {
     /// xxHash64 of the trimmed RGBA pixel bytes, used for alias detection.
     pub content_hash: u64,
 
+    /// Pixels of transparent border added to each side via the extrude step.
+    /// Zero means no extrusion was applied.
+    pub extrude: u32,
+
     /// If `Some(id)`, this sprite is a duplicate of the named one and will
     /// share its atlas rect rather than being placed independently.
     pub alias_of: Option<String>,
