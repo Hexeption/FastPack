@@ -2,7 +2,7 @@ use std::{path::PathBuf, sync::mpsc, time::Duration};
 
 use anyhow::Result;
 use fastpack_core::types::{
-    config::{PackMode, SpriteOverride},
+    config::{PackMode, ScaleVariant, SpriteOverride},
     rect::Point,
 };
 use notify_debouncer_mini::new_debouncer;
@@ -22,6 +22,7 @@ pub struct WatchArgs {
     pub multipack: bool,
     pub default_pivot: Option<Point>,
     pub sprite_overrides: Vec<SpriteOverride>,
+    pub variants: Vec<ScaleVariant>,
 }
 
 /// Watch input directories and repack on any change.
@@ -77,6 +78,7 @@ fn run_once(args: &WatchArgs) -> Result<()> {
         multipack: args.multipack,
         default_pivot: args.default_pivot,
         sprite_overrides: args.sprite_overrides.clone(),
+        variants: args.variants.clone(),
     })?;
 
     let alias_note = if result.alias_count > 0 {

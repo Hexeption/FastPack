@@ -10,10 +10,10 @@ use fastpack_core::{
         maxrects::MaxRects,
         packer::{PackInput, PackOutput, Packer, PlacedSprite},
     },
-    imaging::{alias::detect_aliases, extrude, loader, trim},
+    imaging::{alias::detect_aliases, extrude, loader, scale, trim},
     types::{
         atlas::{AtlasFrame, PackedAtlas},
-        config::{LayoutConfig, PackMode, SpriteConfig, SpriteOverride},
+        config::{LayoutConfig, PackMode, ScaleVariant, SpriteConfig, SpriteOverride},
         rect::{Point, Rect, Size, SourceRect},
         sprite::Sprite,
     },
@@ -49,6 +49,8 @@ pub struct PackArgs {
     pub default_pivot: Option<Point>,
     /// Per-sprite metadata (pivot, nine-patch) read from the project file.
     pub sprite_overrides: Vec<SpriteOverride>,
+    /// Scale variants to produce. An empty list is treated as a single @1x variant.
+    pub variants: Vec<ScaleVariant>,
 }
 
 /// Per-sheet output produced by a pack run.
@@ -139,12 +141,12 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
     }
 
     // 4. Alias detection
-    let (sprites, aliases) = if args.detect_aliases {
+    let (base_sprites, base_aliases) = if args.detect_aliases {
         detect_aliases(sprites)
     } else {
         (sprites, Vec::new())
     };
-    let alias_count = aliases.len();
+    let alias_count = base_aliases.len();
 
     let layout = LayoutConfig {
         max_width: args.max_width,
@@ -154,77 +156,112 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
 
     std::fs::create_dir_all(&args.output_dir).context("failed to create output directory")?;
 
-    // 5–9. Multipack loop: pack remaining sprites, write each sheet, repeat with overflow.
-    let mut remaining = sprites;
-    let mut sheets: Vec<SheetResult> = Vec::new();
+    let effective_variants: Vec<ScaleVariant> = if args.variants.is_empty() {
+        vec![ScaleVariant::default()]
+    } else {
+        args.variants.clone()
+    };
+
+    // 5–10. Variant loop: for each scale variant, run the full pack+compress+export pipeline.
+    let mut all_sheets: Vec<SheetResult> = Vec::new();
     let mut overflow_count = 0;
 
-    loop {
-        let sheet_index = sheets.len();
+    for variant in &effective_variants {
+        // Scale sprites and aliases for this variant.
+        let variant_sprites: Vec<Sprite> = if (variant.scale - 1.0).abs() < f32::EPSILON {
+            base_sprites.clone()
+        } else {
+            base_sprites
+                .iter()
+                .map(|s| scale::scale_sprite(s, variant.scale, variant.scale_mode))
+                .collect::<anyhow::Result<Vec<_>>>()
+                .context("sprite scaling failed")?
+        };
+        let variant_aliases: Vec<Sprite> = if (variant.scale - 1.0).abs() < f32::EPSILON {
+            base_aliases.clone()
+        } else {
+            base_aliases
+                .iter()
+                .map(|s| scale::scale_sprite(s, variant.scale, variant.scale_mode))
+                .collect::<anyhow::Result<Vec<_>>>()
+                .context("alias scaling failed")?
+        };
 
-        // 5. Pack
-        let pack_pb = progress::spinner(&mp, "Packing...");
-        let pack_output: PackOutput = MaxRects::default()
-            .pack(PackInput {
-                sprites: remaining,
-                config: layout.clone(),
-                sprite_config: SpriteConfig::default(),
-            })
-            .context("packing failed")?;
-        pack_pb.finish_and_clear();
+        // Inner multipack loop for this variant.
+        let mut remaining = variant_sprites;
+        let mut variant_sheet_index = 0usize;
 
-        // 6. Compose
-        let atlas_image = compose(&pack_output.placed, &pack_output.atlas_size);
+        loop {
+            // 5. Pack
+            let pack_pb = progress::spinner(&mp, "Packing...");
+            let pack_output: PackOutput = MaxRects::default()
+                .pack(PackInput {
+                    sprites: remaining,
+                    config: layout.clone(),
+                    sprite_config: SpriteConfig::default(),
+                })
+                .context("packing failed")?;
+            pack_pb.finish_and_clear();
 
-        // 7. Build packed atlas metadata (aliases only on the first sheet)
-        let sheet_aliases = if sheet_index == 0 { &aliases[..] } else { &[] };
-        let packed =
-            build_packed_atlas(&pack_output, sheet_aliases, &args.name, args.default_pivot);
+            // 6. Compose
+            let atlas_image = compose(&pack_output.placed, &pack_output.atlas_size);
 
-        // 8. Compress
-        let compress_pb = progress::spinner(&mp, "Compressing...");
-        let compressed = PngCompressor
-            .compress(&CompressInput {
-                image: &atlas_image,
-                pack_mode: args.pack_mode,
-                quality: 95,
-            })
-            .context("png compression failed")?;
-        compress_pb.finish_and_clear();
+            // 7. Build packed atlas metadata (variant aliases only on the first sheet).
+            let sheet_aliases = if variant_sheet_index == 0 {
+                &variant_aliases[..]
+            } else {
+                &[]
+            };
+            let packed =
+                build_packed_atlas(&pack_output, sheet_aliases, &args.name, args.default_pivot);
 
-        // 9. Export + Write
-        let (texture_filename, base_name) = sheet_filename(&args.name, sheet_index);
-        let json_str = JsonHashExporter
-            .export(&ExportInput {
-                atlas: &packed,
-                texture_filename: texture_filename.clone(),
-                pixel_format: "RGBA8888".to_string(),
-            })
-            .context("json export failed")?;
+            // 8. Compress
+            let compress_pb = progress::spinner(&mp, "Compressing...");
+            let compressed = PngCompressor
+                .compress(&CompressInput {
+                    image: &atlas_image,
+                    pack_mode: args.pack_mode,
+                    quality: 95,
+                })
+                .context("png compression failed")?;
+            compress_pb.finish_and_clear();
 
-        let texture_path = args.output_dir.join(&texture_filename);
-        let data_path = args.output_dir.join(format!("{base_name}.json"));
-        std::fs::write(&texture_path, &compressed.data).context("failed to write texture")?;
-        std::fs::write(&data_path, json_str.as_bytes()).context("failed to write data file")?;
+            // 9. Export + Write
+            let (texture_filename, base_name) =
+                sheet_filename(&args.name, &variant.suffix, variant_sheet_index);
+            let json_str = JsonHashExporter
+                .export(&ExportInput {
+                    atlas: &packed,
+                    texture_filename: texture_filename.clone(),
+                    pixel_format: "RGBA8888".to_string(),
+                })
+                .context("json export failed")?;
 
-        let atlas_size = pack_output.atlas_size;
-        sheets.push(SheetResult {
-            atlas_size,
-            texture_bytes: compressed.data.len(),
-            data_bytes: json_str.len(),
-            texture_path,
-            data_path,
-        });
+            let texture_path = args.output_dir.join(&texture_filename);
+            let data_path = args.output_dir.join(format!("{base_name}.json"));
+            std::fs::write(&texture_path, &compressed.data).context("failed to write texture")?;
+            std::fs::write(&data_path, json_str.as_bytes()).context("failed to write data file")?;
 
-        // Extract overflow last so all pack_output borrows above are satisfied.
-        remaining = pack_output.overflow;
+            let atlas_size = pack_output.atlas_size;
+            all_sheets.push(SheetResult {
+                atlas_size,
+                texture_bytes: compressed.data.len(),
+                data_bytes: json_str.len(),
+                texture_path,
+                data_path,
+            });
 
-        if remaining.is_empty() {
-            break;
-        }
-        if !args.multipack {
-            overflow_count = remaining.len();
-            break;
+            // Extract overflow last so all pack_output borrows above are satisfied.
+            remaining = pack_output.overflow;
+            variant_sheet_index += 1;
+
+            if remaining.is_empty() {
+                break;
+            }
+            if !args.multipack {
+                overflow_count = remaining.len();
+                break;
+            }
         }
     }
 
@@ -232,17 +269,20 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
         sprite_count,
         alias_count,
         overflow_count,
-        sheets,
+        sheets: all_sheets,
     })
 }
 
 /// Returns `(texture_filename, base_name_without_ext)` for a sheet index.
-/// Sheet 0 uses `<name>.png`; subsequent sheets use `<name>{index}.png`.
-fn sheet_filename(name: &str, index: usize) -> (String, String) {
+/// Sheet 0 uses `<name><suffix>.png`; subsequent sheets append the index.
+fn sheet_filename(name: &str, suffix: &str, index: usize) -> (String, String) {
     if index == 0 {
-        (format!("{name}.png"), name.to_string())
+        (format!("{name}{suffix}.png"), format!("{name}{suffix}"))
     } else {
-        (format!("{name}{index}.png"), format!("{name}{index}"))
+        (
+            format!("{name}{suffix}{index}.png"),
+            format!("{name}{suffix}{index}"),
+        )
     }
 }
 

@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use clap::{Args, Parser, Subcommand};
-use fastpack_core::types::config::PackMode;
+use fastpack_core::types::config::{PackMode, ScaleMode};
 
 #[derive(Debug, Parser)]
 #[command(name = "fastpack", about = "Texture atlas packer")]
@@ -63,6 +63,18 @@ pub struct PackArgs {
     /// Default pivot Y coordinate (0.0–1.0). Requires --pivot-x.
     #[arg(long, value_name = "Y")]
     pub pivot_y: Option<f32>,
+
+    /// Scale factor applied to output (e.g. 0.5 produces a half-resolution atlas).
+    #[arg(long, default_value_t = 1.0)]
+    pub scale: f32,
+
+    /// Suffix appended to output filenames (e.g. @2x produces atlas@2x.png).
+    #[arg(long, default_value = "")]
+    pub suffix: String,
+
+    /// Resampling filter used when scaling.
+    #[arg(long, value_enum, default_value = "smooth")]
+    pub scale_mode: ScaleModeArg,
 }
 
 #[derive(Debug, Args)]
@@ -101,6 +113,22 @@ impl From<PackModeArg> for PackMode {
             PackModeArg::Fast => PackMode::Fast,
             PackModeArg::Good => PackMode::Good,
             PackModeArg::Best => PackMode::Best,
+        }
+    }
+}
+
+/// Clap-facing scale mode enum; converts to `fastpack_core::types::config::ScaleMode`.
+#[derive(Debug, Clone, clap::ValueEnum)]
+pub enum ScaleModeArg {
+    Smooth,
+    Fast,
+}
+
+impl From<ScaleModeArg> for ScaleMode {
+    fn from(arg: ScaleModeArg) -> Self {
+        match arg {
+            ScaleModeArg::Smooth => ScaleMode::Smooth,
+            ScaleModeArg::Fast => ScaleMode::Fast,
         }
     }
 }
