@@ -20,7 +20,10 @@ use fastpack_core::{
 };
 use fastpack_formats::{
     exporter::{ExportInput, Exporter},
-    formats::{json_hash::JsonHashExporter, phaser3::Phaser3Exporter, pixijs::PixiJsExporter},
+    formats::{
+        json_array::JsonArrayExporter, json_hash::JsonHashExporter, phaser3::Phaser3Exporter,
+        pixijs::PixiJsExporter,
+    },
 };
 use indicatif::{MultiProgress, ParallelProgressIterator};
 use rayon::prelude::*;
@@ -342,6 +345,7 @@ fn sheet_filename(name: &str, suffix: &str, index: usize) -> (String, String) {
 
 fn select_exporter(data_format: &str) -> Box<dyn Exporter> {
     match data_format {
+        "json_array" => Box::new(JsonArrayExporter),
         "phaser3" => Box::new(Phaser3Exporter),
         "pixijs" => Box::new(PixiJsExporter),
         _ => Box::new(JsonHashExporter),
