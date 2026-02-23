@@ -14,6 +14,7 @@ pub struct CompressInput<'a> {
 
 /// Raw encoded bytes returned by a compression backend.
 pub struct CompressOutput {
+    /// The encoded file bytes ready to write to disk.
     pub data: Vec<u8>,
 }
 

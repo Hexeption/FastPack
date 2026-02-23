@@ -29,7 +29,9 @@ pub struct Placement {
 
 /// A sprite that was successfully placed, paired with its destination in the atlas.
 pub struct PlacedSprite {
+    /// Pixel data and metadata for this sprite.
     pub sprite: Sprite,
+    /// Position in the atlas where this sprite was placed.
     pub placement: Placement,
 }
 

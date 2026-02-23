@@ -8,9 +8,13 @@ use super::rect::{Point, Size, SourceRect};
 /// Border widths for a 9-patch / 9-slice scalable sprite.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct NinePatch {
+    /// Top border height in pixels.
     pub top: u32,
+    /// Right border width in pixels.
     pub right: u32,
+    /// Bottom border height in pixels.
     pub bottom: u32,
+    /// Left border width in pixels.
     pub left: u32,
 }
 

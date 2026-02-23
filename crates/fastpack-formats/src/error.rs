@@ -1,5 +1,6 @@
 use thiserror::Error;
 
+/// Errors produced by data format export writers.
 #[derive(Debug, Error)]
 pub enum FormatError {
     #[error("json serialization failed: {0}")]

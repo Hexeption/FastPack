@@ -20,6 +20,7 @@ use super::packer::{PackInput, PackOutput, PlacedSprite, Placement};
 /// computation is implemented in Phase 2.
 #[derive(Default)]
 pub struct MaxRects {
+    /// Placement scoring heuristic (default: `BestShortSideFit`).
     pub heuristic: MaxRectsHeuristic,
 }
 

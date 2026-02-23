@@ -1,5 +1,6 @@
 use thiserror::Error;
 
+/// Errors produced by image encoding and compression operations.
 #[derive(Debug, Error)]
 pub enum CompressError {
     #[error("image encoding failed: {0}")]

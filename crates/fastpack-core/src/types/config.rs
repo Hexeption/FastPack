@@ -199,13 +199,21 @@ impl std::str::FromStr for ScaleMode {
 /// Atlas layout and dimension constraints.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LayoutConfig {
+    /// Maximum atlas width in pixels. Sprites wider than this cannot be packed.
     pub max_width: u32,
+    /// Maximum atlas height in pixels. Sprites taller than this cannot be packed.
     pub max_height: u32,
+    /// Pin the atlas width to an exact value, bypassing the size-fit algorithm.
     pub fixed_width: Option<u32>,
+    /// Pin the atlas height to an exact value, bypassing the size-fit algorithm.
     pub fixed_height: Option<u32>,
+    /// Rounding constraint applied to the computed atlas dimensions.
     pub size_constraint: SizeConstraint,
+    /// When `true`, the atlas width and height are forced to be equal.
     pub force_square: bool,
+    /// When `true`, sprites may be rotated 90° clockwise to improve packing density.
     pub allow_rotation: bool,
+    /// Packing effort level (affects time but not algorithm choice).
     pub pack_mode: PackMode,
     /// Transparent pixels added around the entire atlas edge.
     pub border_padding: u32,
@@ -233,6 +241,7 @@ impl Default for LayoutConfig {
 /// Sprite pre-processing options.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SpriteConfig {
+    /// How transparent borders are stripped before packing.
     pub trim_mode: TrimMode,
     /// Alpha threshold: pixels at or below this level are treated as transparent.
     pub trim_threshold: u8,
@@ -244,7 +253,9 @@ pub struct SpriteConfig {
     pub common_divisor_x: u32,
     /// Height must be divisible by this value (0 = disabled).
     pub common_divisor_y: u32,
+    /// When `true`, duplicate sprites share a single atlas entry.
     pub detect_aliases: bool,
+    /// Pivot applied to sprites that have no per-sprite override.
     pub default_pivot: Point,
 }
 
@@ -270,7 +281,9 @@ pub struct OutputConfig {
     pub name: String,
     /// Directory where output files are written.
     pub directory: PathBuf,
+    /// Container format for the atlas texture.
     pub texture_format: TextureFormat,
+    /// Pixel encoding within the texture.
     pub pixel_format: PixelFormat,
     /// Multiply RGB by alpha before encoding.
     pub premultiply_alpha: bool,
@@ -322,6 +335,7 @@ pub struct ScaleVariant {
     pub scale: f32,
     /// Suffix appended to output filenames (e.g. `"@1x"`).
     pub suffix: String,
+    /// Resampling filter used when scaling sprites.
     pub scale_mode: ScaleMode,
 }
 
@@ -340,18 +354,26 @@ impl Default for ScaleVariant {
 pub struct SpriteOverride {
     /// Sprite id (relative path without extension).
     pub id: String,
+    /// Pivot override. `None` inherits from `SpriteConfig::default_pivot`.
     pub pivot: Option<Point>,
+    /// 9-patch border override. `None` means the sprite is not a 9-patch.
     pub nine_patch: Option<super::sprite::NinePatch>,
 }
 
 /// Top-level packer configuration.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PackerConfig {
+    /// Atlas layout and size constraints.
     pub layout: LayoutConfig,
+    /// Sprite pre-processing settings.
     pub sprites: SpriteConfig,
+    /// Output format and path settings.
     pub output: OutputConfig,
+    /// Algorithm and its settings.
     pub algorithm: AlgorithmConfig,
+    /// Scale variants to produce (usually one entry for the primary scale).
     pub variants: Vec<ScaleVariant>,
+    /// Per-sprite overrides applied after loading.
     pub sprite_overrides: Vec<SpriteOverride>,
 }
 
@@ -371,6 +393,7 @@ impl Default for PackerConfig {
 /// Glob-based source input specification.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SourceSpec {
+    /// Root directory to search.
     pub path: PathBuf,
     /// Glob pattern relative to `path`.
     pub filter: String,
@@ -388,7 +411,9 @@ impl Default for SourceSpec {
 /// Full project as stored in a `.fpsheet` TOML file.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Project {
+    /// Packer configuration for this project.
     pub config: PackerConfig,
+    /// Input directories and glob filters.
     pub sources: Vec<SourceSpec>,
 }
 

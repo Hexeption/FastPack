@@ -1,5 +1,6 @@
 use thiserror::Error;
 
+/// Errors produced by core image loading and packing operations.
 #[derive(Debug, Error)]
 pub enum CoreError {
     #[error("failed to load image '{path}': {source}")]
