@@ -31,15 +31,4 @@ jobs:
             libxkbcommon-dev \
             libssl-dev
 
-      - run: cargo publish --package fastpack-core
-      - run: sleep 30
-
-      - run: cargo publish --package fastpack-formats
-      - run: cargo publish --package fastpack-compress
-      - run: sleep 30
-
-      - run: cargo publish --package fastpack-gui
-      - run: cargo publish --package fastpack-tui
-      - run: sleep 30
-
-      - run: cargo publish --package fastpack
+      - run: cargo publish --workspace
