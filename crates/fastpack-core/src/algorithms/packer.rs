@@ -27,10 +27,16 @@ pub struct Placement {
     pub rotated: bool,
 }
 
+/// A sprite that was successfully placed, paired with its destination in the atlas.
+pub struct PlacedSprite {
+    pub sprite: Sprite,
+    pub placement: Placement,
+}
+
 /// Output produced by a single atlas packing pass.
 pub struct PackOutput {
-    /// Successful placements.
-    pub placements: Vec<Placement>,
+    /// Successfully placed sprites with their atlas positions.
+    pub placed: Vec<PlacedSprite>,
     /// Actual atlas dimensions used.
     pub atlas_size: Size,
     /// Sprites that did not fit; forwarded to the next sheet in multipack mode.
