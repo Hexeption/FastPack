@@ -231,7 +231,7 @@ impl Default for LayoutConfig {
             size_constraint: SizeConstraint::AnySize,
             force_square: false,
             allow_rotation: true,
-            pack_mode: PackMode::Good,
+            pack_mode: PackMode::Best,
             border_padding: 2,
             shape_padding: 2,
         }

@@ -22,7 +22,7 @@ pub struct NinePatch {
 ///
 /// `image` contains pixel data *after* trimming and extrusion. Use
 /// `original_size` and `trim_rect` to reconstruct the sprite's original position.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Sprite {
     /// Unique identifier — typically the relative source path without extension
     /// (e.g. `"ui/button"`).
