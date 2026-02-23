@@ -18,7 +18,11 @@ thiserror.workspace         = true
 anyhow.workspace            = true
 serde.workspace             = true
 tracing.workspace           = true
+image.workspace             = true
+walkdir                     = "2"
+toml                        = "0.8"
+rfd                         = "0.15"
 
 egui        = "0.29"
-eframe      = "0.29"
+eframe      = { version = "0.29", features = ["default_fonts", "wgpu"] }
 egui_extras = { version = "0.29", features = ["image"] }

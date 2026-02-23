@@ -14,14 +14,20 @@ use std::path::PathBuf;
 ///
 /// `project_path` is the optional `.fpsheet` file to open on startup.
 pub fn run(project_path: Option<PathBuf>) -> anyhow::Result<()> {
-    let mut state = state::AppState::default();
-    state.project_path = project_path;
-
+    let mut app = app::FastPackApp::default();
+    if let Some(path) = project_path {
+        match std::fs::read_to_string(&path) {
+            Ok(text) => match toml::from_str(&text) {
+                Ok(project) => {
+                    app.state.project = project;
+                    app.state.project_path = Some(path);
+                }
+                Err(e) => app.state.log_error(format!("Failed to parse project: {e}")),
+            },
+            Err(e) => app.state.log_error(format!("Failed to read project: {e}")),
+        }
+    }
     let options = eframe::NativeOptions::default();
-    eframe::run_native(
-        "FastPack",
-        options,
-        Box::new(|_cc| Ok(Box::new(app::FastPackApp { state }))),
-    )
-    .map_err(|e| anyhow::anyhow!("eframe error: {e}"))
+    eframe::run_native("FastPack", options, Box::new(|_cc| Ok(Box::new(app))))
+        .map_err(|e| anyhow::anyhow!("eframe error: {e}"))
 }
