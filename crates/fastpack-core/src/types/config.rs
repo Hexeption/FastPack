@@ -256,7 +256,7 @@ impl Default for LayoutConfig {
             fixed_height: None,
             size_constraint: SizeConstraint::AnySize,
             force_square: false,
-            allow_rotation: true,
+            allow_rotation: false,
             pack_mode: PackMode::Best,
             border_padding: 2,
             shape_padding: 2,
