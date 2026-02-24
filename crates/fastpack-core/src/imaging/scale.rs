@@ -1,5 +1,5 @@
-use anyhow::{Result, bail};
-use image::{GenericImageView, imageops::FilterType};
+use anyhow::Result;
+use image::{DynamicImage, GenericImageView, imageops::FilterType};
 
 use crate::types::{
     config::ScaleMode,
@@ -7,38 +7,50 @@ use crate::types::{
     sprite::{NinePatch, Sprite},
 };
 
+use super::pixel_art;
+
 /// Produce a copy of `sprite` scaled by `factor` using the given resampling mode.
 ///
 /// `factor < 1.0` shrinks; `factor > 1.0` enlarges. When `factor` is exactly
 /// 1.0 the sprite is returned as-is (cloned, no resampling).
 ///
-/// Pixel art modes (`Scale2x`, `Scale3x`, `Hq2x`, `Eagle`) are not yet
-/// implemented and return an error; use `Smooth` or `Fast` for now.
+/// Pixel art modes (`Scale2x`, `Scale3x`, `Hq2x`, `Eagle`) first apply their
+/// integer upscaler (2× or 3×) and then resize to the exact target dimensions
+/// with nearest-neighbour when the factor does not align exactly with the
+/// algorithm's native multiplier.
 pub fn scale_sprite(sprite: &Sprite, factor: f32, mode: ScaleMode) -> Result<Sprite> {
     if (factor - 1.0).abs() < f32::EPSILON {
         return Ok(sprite.clone());
     }
 
-    match mode {
-        ScaleMode::Scale2x | ScaleMode::Scale3x | ScaleMode::Hq2x | ScaleMode::Eagle => {
-            bail!(
-                "pixel art scale modes (scale2x/scale3x/hq2x/eagle) are not yet implemented; \
-                 use smooth or fast"
-            );
+    let (src_w, src_h) = sprite.image.dimensions();
+    let target_w = ((src_w as f32 * factor).round() as u32).max(1);
+    let target_h = ((src_h as f32 * factor).round() as u32).max(1);
+
+    let scaled_image = match mode {
+        ScaleMode::Smooth => sprite
+            .image
+            .resize_exact(target_w, target_h, FilterType::Lanczos3),
+        ScaleMode::Fast => sprite
+            .image
+            .resize_exact(target_w, target_h, FilterType::Nearest),
+        ScaleMode::Scale2x => {
+            let up = pixel_art::scale2x(&sprite.image.to_rgba8());
+            resize_to(DynamicImage::ImageRgba8(up), target_w, target_h)
         }
-        ScaleMode::Smooth | ScaleMode::Fast => {}
-    }
-
-    let filter = match mode {
-        ScaleMode::Smooth => FilterType::Lanczos3,
-        ScaleMode::Fast => FilterType::Nearest,
-        _ => unreachable!(),
+        ScaleMode::Scale3x => {
+            let up = pixel_art::scale3x(&sprite.image.to_rgba8());
+            resize_to(DynamicImage::ImageRgba8(up), target_w, target_h)
+        }
+        ScaleMode::Hq2x => {
+            let up = pixel_art::hq2x(&sprite.image.to_rgba8());
+            resize_to(DynamicImage::ImageRgba8(up), target_w, target_h)
+        }
+        ScaleMode::Eagle => {
+            let up = pixel_art::eagle2x(&sprite.image.to_rgba8());
+            resize_to(DynamicImage::ImageRgba8(up), target_w, target_h)
+        }
     };
-
-    let (w, h) = sprite.image.dimensions();
-    let new_w = ((w as f32 * factor).round() as u32).max(1);
-    let new_h = ((h as f32 * factor).round() as u32).max(1);
-    let scaled_image = sprite.image.resize_exact(new_w, new_h, filter);
 
     let original_size = Size {
         w: ((sprite.original_size.w as f32 * factor).round() as u32).max(1),
@@ -81,4 +93,14 @@ pub fn scale_sprite(sprite: &Sprite, factor: f32, mode: ScaleMode) -> Result<Spr
         extrude: (sprite.extrude as f32 * factor).round() as u32,
         alias_of: sprite.alias_of.clone(),
     })
+}
+
+/// Resize `img` to `(w, h)` using nearest-neighbour, or return it unchanged
+/// when the dimensions already match.
+fn resize_to(img: DynamicImage, w: u32, h: u32) -> DynamicImage {
+    if img.width() == w && img.height() == h {
+        img
+    } else {
+        img.resize_exact(w, h, FilterType::Nearest)
+    }
 }

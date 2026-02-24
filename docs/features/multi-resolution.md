@@ -30,7 +30,19 @@ suffix     = "@1x"
 scale_mode = "smooth"
 ```
 
-`scale_mode = "smooth"` resamples with Lanczos3. Use it for photographic sprites or mixed content. `scale_mode = "fast"` uses nearest-neighbour and keeps hard pixel edges without blurring — use it for pixel art.
+Available scale modes:
+
+`smooth` resamples with Lanczos3. Use it for photographic sprites or mixed content.
+
+`fast` uses nearest-neighbour. Hard pixel edges, no blurring. Good for pixel art at non-integer factors.
+
+`scale2x` applies the EPX / Scale2x algorithm. Each source pixel expands to a 2×2 block, with corners filled by adjacent cardinal neighbours when they form a clean edge. Intended for pixel art scaled to exactly 2×, but works at any factor: the 2× intermediate is then resampled with nearest-neighbour to reach the target size.
+
+`scale3x` is the 3× EPX variant. Same idea as `scale2x`, producing a 3×3 block per source pixel. Use it for 3× pixel art upscaling.
+
+`hq2x` uses an edge-aware blend. It is a simplified version of the HQ2x algorithm: corner pixels blend towards matching cardinal neighbours to smooth diagonal edges in pixel art without blurring axis-aligned edges. Produces softer output than `scale2x` at 2×.
+
+`eagle` applies the Eagle 2× algorithm. Each corner of the 2×2 output block picks the diagonal neighbour's colour when that neighbour also matches both adjacent cardinal neighbours. Sharper than `hq2x`, similar to `scale2x` but with different edge detection logic.
 
 ## Examples
 
@@ -62,6 +74,8 @@ Each variant runs a full independent pipeline: sprites are scaled, trim rects ar
 Pivot points are normalized and scale-independent; they are copied to each variant unchanged.
 
 A scale factor of exactly `1.0` skips resampling entirely and copies source pixels directly.
+
+Pixel art modes (`scale2x`, `scale3x`, `hq2x`, `eagle`) apply their integer upscaler first, then resize to the exact target dimensions with nearest-neighbour if the factor does not align with the algorithm's native multiplier. For example, `scale2x` at factor `4.0` produces a 2× EPX intermediate and then doubles it again with nearest-neighbour to reach 4×. Metadata (trim rects, nine-patch borders, polygon vertices) is always scaled by the requested factor, not by the algorithm's native multiplier.
 
 ## TexturePacker Compatibility
 
