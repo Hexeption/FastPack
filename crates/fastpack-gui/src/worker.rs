@@ -113,30 +113,48 @@ fn build_sheet(
 
     let overflow = pack_output.overflow;
 
-    let mut canvas =
-        image::DynamicImage::new_rgba8(pack_output.atlas_size.w, pack_output.atlas_size.h);
-    {
-        let canvas_rgba = canvas.as_mut_rgba8().expect("canvas is rgba8");
-        for ps in &pack_output.placed {
-            let rgba = ps.sprite.image.as_rgba8().expect("sprite is rgba8");
-            if ps.placement.rotated {
-                let rotated = image::imageops::rotate90(rgba);
-                image::imageops::replace(
-                    canvas_rgba,
-                    &rotated,
-                    ps.placement.dest.x as i64,
-                    ps.placement.dest.y as i64,
-                );
-            } else {
-                image::imageops::replace(
-                    canvas_rgba,
-                    rgba,
-                    ps.placement.dest.x as i64,
-                    ps.placement.dest.y as i64,
-                );
+    // Packer guarantees non-overlapping placements, so parallel writes are sound.
+    // Transmit the pointer as usize (Send + Sync) to satisfy the closure bounds.
+    let aw = pack_output.atlas_size.w as usize;
+    let ah = pack_output.atlas_size.h as usize;
+    let mut canvas_raw = vec![0u8; aw * ah * 4];
+    let buf_ptr = canvas_raw.as_mut_ptr() as usize;
+    let buf_stride = aw;
+
+    pack_output.placed.par_iter().for_each(move |ps| {
+        let dx = ps.placement.dest.x as usize;
+        let dy = ps.placement.dest.y as usize;
+        let dw = ps.placement.dest.w as usize;
+        let dh = ps.placement.dest.h as usize;
+        let rgba = ps.sprite.image.as_rgba8().expect("sprite is rgba8");
+        let dst = buf_ptr as *mut u8;
+
+        if ps.placement.rotated {
+            let rotated = image::imageops::rotate90(rgba);
+            let src_raw = rotated.as_raw();
+            for row in 0..dh {
+                unsafe {
+                    std::ptr::copy_nonoverlapping(
+                        src_raw.as_ptr().add(row * dw * 4),
+                        dst.add(((dy + row) * buf_stride + dx) * 4),
+                        dw * 4,
+                    );
+                }
+            }
+        } else {
+            let src_raw = rgba.as_raw();
+            let src_stride = rgba.width() as usize * 4;
+            for row in 0..dh {
+                unsafe {
+                    std::ptr::copy_nonoverlapping(
+                        src_raw.as_ptr().add(row * src_stride),
+                        dst.add(((dy + row) * buf_stride + dx) * 4),
+                        dw * 4,
+                    );
+                }
             }
         }
-    }
+    });
 
     let frames: Vec<FrameInfo> = pack_output
         .placed
@@ -184,7 +202,7 @@ fn build_sheet(
 
     let width = pack_output.atlas_size.w;
     let height = pack_output.atlas_size.h;
-    let rgba = canvas.into_rgba8().into_raw();
+    let rgba = canvas_raw;
 
     Ok((
         SheetOutput {
@@ -202,6 +220,17 @@ fn build_sheet(
 ///
 /// Intended to be called from a background thread.
 pub fn run_pack(project: &Project) -> Result<WorkerOutput> {
+    let n = std::thread::available_parallelism()
+        .map(|p| p.get().saturating_sub(2).max(1))
+        .unwrap_or(1);
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(n)
+        .build()
+        .map_err(|e| anyhow::anyhow!("{e}"))?
+        .install(|| run_pack_impl(project))
+}
+
+fn run_pack_impl(project: &Project) -> Result<WorkerOutput> {
     // 1. Collect
     let paths = collect_images(project);
     if paths.is_empty() {
