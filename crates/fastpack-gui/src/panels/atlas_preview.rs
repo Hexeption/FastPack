@@ -71,11 +71,11 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, atlas: Option<&egui::Textur
         }
     }
 
-    if let Some((_, w, h)) = &state.atlas_rgba {
+    if let Some(sheet) = state.sheets.get(state.current_sheet) {
         let text = format!(
             "{}×{}   {} sprites   {} aliases   {} overflow   {:.0}%",
-            w,
-            h,
+            sheet.width,
+            sheet.height,
             state.sprite_count,
             state.alias_count,
             state.overflow_count,

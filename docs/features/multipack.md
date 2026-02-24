@@ -23,6 +23,12 @@ max_height = 2048
 
 Enable via CLI `--multipack` or set in the project file. When no `--multipack` flag is given on the CLI, packing stops with an error if sprites overflow a single sheet.
 
+### GUI
+
+Open the **Texture** section of the settings panel and check **Multipack**. The project re-packs immediately.
+
+When the result has more than one sheet, the toolbar shows a `◀ N / M ▶` pager. Click the arrows to switch between sheets. The sprite list and atlas preview update to show the selected sheet.
+
 ## Examples
 
 With 600 sprites that do not fit on a 2048×2048 atlas:

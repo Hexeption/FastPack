@@ -55,6 +55,7 @@ impl LogEntry {
 }
 
 /// A single frame in the packed atlas (used by sprite list + preview).
+#[derive(Clone)]
 pub struct FrameInfo {
     pub id: String,
     pub x: u32,
@@ -62,6 +63,15 @@ pub struct FrameInfo {
     pub w: u32,
     pub h: u32,
     pub alias_of: Option<String>,
+}
+
+/// Per-sheet atlas data kept in AppState after a pack run.
+pub struct SheetData {
+    pub rgba: Vec<u8>,
+    pub width: u32,
+    pub height: u32,
+    pub frames: Vec<FrameInfo>,
+    pub atlas_frames: Vec<AtlasFrame>,
 }
 
 /// One-shot flags set by menus/toolbar and consumed by the app's update loop.
@@ -87,12 +97,12 @@ pub struct AppState {
     /// Messages shown in the output log panel.
     pub log: Vec<LogEntry>,
 
-    /// Frame entries populated after each successful pack.
+    /// All packed sheets from the last successful pack.
+    pub sheets: Vec<SheetData>,
+    /// Index of the sheet currently displayed in the atlas preview.
+    pub current_sheet: usize,
+    /// Frame entries for the currently displayed sheet (mirrors `sheets[current_sheet].frames`).
     pub frames: Vec<FrameInfo>,
-    /// Raw RGBA8888 pixel data from the last pack, plus (width, height).
-    pub atlas_rgba: Option<(Vec<u8>, u32, u32)>,
-    /// Full atlas frame metadata for export.
-    pub atlas_frames: Vec<AtlasFrame>,
     /// Counts from the last pack run.
     pub sprite_count: usize,
     pub alias_count: usize,
@@ -123,9 +133,9 @@ impl Default for AppState {
             project_path: None,
             dirty: false,
             log: Vec::new(),
+            sheets: Vec::new(),
+            current_sheet: 0,
             frames: Vec::new(),
-            atlas_rgba: None,
-            atlas_frames: Vec::new(),
             sprite_count: 0,
             alias_count: 0,
             overflow_count: 0,

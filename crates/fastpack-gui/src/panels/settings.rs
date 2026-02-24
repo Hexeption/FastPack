@@ -55,8 +55,13 @@ fn setting_row(ui: &mut egui::Ui, label: &str, widget: impl FnOnce(&mut egui::Ui
 }
 
 fn show_texture(ui: &mut egui::Ui, state: &mut AppState) {
-    let cfg = &mut state.project.config.output;
-    let dirty = &mut state.dirty;
+    let AppState {
+        project,
+        dirty,
+        pending,
+        ..
+    } = state;
+    let cfg = &mut project.config.output;
 
     setting_row(ui, "Name", |ui| {
         if ui
@@ -165,6 +170,13 @@ fn show_texture(ui: &mut egui::Ui, state: &mut AppState) {
             .changed()
         {
             *dirty = true;
+        }
+    });
+
+    setting_row(ui, "Multipack", |ui| {
+        if ui.checkbox(&mut cfg.multipack, "").changed() {
+            *dirty = true;
+            pending.pack = true;
         }
     });
 }

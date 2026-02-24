@@ -29,7 +29,7 @@ use crate::{
 #[derive(Default)]
 pub struct FastPackApp {
     pub state: AppState,
-    pub atlas_texture: Option<egui::TextureHandle>,
+    pub atlas_textures: Vec<egui::TextureHandle>,
     worker_rx: Option<mpsc::Receiver<WorkerMessage>>,
 }
 
@@ -75,7 +75,8 @@ impl eframe::App for FastPackApp {
             });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            atlas_preview::show(ui, &mut self.state, self.atlas_texture.as_ref());
+            let cur = self.state.current_sheet;
+            atlas_preview::show(ui, &mut self.state, self.atlas_textures.get(cur));
 
             let hovering = ctx.input(|i| !i.raw.hovered_files.is_empty());
             if hovering {
@@ -112,34 +113,63 @@ impl FastPackApp {
                         self.state.sprite_count = output.sprite_count;
                         self.state.alias_count = output.alias_count;
                         self.state.overflow_count = output.overflow_count;
-                        self.state.frames = output
-                            .frames
-                            .into_iter()
-                            .map(|f| crate::state::FrameInfo {
-                                id: f.id,
-                                x: f.x,
-                                y: f.y,
-                                w: f.w,
-                                h: f.h,
-                                alias_of: f.alias_of,
-                            })
-                            .collect();
-                        let color_image = egui::ColorImage::from_rgba_unmultiplied(
-                            [output.width as usize, output.height as usize],
-                            &output.rgba,
-                        );
-                        self.atlas_texture = Some(ctx.load_texture(
-                            "atlas",
-                            color_image,
-                            egui::TextureOptions::default(),
-                        ));
-                        self.state.atlas_rgba = Some((output.rgba, output.width, output.height));
-                        self.state.atlas_frames = output.atlas_frames;
+                        self.state.current_sheet = 0;
+                        self.state.selected_frame = None;
+                        self.atlas_textures.clear();
+                        self.state.sheets.clear();
+
+                        for sheet in output.sheets {
+                            let color_image = egui::ColorImage::from_rgba_unmultiplied(
+                                [sheet.width as usize, sheet.height as usize],
+                                &sheet.rgba,
+                            );
+                            self.atlas_textures.push(ctx.load_texture(
+                                "atlas",
+                                color_image,
+                                egui::TextureOptions::default(),
+                            ));
+                            let frames: Vec<crate::state::FrameInfo> = sheet
+                                .frames
+                                .into_iter()
+                                .map(|f| crate::state::FrameInfo {
+                                    id: f.id,
+                                    x: f.x,
+                                    y: f.y,
+                                    w: f.w,
+                                    h: f.h,
+                                    alias_of: f.alias_of,
+                                })
+                                .collect();
+                            self.state.sheets.push(crate::state::SheetData {
+                                rgba: sheet.rgba,
+                                width: sheet.width,
+                                height: sheet.height,
+                                frames,
+                                atlas_frames: sheet.atlas_frames,
+                            });
+                        }
+
+                        self.state.frames = self
+                            .state
+                            .sheets
+                            .first()
+                            .map(|s| s.frames.clone())
+                            .unwrap_or_default();
+
+                        let sheet_count = self.state.sheets.len();
+                        let (w, h) = self
+                            .state
+                            .sheets
+                            .first()
+                            .map(|s| (s.width, s.height))
+                            .unwrap_or_default();
                         self.state.log_info(format!(
-                            "Packed {} sprites — {}×{}  ({} aliases, {} overflow)",
+                            "Packed {} sprites — {}×{}  ({} sheet{}, {} aliases, {} overflow)",
                             self.state.sprite_count,
-                            output.width,
-                            output.height,
+                            w,
+                            h,
+                            sheet_count,
+                            if sheet_count == 1 { "" } else { "s" },
                             self.state.alias_count,
                             self.state.overflow_count,
                         ));
@@ -172,7 +202,7 @@ impl FastPackApp {
         }
         if std::mem::take(&mut self.state.pending.new_project) {
             self.state.new_project();
-            self.atlas_texture = None;
+            self.atlas_textures.clear();
         }
         if std::mem::take(&mut self.state.pending.open_project) {
             self.do_open_project();
@@ -228,7 +258,7 @@ impl FastPackApp {
                     self.state.project_path = Some(path.clone());
                     self.state.dirty = false;
                     self.state.frames.clear();
-                    self.atlas_texture = None;
+                    self.atlas_textures.clear();
                     self.state.log_info(format!("Opened {}", path.display()));
                 }
                 Err(e) => self
@@ -273,11 +303,11 @@ impl FastPackApp {
     }
 
     fn do_export(&mut self) {
-        let Some((ref rgba, width, height)) = self.state.atlas_rgba else {
+        if self.state.sheets.is_empty() {
             self.state
                 .log_warn("Nothing to export. Pack sprites first.");
             return;
-        };
+        }
 
         let out_cfg = &self.state.project.config.output;
         let out_dir = out_cfg.directory.clone();
@@ -300,52 +330,10 @@ impl FastPackApp {
             return;
         }
 
-        // Compress texture
         let compressor: Box<dyn Compressor> = match texture_format {
             TextureFormat::Jpeg => Box::new(JpegCompressor),
             TextureFormat::WebP => Box::new(WebpCompressor),
             _ => Box::new(PngCompressor),
-        };
-
-        let atlas_image =
-            image::RgbaImage::from_raw(width, height, rgba.clone()).expect("valid rgba buffer");
-        let dyn_image = image::DynamicImage::from(atlas_image);
-
-        let compress_result = compressor.compress(&CompressInput {
-            image: &dyn_image,
-            pack_mode,
-            quality,
-        });
-
-        let texture_bytes = match compress_result {
-            Ok(output) => output.data,
-            Err(e) => {
-                self.state
-                    .log_error(format!("Texture compression failed: {e}"));
-                return;
-            }
-        };
-
-        let tex_ext = compressor.file_extension();
-        let tex_filename = format!("{}.{}", name, tex_ext);
-        let tex_path = out_dir.join(&tex_filename);
-
-        if let Err(e) = std::fs::write(&tex_path, &texture_bytes) {
-            self.state
-                .log_error(format!("Failed to write texture: {e}"));
-            return;
-        }
-
-        let tex_kb = texture_bytes.len() as f64 / 1024.0;
-        self.state
-            .log_info(format!("Wrote {} ({:.1} KB)", tex_path.display(), tex_kb));
-
-        // Export data file
-        let exporter: Box<dyn Exporter> = match data_format.as_str() {
-            "json_array" => Box::new(JsonArrayExporter),
-            "phaser3" => Box::new(Phaser3Exporter),
-            "pixijs" => Box::new(PixiJsExporter),
-            _ => Box::new(JsonHashExporter),
         };
 
         let pixel_format_str = match pixel_format {
@@ -357,43 +345,133 @@ impl FastPackApp {
             PixelFormat::Alpha8 => "ALPHA8",
         };
 
-        let packed_atlas = PackedAtlas {
-            frames: self.state.atlas_frames.clone(),
-            size: Size {
-                w: width,
-                h: height,
-            },
-            image: None,
-            name: name.clone(),
-            scale: 1.0,
+        let exporter: Box<dyn Exporter> = match data_format.as_str() {
+            "json_array" => Box::new(JsonArrayExporter),
+            "phaser3" => Box::new(Phaser3Exporter),
+            "pixijs" => Box::new(PixiJsExporter),
+            _ => Box::new(JsonHashExporter),
         };
 
-        let export_input = ExportInput {
-            atlas: &packed_atlas,
-            texture_filename: tex_filename,
-            pixel_format: pixel_format_str.to_string(),
+        let sheet_base = |i: usize| -> String {
+            if i == 0 {
+                name.clone()
+            } else {
+                format!("{name}{i}")
+            }
         };
 
-        match exporter.export(&export_input) {
-            Ok(data_content) => {
-                let data_filename = format!("{}.{}", name, exporter.file_extension());
-                let data_path = out_dir.join(&data_filename);
-                match std::fs::write(&data_path, data_content.as_bytes()) {
-                    Ok(()) => {
-                        self.state.log_info(format!(
+        let tex_ext = compressor.file_extension();
+
+        // Compress textures and build per-sheet metadata.
+        let mut packed_atlases: Vec<PackedAtlas> = Vec::new();
+        let mut tex_filenames: Vec<String> = Vec::new();
+
+        for i in 0..self.state.sheets.len() {
+            let (width, height, rgba, atlas_frames) = {
+                let sheet = &self.state.sheets[i];
+                (
+                    sheet.width,
+                    sheet.height,
+                    sheet.rgba.clone(),
+                    sheet.atlas_frames.clone(),
+                )
+            };
+
+            let atlas_image =
+                image::RgbaImage::from_raw(width, height, rgba).expect("valid rgba buffer");
+            let dyn_image = image::DynamicImage::from(atlas_image);
+
+            let texture_bytes = match compressor.compress(&CompressInput {
+                image: &dyn_image,
+                pack_mode,
+                quality,
+            }) {
+                Ok(output) => output.data,
+                Err(e) => {
+                    self.state
+                        .log_error(format!("Texture compression failed (sheet {i}): {e}"));
+                    return;
+                }
+            };
+
+            let tex_filename = format!("{}.{}", sheet_base(i), tex_ext);
+            let tex_path = out_dir.join(&tex_filename);
+
+            if let Err(e) = std::fs::write(&tex_path, &texture_bytes) {
+                self.state
+                    .log_error(format!("Failed to write texture (sheet {i}): {e}"));
+                return;
+            }
+
+            let tex_kb = texture_bytes.len() as f64 / 1024.0;
+            self.state
+                .log_info(format!("Wrote {} ({:.1} KB)", tex_path.display(), tex_kb));
+
+            tex_filenames.push(tex_filename);
+            packed_atlases.push(PackedAtlas {
+                frames: atlas_frames,
+                size: Size {
+                    w: width,
+                    h: height,
+                },
+                image: None,
+                name: sheet_base(i),
+                scale: 1.0,
+            });
+        }
+
+        // Build export inputs for all sheets.
+        let export_inputs: Vec<ExportInput<'_>> = packed_atlases
+            .iter()
+            .zip(tex_filenames.iter())
+            .map(|(atlas, fname)| ExportInput {
+                atlas,
+                texture_filename: fname.clone(),
+                pixel_format: pixel_format_str.to_string(),
+            })
+            .collect();
+
+        // Try combined output first; fall back to per-sheet.
+        if let Some(result) = exporter.combine(&export_inputs) {
+            match result {
+                Ok(content) => {
+                    let data_filename = format!("{}.{}", name, exporter.file_extension());
+                    let data_path = out_dir.join(&data_filename);
+                    match std::fs::write(&data_path, content.as_bytes()) {
+                        Ok(()) => self.state.log_info(format!(
                             "Wrote {} ({} bytes)",
                             data_path.display(),
-                            data_content.len(),
-                        ));
-                    }
-                    Err(e) => {
-                        self.state
-                            .log_error(format!("Failed to write data file: {e}"));
+                            content.len(),
+                        )),
+                        Err(e) => self
+                            .state
+                            .log_error(format!("Failed to write data file: {e}")),
                     }
                 }
+                Err(e) => self.state.log_error(format!("Data export failed: {e}")),
             }
-            Err(e) => {
-                self.state.log_error(format!("Data export failed: {e}"));
+        } else {
+            for (i, input) in export_inputs.iter().enumerate() {
+                match exporter.export(input) {
+                    Ok(content) => {
+                        let data_filename =
+                            format!("{}.{}", sheet_base(i), exporter.file_extension());
+                        let data_path = out_dir.join(&data_filename);
+                        match std::fs::write(&data_path, content.as_bytes()) {
+                            Ok(()) => self.state.log_info(format!(
+                                "Wrote {} ({} bytes)",
+                                data_path.display(),
+                                content.len(),
+                            )),
+                            Err(e) => self
+                                .state
+                                .log_error(format!("Failed to write data file: {e}")),
+                        }
+                    }
+                    Err(e) => self
+                        .state
+                        .log_error(format!("Data export failed (sheet {i}): {e}")),
+                }
             }
         }
     }
@@ -411,7 +489,7 @@ impl FastPackApp {
                             self.state.project_path = Some(path.clone());
                             self.state.dirty = false;
                             self.state.frames.clear();
-                            self.atlas_texture = None;
+                            self.atlas_textures.clear();
                             self.state.log_info(format!("Opened {}", path.display()));
                         }
                         Err(e) => self

@@ -319,6 +319,8 @@ pub struct OutputConfig {
     pub quality: u8,
     /// Path prefix inserted into texture filenames within data files.
     pub texture_path_prefix: String,
+    /// When `true`, overflow sprites are packed into additional sheets.
+    pub multipack: bool,
 }
 
 impl Default for OutputConfig {
@@ -332,6 +334,7 @@ impl Default for OutputConfig {
             data_format: "json_hash".to_string(),
             quality: 95,
             texture_path_prefix: String::new(),
+            multipack: false,
         }
     }
 }
