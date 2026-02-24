@@ -2,10 +2,11 @@ use std::path::PathBuf;
 use std::sync::mpsc;
 
 use eframe::egui;
+use rust_i18n::t;
 
 use crate::{
     panels::settings,
-    preferences::Preferences,
+    preferences::{Language, Preferences},
     state::AppState,
     updater::{self, UpdateMsg, UpdateStatus},
 };
@@ -13,8 +14,9 @@ use crate::{
 #[derive(Clone, Copy, PartialEq, Default)]
 enum Tab {
     #[default]
-    Updates,
+    General,
     Defaults,
+    Updates,
 }
 
 pub fn show(
@@ -26,7 +28,7 @@ pub fn show(
 ) {
     poll_updates(update_status, update_rx);
 
-    egui::Window::new("Preferences")
+    egui::Window::new(t!("prefs.title"))
         .open(open)
         .resizable(true)
         .default_size([520.0, 500.0])
@@ -36,14 +38,16 @@ pub fn show(
             let mut tab: Tab = ctx.data(|d| d.get_temp(tab_id).unwrap_or_default());
 
             ui.horizontal(|ui| {
-                ui.selectable_value(&mut tab, Tab::Updates, "Updates");
-                ui.selectable_value(&mut tab, Tab::Defaults, "Defaults");
+                ui.selectable_value(&mut tab, Tab::General, t!("prefs.tab_general"));
+                ui.selectable_value(&mut tab, Tab::Defaults, t!("prefs.tab_defaults"));
+                ui.selectable_value(&mut tab, Tab::Updates, t!("prefs.tab_updates"));
             });
             ui.separator();
 
             ctx.data_mut(|d| d.insert_temp(tab_id, tab));
 
             match tab {
+                Tab::General => show_general(ui, prefs),
                 Tab::Defaults => show_defaults(ui, prefs),
                 Tab::Updates => show_updates(ui, prefs, update_status, update_rx),
             }
@@ -79,6 +83,26 @@ fn poll_updates(
     }
 }
 
+fn show_general(ui: &mut egui::Ui, prefs: &mut Preferences) {
+    ui.add_space(4.0);
+    ui.horizontal(|ui| {
+        ui.label(t!("prefs.language"));
+        let mut selected = prefs.language;
+        egui::ComboBox::from_id_salt("language_selector")
+            .selected_text(selected.display())
+            .show_ui(ui, |ui| {
+                for &lang in Language::ALL {
+                    ui.selectable_value(&mut selected, lang, lang.display());
+                }
+            });
+        if selected != prefs.language {
+            prefs.language = selected;
+            rust_i18n::set_locale(selected.code());
+            prefs.save();
+        }
+    });
+}
+
 fn show_defaults(ui: &mut egui::Ui, prefs: &mut Preferences) {
     let mut tmp = AppState::default();
     tmp.project.config = prefs.default_config.clone();
@@ -86,18 +110,24 @@ fn show_defaults(ui: &mut egui::Ui, prefs: &mut Preferences) {
     egui::ScrollArea::vertical()
         .id_salt("prefs_defaults_scroll")
         .show(ui, |ui| {
-            section(ui, "Texture", |ui| settings::show_texture(ui, &mut tmp));
-            section(ui, "Layout", |ui| settings::show_layout(ui, &mut tmp));
-            section(ui, "Sprites", |ui| settings::show_sprites(ui, &mut tmp));
-            section(ui, "Variants", |ui| settings::show_variants(ui, &mut tmp));
+            section(ui, "texture", t!("settings.texture"), |ui| {
+                settings::show_texture(ui, &mut tmp)
+            });
+            section(ui, "layout", t!("settings.layout"), |ui| {
+                settings::show_layout(ui, &mut tmp)
+            });
+            section(ui, "sprites", t!("settings.sprites"), |ui| {
+                settings::show_sprites(ui, &mut tmp)
+            });
+            section(ui, "variants", t!("settings.variants"), |ui| {
+                settings::show_variants(ui, &mut tmp)
+            });
 
             ui.add_space(4.0);
             ui.label(
-                egui::RichText::new(
-                    "Changes are saved automatically and applied to every new project.",
-                )
-                .small()
-                .weak(),
+                egui::RichText::new(t!("prefs.defaults_hint"))
+                    .small()
+                    .weak(),
             );
         });
 
@@ -107,11 +137,16 @@ fn show_defaults(ui: &mut egui::Ui, prefs: &mut Preferences) {
     }
 }
 
-fn section(ui: &mut egui::Ui, label: &str, body: impl FnOnce(&mut egui::Ui)) {
-    let id = egui::Id::new(("prefs_section", label));
+fn section(
+    ui: &mut egui::Ui,
+    id_key: &str,
+    label: impl Into<String>,
+    body: impl FnOnce(&mut egui::Ui),
+) {
+    let id = egui::Id::new(("prefs_section", id_key));
     egui::collapsing_header::CollapsingState::load_with_default_open(ui.ctx(), id, true)
         .show_header(ui, |ui| {
-            ui.strong(label);
+            ui.strong(label.into());
         })
         .body(|ui| {
             ui.add_space(2.0);
@@ -130,30 +165,34 @@ fn show_updates(
     ui.add_space(4.0);
 
     ui.horizontal(|ui| {
-        ui.label("FastPack");
+        ui.label(t!("prefs.version"));
         ui.strong(format!("v{}", updater::CURRENT_VERSION));
     });
 
     ui.horizontal(|ui| {
-        ui.label("Latest:");
+        ui.label(t!("prefs.latest"));
         match update_status {
             UpdateStatus::Idle => {
-                ui.weak("not checked");
+                ui.weak(t!("prefs.not_checked"));
             }
             UpdateStatus::Checking => {
-                ui.weak("checking…");
+                ui.weak(t!("prefs.checking"));
             }
             UpdateStatus::UpToDate { latest } => {
-                ui.label(format!("v{latest}  (up to date)"));
+                ui.label(format!("v{}  {}", latest, t!("prefs.up_to_date")));
             }
             UpdateStatus::Available(info) => {
-                ui.strong(format!("v{} — update available", info.version));
+                ui.strong(format!(
+                    "v{} {}",
+                    info.version,
+                    t!("prefs.update_available")
+                ));
             }
             UpdateStatus::Downloading => {
-                ui.weak("downloading…");
+                ui.weak(t!("prefs.downloading"));
             }
             UpdateStatus::Downloaded(_) => {
-                ui.label("downloaded, ready to install");
+                ui.label(t!("prefs.downloaded"));
             }
             UpdateStatus::Error(msg) => {
                 ui.colored_label(egui::Color32::from_rgb(220, 70, 70), msg.as_str());
@@ -168,7 +207,7 @@ fn show_updates(
         UpdateStatus::Checking | UpdateStatus::Downloading
     );
     if ui
-        .add_enabled(!busy, egui::Button::new("Check for Updates"))
+        .add_enabled(!busy, egui::Button::new(t!("prefs.check_updates")))
         .clicked()
     {
         let (tx, rx) = mpsc::channel();
@@ -178,10 +217,7 @@ fn show_updates(
     }
 
     if ui
-        .checkbox(
-            &mut prefs.auto_check_updates,
-            "Check automatically on startup",
-        )
+        .checkbox(&mut prefs.auto_check_updates, t!("prefs.auto_check"))
         .changed()
     {
         prefs.save();
@@ -204,7 +240,7 @@ fn show_updates(
         ui.add_space(4.0);
         let info_clone = info.clone();
         if ui
-            .add_enabled(!busy, egui::Button::new("Download and Install"))
+            .add_enabled(!busy, egui::Button::new(t!("prefs.download_install")))
             .clicked()
         {
             let (tx, rx) = mpsc::channel();
@@ -215,9 +251,9 @@ fn show_updates(
     }
 
     if let UpdateStatus::Downloaded(path) = update_status {
-        ui.label("Download complete. The app will restart after applying the update.");
+        ui.label(t!("prefs.restart_hint"));
         let path: PathBuf = path.clone();
-        if ui.button("Restart and Update").clicked() {
+        if ui.button(t!("prefs.restart")).clicked() {
             if let Err(e) = updater::apply_update(&path) {
                 *update_status = UpdateStatus::Error(e);
             }

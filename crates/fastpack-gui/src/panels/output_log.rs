@@ -1,12 +1,13 @@
 use eframe::egui;
+use rust_i18n::t;
 
 use crate::state::{AppState, LogLevel};
 
 pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
     ui.horizontal(|ui| {
-        ui.strong("Output");
+        ui.strong(t!("output_log.title"));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if ui.small_button("Clear").clicked() {
+            if ui.small_button(t!("output_log.clear")).clicked() {
                 state.log.clear();
             }
         });

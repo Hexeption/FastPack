@@ -1,13 +1,14 @@
 use eframe::egui;
 use fastpack_core::types::config::SpriteOverride;
+use rust_i18n::t;
 
 use crate::state::AppState;
 
 pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
     ui.horizontal(|ui| {
-        ui.strong("Sources");
+        ui.strong(t!("sprite_list.sources"));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if ui.small_button("Add…").clicked() {
+            if ui.small_button(t!("sprite_list.add")).clicked() {
                 state.pending.add_source = true;
             }
         });
@@ -17,7 +18,7 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
     let mut remove_idx: Option<usize> = None;
     for (i, source) in state.project.sources.iter().enumerate() {
         ui.horizontal(|ui| {
-            if ui.small_button("×").clicked() {
+            if ui.small_button(t!("sprite_list.remove")).clicked() {
                 remove_idx = Some(i);
             }
             let full = source.path.to_string_lossy();
@@ -32,7 +33,7 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
     }
     if state.project.sources.is_empty() {
         ui.label(
-            egui::RichText::new("No sources — add a folder.")
+            egui::RichText::new(t!("sprite_list.no_sources"))
                 .weak()
                 .small(),
         );
@@ -45,12 +46,16 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
 
     let frame_count = state.frames.len();
     ui.horizontal(|ui| {
-        ui.strong(format!("Frames ({})", frame_count));
+        ui.strong(t!("sprite_list.frames", count = frame_count));
     });
     ui.separator();
 
     if state.frames.is_empty() {
-        ui.label(egui::RichText::new("Pack to see sprites.").weak().small());
+        ui.label(
+            egui::RichText::new(t!("sprite_list.pack_hint"))
+                .weak()
+                .small(),
+        );
         return;
     }
 
@@ -113,11 +118,11 @@ fn show_sprite_detail(ui: &mut egui::Ui, state: &mut AppState) {
         if np_chg || pv_chg {
             state.dirty = true;
         }
-        if ui.small_button("Remove Override").clicked() {
+        if ui.small_button(t!("sprite_list.remove_override")).clicked() {
             state.project.config.sprite_overrides.remove(idx);
             state.dirty = true;
         }
-    } else if ui.small_button("Add Override").clicked() {
+    } else if ui.small_button(t!("sprite_list.add_override")).clicked() {
         state.project.config.sprite_overrides.push(SpriteOverride {
             id: frame_id,
             pivot: None,

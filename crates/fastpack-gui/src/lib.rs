@@ -1,4 +1,4 @@
-#![allow(dead_code, unused_imports, unused_variables, unused_mut)]
+rust_i18n::i18n!("locales");
 
 pub mod app;
 pub mod menu;
@@ -14,12 +14,14 @@ pub mod worker;
 use std::path::PathBuf;
 
 use eframe::egui;
+use rust_i18n::t;
 
 /// Launch the native GUI window.
 ///
 /// `project_path` is the optional `.fpsheet` file to open on startup.
 pub fn run(project_path: Option<PathBuf>) -> anyhow::Result<()> {
     let mut app = app::FastPackApp::default();
+    rust_i18n::set_locale(app.prefs.language.code());
     if let Some(path) = project_path {
         match std::fs::read_to_string(&path) {
             Ok(text) => match toml::from_str(&text) {
@@ -27,9 +29,13 @@ pub fn run(project_path: Option<PathBuf>) -> anyhow::Result<()> {
                     app.state.project = project;
                     app.state.project_path = Some(path);
                 }
-                Err(e) => app.state.log_error(format!("Failed to parse project: {e}")),
+                Err(e) => app
+                    .state
+                    .log_error(t!("log.parse_failed", err = e.to_string())),
             },
-            Err(e) => app.state.log_error(format!("Failed to read project: {e}")),
+            Err(e) => app
+                .state
+                .log_error(t!("log.read_failed", err = e.to_string())),
         }
     }
     let options = eframe::NativeOptions {

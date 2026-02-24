@@ -1,19 +1,20 @@
 use eframe::egui;
+use rust_i18n::t;
 
 use crate::state::AppState;
 
 pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
     egui::menu::bar(ui, |ui| {
-        ui.menu_button("File", |ui| {
+        ui.menu_button(t!("menu.file"), |ui| {
             if ui
-                .add(egui::Button::new("New").shortcut_text("Ctrl+N"))
+                .add(egui::Button::new(t!("menu.new")).shortcut_text("Ctrl+N"))
                 .clicked()
             {
                 state.pending.new_project = true;
                 ui.close_menu();
             }
             if ui
-                .add(egui::Button::new("Open…").shortcut_text("Ctrl+O"))
+                .add(egui::Button::new(t!("menu.open")).shortcut_text("Ctrl+O"))
                 .clicked()
             {
                 state.pending.open_project = true;
@@ -21,34 +22,34 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
             }
             ui.separator();
             if ui
-                .add(egui::Button::new("Save").shortcut_text("Ctrl+S"))
+                .add(egui::Button::new(t!("menu.save")).shortcut_text("Ctrl+S"))
                 .clicked()
             {
                 state.pending.save_project = true;
                 ui.close_menu();
             }
-            if ui.button("Save As…").clicked() {
+            if ui.button(t!("menu.save_as")).clicked() {
                 state.pending.save_project_as = true;
                 ui.close_menu();
             }
             ui.separator();
-            if ui.button("Quit").clicked() {
+            if ui.button(t!("menu.quit")).clicked() {
                 ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
             }
         });
 
-        ui.menu_button("Edit", |ui| {
-            if ui.button("Preferences…").clicked() {
+        ui.menu_button(t!("menu.edit"), |ui| {
+            if ui.button(t!("menu.preferences")).clicked() {
                 state.pending.open_prefs = true;
                 ui.close_menu();
             }
         });
 
-        ui.menu_button("Atlas", |ui| {
+        ui.menu_button(t!("menu.atlas"), |ui| {
             let label = if state.packing {
-                "Exporting..."
+                t!("menu.exporting")
             } else {
-                "Export"
+                t!("menu.export")
             };
             if ui
                 .add_enabled(
@@ -61,7 +62,7 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
                 ui.close_menu();
             }
             ui.separator();
-            if ui.button("Add Sprites...").clicked() {
+            if ui.button(t!("menu.add_sprites")).clicked() {
                 state.pending.add_source = true;
                 ui.close_menu();
             }

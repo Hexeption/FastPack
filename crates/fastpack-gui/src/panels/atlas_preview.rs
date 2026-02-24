@@ -1,4 +1,5 @@
 use eframe::egui;
+use rust_i18n::t;
 
 use crate::state::AppState;
 
@@ -12,7 +13,7 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, atlases: &[egui::TextureHan
             });
         } else {
             ui.centered_and_justified(|ui| {
-                ui.label("Pack sprites to see the atlas.");
+                ui.label(t!("atlas_preview.hint"));
             });
         }
         return;
@@ -164,7 +165,13 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, atlases: &[egui::TextureHan
             painter.text(
                 egui::pos2(origin.x + 4.0, origin.y + ih - 4.0),
                 egui::Align2::LEFT_BOTTOM,
-                format!("Sheet {}: {}×{}", i + 1, sheet.width, sheet.height),
+                t!(
+                    "atlas_preview.sheet",
+                    index = i + 1,
+                    w = sheet.width,
+                    h = sheet.height
+                )
+                .to_string(),
                 egui::FontId::proportional(10.0),
                 egui::Color32::WHITE,
             );
@@ -174,24 +181,28 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, atlases: &[egui::TextureHan
     // Stats label at bottom-left of the panel
     let stats_text = if n == 1 {
         state.sheets.first().map(|sheet| {
-            format!(
-                "{}×{}   {} sprites   {} aliases   {} overflow   {:.0}%",
-                sheet.width,
-                sheet.height,
-                state.sprite_count,
-                state.alias_count,
-                state.overflow_count,
-                zoom * 100.0
+            t!(
+                "atlas_preview.stats_full",
+                w = sheet.width,
+                h = sheet.height,
+                sprites = state.sprite_count,
+                aliases = state.alias_count,
+                overflow = state.overflow_count,
+                fill = format!("{:.0}", zoom * 100.0)
             )
+            .to_string()
         })
     } else {
-        Some(format!(
-            "{} sprites   {} aliases   {} overflow   {:.0}%",
-            state.sprite_count,
-            state.alias_count,
-            state.overflow_count,
-            zoom * 100.0
-        ))
+        Some(
+            t!(
+                "atlas_preview.stats_sheet",
+                sprites = state.sprite_count,
+                aliases = state.alias_count,
+                overflow = state.overflow_count,
+                fill = format!("{:.0}", zoom * 100.0)
+            )
+            .to_string(),
+        )
     };
     if let Some(text) = stats_text {
         painter.text(

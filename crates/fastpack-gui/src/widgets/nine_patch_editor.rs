@@ -1,5 +1,6 @@
 use eframe::egui;
 use fastpack_core::types::sprite::NinePatch;
+use rust_i18n::t;
 
 pub fn show(
     ui: &mut egui::Ui,
@@ -10,7 +11,10 @@ pub fn show(
     let mut changed = false;
 
     let mut enabled = nine_patch.is_some();
-    if ui.checkbox(&mut enabled, "Nine-patch").changed() {
+    if ui
+        .checkbox(&mut enabled, t!("widgets.nine_patch"))
+        .changed()
+    {
         *nine_patch = if enabled {
             Some(NinePatch {
                 top: 0,
@@ -70,14 +74,14 @@ pub fn show(
         .num_columns(4)
         .spacing([4.0, 4.0])
         .show(ui, |ui| {
-            ui.label("T");
+            ui.label(t!("widgets.nine_patch_t"));
             if ui
                 .add(egui::DragValue::new(&mut np.top).range(0..=sprite_h))
                 .changed()
             {
                 changed = true;
             }
-            ui.label("B");
+            ui.label(t!("widgets.nine_patch_b"));
             if ui
                 .add(egui::DragValue::new(&mut np.bottom).range(0..=sprite_h))
                 .changed()
@@ -85,14 +89,14 @@ pub fn show(
                 changed = true;
             }
             ui.end_row();
-            ui.label("L");
+            ui.label(t!("widgets.nine_patch_l"));
             if ui
                 .add(egui::DragValue::new(&mut np.left).range(0..=sprite_w))
                 .changed()
             {
                 changed = true;
             }
-            ui.label("R");
+            ui.label(t!("widgets.nine_patch_r"));
             if ui
                 .add(egui::DragValue::new(&mut np.right).range(0..=sprite_w))
                 .changed()

@@ -4,6 +4,7 @@ use fastpack_core::types::{
     atlas::AtlasFrame,
     config::{PackerConfig, Project, SourceSpec},
 };
+use rust_i18n::t;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LogLevel {
@@ -165,7 +166,7 @@ impl AppState {
             .as_ref()
             .and_then(|p| p.file_stem())
             .map(|s| s.to_string_lossy().into_owned())
-            .unwrap_or_else(|| "Untitled".into());
+            .unwrap_or_else(|| t!("state.untitled").to_string());
         if self.dirty {
             format!("FastPack — {}*", name)
         } else {
@@ -179,7 +180,7 @@ impl AppState {
         *self = AppState::default();
         self.dark_mode = dark_mode;
         self.project.config = default_config;
-        self.log.push(LogEntry::info("New project created."));
+        self.log.push(LogEntry::info(t!("state.new_project")));
     }
 
     /// Add a source directory and schedule an auto-pack.
@@ -191,7 +192,7 @@ impl AppState {
         });
         self.dirty = true;
         self.pending.pack = true;
-        self.log_info(format!("Added source: {display}"));
+        self.log_info(t!("state.added_source", path = display));
     }
 
     /// Remove the source at `index`.
@@ -199,7 +200,10 @@ impl AppState {
         if index < self.project.sources.len() {
             let removed = self.project.sources.remove(index);
             self.dirty = true;
-            self.log_info(format!("Removed source: {}", removed.path.display()));
+            self.log_info(t!(
+                "state.removed_source",
+                path = removed.path.display().to_string()
+            ));
         }
     }
 }

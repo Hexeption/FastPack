@@ -1,11 +1,15 @@
 use eframe::egui;
 use fastpack_core::types::rect::Point;
+use rust_i18n::t;
 
 pub fn show(ui: &mut egui::Ui, pivot: &mut Option<Point>) -> bool {
     let mut changed = false;
 
     let mut enabled = pivot.is_some();
-    if ui.checkbox(&mut enabled, "Custom pivot").changed() {
+    if ui
+        .checkbox(&mut enabled, t!("widgets.custom_pivot"))
+        .changed()
+    {
         *pivot = if enabled {
             Some(Point { x: 0.5, y: 0.5 })
         } else {
@@ -51,7 +55,7 @@ pub fn show(ui: &mut egui::Ui, pivot: &mut Option<Point>) -> bool {
         .num_columns(2)
         .spacing([4.0, 4.0])
         .show(ui, |ui| {
-            ui.label("X");
+            ui.label(t!("widgets.pivot_x"));
             if ui
                 .add(egui::Slider::new(&mut pt.x, 0.0..=1.0).fixed_decimals(2))
                 .changed()
@@ -59,7 +63,7 @@ pub fn show(ui: &mut egui::Ui, pivot: &mut Option<Point>) -> bool {
                 changed = true;
             }
             ui.end_row();
-            ui.label("Y");
+            ui.label(t!("widgets.pivot_y"));
             if ui
                 .add(egui::Slider::new(&mut pt.y, 0.0..=1.0).fixed_decimals(2))
                 .changed()

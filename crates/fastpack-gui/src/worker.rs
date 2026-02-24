@@ -12,7 +12,7 @@ use fastpack_core::{
     types::{
         atlas::AtlasFrame,
         config::{AlgorithmConfig, Project},
-        rect::{Rect, Size, SourceRect},
+        rect::{Rect, SourceRect},
         sprite::Sprite,
     },
 };

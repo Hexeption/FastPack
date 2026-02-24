@@ -3,6 +3,62 @@ use std::path::PathBuf;
 use fastpack_core::types::config::PackerConfig;
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum Language {
+    #[default]
+    En,
+    Fr,
+    Es,
+    De,
+    It,
+    Pt,
+    Ja,
+    Zh,
+    Ko,
+}
+
+impl Language {
+    pub fn code(self) -> &'static str {
+        match self {
+            Self::En => "en",
+            Self::Fr => "fr",
+            Self::Es => "es",
+            Self::De => "de",
+            Self::It => "it",
+            Self::Pt => "pt",
+            Self::Ja => "ja",
+            Self::Zh => "zh",
+            Self::Ko => "ko",
+        }
+    }
+
+    pub fn display(self) -> &'static str {
+        match self {
+            Self::En => "English",
+            Self::Fr => "Français",
+            Self::Es => "Español",
+            Self::De => "Deutsch",
+            Self::It => "Italiano",
+            Self::Pt => "Português",
+            Self::Ja => "日本語",
+            Self::Zh => "中文（简体）",
+            Self::Ko => "한국어",
+        }
+    }
+
+    pub const ALL: &'static [Language] = &[
+        Self::En,
+        Self::Fr,
+        Self::Es,
+        Self::De,
+        Self::It,
+        Self::Pt,
+        Self::Ja,
+        Self::Zh,
+        Self::Ko,
+    ];
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Preferences {
     #[serde(default = "default_true")]
@@ -11,6 +67,8 @@ pub struct Preferences {
     pub auto_check_updates: bool,
     #[serde(default)]
     pub default_config: PackerConfig,
+    #[serde(default)]
+    pub language: Language,
 }
 
 fn default_true() -> bool {
@@ -23,6 +81,7 @@ impl Default for Preferences {
             dark_mode: true,
             auto_check_updates: true,
             default_config: PackerConfig::default(),
+            language: Language::En,
         }
     }
 }

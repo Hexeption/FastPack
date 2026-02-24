@@ -27,12 +27,13 @@ use crate::{
     updater::{UpdateMsg, UpdateStatus},
     worker::{WorkerMessage, run_pack},
 };
+use rust_i18n::t;
 
 pub struct FastPackApp {
     pub state: AppState,
     pub atlas_textures: Vec<egui::TextureHandle>,
     worker_rx: Option<mpsc::Receiver<WorkerMessage>>,
-    prefs: Preferences,
+    pub prefs: Preferences,
     prefs_open: bool,
     update_status: UpdateStatus,
     update_rx: Option<mpsc::Receiver<UpdateMsg>>,
@@ -41,6 +42,7 @@ pub struct FastPackApp {
 impl Default for FastPackApp {
     fn default() -> Self {
         let prefs = Preferences::load();
+        rust_i18n::set_locale(prefs.language.code());
         let state = AppState {
             dark_mode: prefs.dark_mode,
             ..AppState::default()
@@ -125,7 +127,7 @@ impl eframe::App for FastPackApp {
                 ui.painter().text(
                     overlay_rect.center(),
                     egui::Align2::CENTER_CENTER,
-                    "Drop folders or .fpsheet here",
+                    t!("drop_overlay"),
                     egui::FontId::proportional(18.0),
                     egui::Color32::WHITE,
                 );
@@ -209,21 +211,20 @@ impl FastPackApp {
                             .first()
                             .map(|s| (s.width, s.height))
                             .unwrap_or_default();
-                        self.state.log_info(format!(
-                            "Packed {} sprites — {}×{}  ({} sheet{}, {} aliases, {} overflow)",
-                            self.state.sprite_count,
-                            w,
-                            h,
-                            sheet_count,
-                            if sheet_count == 1 { "" } else { "s" },
-                            self.state.alias_count,
-                            self.state.overflow_count,
+                        self.state.log_info(t!(
+                            "log.pack_result",
+                            sprites = self.state.sprite_count,
+                            w = w,
+                            h = h,
+                            sheets = sheet_count,
+                            aliases = self.state.alias_count,
+                            overflow = self.state.overflow_count,
                         ));
                         finished = true;
                     }
                     Ok(WorkerMessage::Failed(msg)) => {
                         self.state.packing = false;
-                        self.state.log_error(format!("Pack failed: {msg}"));
+                        self.state.log_error(t!("log.pack_failed", msg = msg));
                         finished = true;
                     }
                     Err(mpsc::TryRecvError::Empty) => break,
@@ -272,8 +273,7 @@ impl FastPackApp {
             return;
         }
         if self.state.project.sources.is_empty() {
-            self.state
-                .log_warn("No source directories configured. Add sprites first.");
+            self.state.log_warn(t!("log.no_sources"));
             return;
         }
         let (tx, rx) = mpsc::channel();
@@ -308,13 +308,16 @@ impl FastPackApp {
                     self.state.dirty = false;
                     self.state.frames.clear();
                     self.atlas_textures.clear();
-                    self.state.log_info(format!("Opened {}", path.display()));
+                    self.state
+                        .log_info(t!("log.opened", path = path.display().to_string()));
                 }
                 Err(e) => self
                     .state
-                    .log_error(format!("Failed to parse project: {e}")),
+                    .log_error(t!("log.parse_failed", err = e.to_string())),
             },
-            Err(e) => self.state.log_error(format!("Failed to read project: {e}")),
+            Err(e) => self
+                .state
+                .log_error(t!("log.read_failed", err = e.to_string())),
         }
     }
 
@@ -333,15 +336,16 @@ impl FastPackApp {
                 Ok(()) => {
                     self.state.project_path = Some(path.clone());
                     self.state.dirty = false;
-                    self.state.log_info(format!("Saved {}", path.display()));
+                    self.state
+                        .log_info(t!("log.saved", path = path.display().to_string()));
                 }
                 Err(e) => self
                     .state
-                    .log_error(format!("Failed to write project: {e}")),
+                    .log_error(t!("log.write_project_failed", err = e.to_string())),
             },
             Err(e) => self
                 .state
-                .log_error(format!("Failed to serialise project: {e}")),
+                .log_error(t!("log.serialize_failed", err = e.to_string())),
         }
     }
 
@@ -355,16 +359,14 @@ impl FastPackApp {
 
     fn do_export(&mut self) {
         if self.state.sheets.is_empty() {
-            self.state
-                .log_warn("Nothing to export. Pack sprites first.");
+            self.state.log_warn(t!("log.nothing_to_export"));
             return;
         }
 
         let out_cfg = &self.state.project.config.output;
         let out_dir = out_cfg.directory.clone();
         if out_dir.as_os_str().is_empty() {
-            self.state
-                .log_warn("No output directory set. Configure it in the Texture settings.");
+            self.state.log_warn(t!("log.no_output_dir"));
             return;
         }
 
@@ -377,7 +379,7 @@ impl FastPackApp {
 
         if let Err(e) = std::fs::create_dir_all(&out_dir) {
             self.state
-                .log_error(format!("Failed to create output directory: {e}"));
+                .log_error(t!("log.create_dir_failed", err = e.to_string()));
             return;
         }
 
@@ -440,7 +442,7 @@ impl FastPackApp {
                 Ok(output) => output.data,
                 Err(e) => {
                     self.state
-                        .log_error(format!("Texture compression failed (sheet {i}): {e}"));
+                        .log_error(t!("log.compress_failed", i = i, err = e.to_string()));
                     return;
                 }
             };
@@ -450,13 +452,16 @@ impl FastPackApp {
 
             if let Err(e) = std::fs::write(&tex_path, &texture_bytes) {
                 self.state
-                    .log_error(format!("Failed to write texture (sheet {i}): {e}"));
+                    .log_error(t!("log.write_texture_failed", i = i, err = e.to_string()));
                 return;
             }
 
             let tex_kb = texture_bytes.len() as f64 / 1024.0;
-            self.state
-                .log_info(format!("Wrote {} ({:.1} KB)", tex_path.display(), tex_kb));
+            self.state.log_info(t!(
+                "log.wrote_texture",
+                path = tex_path.display().to_string(),
+                kb = format!("{:.1}", tex_kb)
+            ));
 
             tex_filenames.push(tex_filename);
             packed_atlases.push(PackedAtlas {
@@ -489,17 +494,19 @@ impl FastPackApp {
                     let data_filename = format!("{}.{}", name, exporter.file_extension());
                     let data_path = out_dir.join(&data_filename);
                     match std::fs::write(&data_path, content.as_bytes()) {
-                        Ok(()) => self.state.log_info(format!(
-                            "Wrote {} ({} bytes)",
-                            data_path.display(),
-                            content.len(),
+                        Ok(()) => self.state.log_info(t!(
+                            "log.wrote_data",
+                            path = data_path.display().to_string(),
+                            bytes = content.len(),
                         )),
                         Err(e) => self
                             .state
-                            .log_error(format!("Failed to write data file: {e}")),
+                            .log_error(t!("log.write_data_failed", err = e.to_string())),
                     }
                 }
-                Err(e) => self.state.log_error(format!("Data export failed: {e}")),
+                Err(e) => self
+                    .state
+                    .log_error(t!("log.export_failed", err = e.to_string())),
             }
         } else {
             for (i, input) in export_inputs.iter().enumerate() {
@@ -509,19 +516,21 @@ impl FastPackApp {
                             format!("{}.{}", sheet_base(i), exporter.file_extension());
                         let data_path = out_dir.join(&data_filename);
                         match std::fs::write(&data_path, content.as_bytes()) {
-                            Ok(()) => self.state.log_info(format!(
-                                "Wrote {} ({} bytes)",
-                                data_path.display(),
-                                content.len(),
+                            Ok(()) => self.state.log_info(t!(
+                                "log.wrote_data",
+                                path = data_path.display().to_string(),
+                                bytes = content.len(),
                             )),
                             Err(e) => self
                                 .state
-                                .log_error(format!("Failed to write data file: {e}")),
+                                .log_error(t!("log.write_data_failed", err = e.to_string())),
                         }
                     }
-                    Err(e) => self
-                        .state
-                        .log_error(format!("Data export failed (sheet {i}): {e}")),
+                    Err(e) => self.state.log_error(t!(
+                        "log.export_failed_sheet",
+                        i = i,
+                        err = e.to_string()
+                    )),
                 }
             }
         }
@@ -541,13 +550,16 @@ impl FastPackApp {
                             self.state.dirty = false;
                             self.state.frames.clear();
                             self.atlas_textures.clear();
-                            self.state.log_info(format!("Opened {}", path.display()));
+                            self.state
+                                .log_info(t!("log.opened", path = path.display().to_string()));
                         }
                         Err(e) => self
                             .state
-                            .log_error(format!("Failed to parse project: {e}")),
+                            .log_error(t!("log.parse_failed", err = e.to_string())),
                     },
-                    Err(e) => self.state.log_error(format!("Failed to read file: {e}")),
+                    Err(e) => self
+                        .state
+                        .log_error(t!("log.read_file_failed", err = e.to_string())),
                 }
             } else if path.is_dir() {
                 self.state.add_source_path(path);
