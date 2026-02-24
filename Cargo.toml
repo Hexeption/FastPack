@@ -10,7 +10,7 @@ members = [
 ]
 
 [workspace.package]
-version      = "0.6.0"
+version      = "0.6.1"
 edition      = "2024"
 rust-version = "1.85"
 license      = "MIT"
@@ -21,11 +21,11 @@ categories   = ["game-development", "multimedia::images", "command-line-utilitie
 
 [workspace.dependencies]
 # Internal crates
-fastpack-core     = { path = "crates/fastpack-core",     version = "0.6.0" }
-fastpack-formats  = { path = "crates/fastpack-formats",  version = "0.6.0" }
-fastpack-compress = { path = "crates/fastpack-compress", version = "0.6.0" }
-fastpack-gui      = { path = "crates/fastpack-gui",      version = "0.6.0" }
-fastpack-tui      = { path = "crates/fastpack-tui",      version = "0.6.0" }
+fastpack-core     = { path = "crates/fastpack-core",     version = "0.6.1" }
+fastpack-formats  = { path = "crates/fastpack-formats",  version = "0.6.1" }
+fastpack-compress = { path = "crates/fastpack-compress", version = "0.6.1" }
+fastpack-gui      = { path = "crates/fastpack-gui",      version = "0.6.1" }
+fastpack-tui      = { path = "crates/fastpack-tui",      version = "0.6.1" }
 
 # Error handling
 thiserror = "2"

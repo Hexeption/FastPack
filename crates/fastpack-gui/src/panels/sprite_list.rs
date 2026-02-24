@@ -59,12 +59,8 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
         .show(ui, |ui| {
             for (i, frame) in state.frames.iter().enumerate() {
                 let selected = state.selected_frame == Some(i);
-                let label = if let Some(ref alias_target) = frame.alias_of {
-                    format!("{} → {alias_target}", frame.id)
-                } else {
-                    frame.id.clone()
-                };
-                let response = ui.selectable_label(selected, egui::RichText::new(&label).small());
+                let response =
+                    ui.selectable_label(selected, egui::RichText::new(&frame.id).small());
                 if response.clicked() {
                     state.selected_frame = if selected { None } else { Some(i) };
                 }
