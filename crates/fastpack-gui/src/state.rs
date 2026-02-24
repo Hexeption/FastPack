@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use fastpack_core::types::{
     atlas::AtlasFrame,
-    config::{Project, SourceSpec},
+    config::{PackerConfig, Project, SourceSpec},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -84,6 +84,7 @@ pub struct PendingActions {
     pub save_project: bool,
     pub save_project_as: bool,
     pub add_source: bool,
+    pub open_prefs: bool,
 }
 
 pub struct AppState {
@@ -172,11 +173,12 @@ impl AppState {
         }
     }
 
-    /// Discard all state and start fresh.
-    pub fn new_project(&mut self) {
+    /// Discard all state and start fresh using the given default config.
+    pub fn new_project(&mut self, default_config: PackerConfig) {
         let dark_mode = self.dark_mode;
         *self = AppState::default();
         self.dark_mode = dark_mode;
+        self.project.config = default_config;
         self.log.push(LogEntry::info("New project created."));
     }
 

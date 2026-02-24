@@ -37,6 +37,13 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
             }
         });
 
+        ui.menu_button("Edit", |ui| {
+            if ui.button("Preferences…").clicked() {
+                state.pending.open_prefs = true;
+                ui.close_menu();
+            }
+        });
+
         ui.menu_button("Atlas", |ui| {
             let label = if state.packing {
                 "Exporting..."

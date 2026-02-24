@@ -54,7 +54,7 @@ fn setting_row(ui: &mut egui::Ui, label: &str, widget: impl FnOnce(&mut egui::Ui
     });
 }
 
-fn show_texture(ui: &mut egui::Ui, state: &mut AppState) {
+pub fn show_texture(ui: &mut egui::Ui, state: &mut AppState) {
     let AppState {
         project,
         dirty,
@@ -185,7 +185,7 @@ fn show_texture(ui: &mut egui::Ui, state: &mut AppState) {
     });
 }
 
-fn show_layout(ui: &mut egui::Ui, state: &mut AppState) {
+pub fn show_layout(ui: &mut egui::Ui, state: &mut AppState) {
     let AppState {
         project,
         dirty,
@@ -450,7 +450,7 @@ fn show_layout(ui: &mut egui::Ui, state: &mut AppState) {
     });
 }
 
-fn show_sprites(ui: &mut egui::Ui, state: &mut AppState) {
+pub fn show_sprites(ui: &mut egui::Ui, state: &mut AppState) {
     let AppState {
         project,
         dirty,
@@ -569,7 +569,7 @@ fn show_sprites(ui: &mut egui::Ui, state: &mut AppState) {
     });
 }
 
-fn show_variants(ui: &mut egui::Ui, state: &mut AppState) {
+pub fn show_variants(ui: &mut egui::Ui, state: &mut AppState) {
     let mut remove_idx: Option<usize> = None;
 
     for (i, variant) in state.project.config.variants.iter_mut().enumerate() {

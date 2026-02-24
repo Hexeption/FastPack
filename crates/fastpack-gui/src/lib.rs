@@ -3,9 +3,11 @@
 pub mod app;
 pub mod menu;
 pub mod panels;
+pub mod preferences;
 pub mod state;
 pub mod theme;
 pub mod toolbar;
+pub mod updater;
 pub mod widgets;
 pub mod worker;
 

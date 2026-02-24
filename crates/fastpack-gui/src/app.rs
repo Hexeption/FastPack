@@ -20,17 +20,48 @@ use fastpack_formats::{
 
 use crate::{
     menu,
-    panels::{atlas_preview, output_log, settings, sprite_list},
+    panels::{atlas_preview, output_log, prefs_window, settings, sprite_list},
+    preferences::Preferences,
     state::AppState,
     toolbar,
+    updater::{UpdateMsg, UpdateStatus},
     worker::{WorkerMessage, run_pack},
 };
 
-#[derive(Default)]
 pub struct FastPackApp {
     pub state: AppState,
     pub atlas_textures: Vec<egui::TextureHandle>,
     worker_rx: Option<mpsc::Receiver<WorkerMessage>>,
+    prefs: Preferences,
+    prefs_open: bool,
+    update_status: UpdateStatus,
+    update_rx: Option<mpsc::Receiver<UpdateMsg>>,
+}
+
+impl Default for FastPackApp {
+    fn default() -> Self {
+        let prefs = Preferences::load();
+        let state = AppState {
+            dark_mode: prefs.dark_mode,
+            ..AppState::default()
+        };
+        let mut app = Self {
+            state,
+            atlas_textures: Vec::new(),
+            worker_rx: None,
+            prefs,
+            prefs_open: false,
+            update_status: UpdateStatus::Idle,
+            update_rx: None,
+        };
+        if app.prefs.auto_check_updates {
+            let (tx, rx) = mpsc::channel();
+            crate::updater::spawn_check(tx);
+            app.update_rx = Some(rx);
+            app.update_status = UpdateStatus::Checking;
+        }
+        app
+    }
 }
 
 impl eframe::App for FastPackApp {
@@ -39,6 +70,12 @@ impl eframe::App for FastPackApp {
         self.poll_worker(ctx);
         self.handle_pending(ctx);
         self.handle_dropped_files(ctx);
+
+        // Sync dark_mode back to prefs when the toolbar toggles it.
+        if self.prefs.dark_mode != self.state.dark_mode {
+            self.prefs.dark_mode = self.state.dark_mode;
+            self.prefs.save();
+        }
 
         ctx.send_viewport_cmd(egui::ViewportCommand::Title(self.state.window_title()));
 
@@ -94,6 +131,16 @@ impl eframe::App for FastPackApp {
                 );
             }
         });
+
+        if self.prefs_open {
+            prefs_window::show(
+                ctx,
+                &mut self.prefs,
+                &mut self.prefs_open,
+                &mut self.update_status,
+                &mut self.update_rx,
+            );
+        }
     }
 }
 
@@ -200,7 +247,7 @@ impl FastPackApp {
             self.do_export();
         }
         if std::mem::take(&mut self.state.pending.new_project) {
-            self.state.new_project();
+            self.state.new_project(self.prefs.default_config.clone());
             self.atlas_textures.clear();
         }
         if std::mem::take(&mut self.state.pending.open_project) {
@@ -214,6 +261,9 @@ impl FastPackApp {
         }
         if std::mem::take(&mut self.state.pending.add_source) {
             self.do_add_source();
+        }
+        if std::mem::take(&mut self.state.pending.open_prefs) {
+            self.prefs_open = true;
         }
     }
 

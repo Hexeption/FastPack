@@ -20,9 +20,12 @@ serde.workspace             = true
 tracing.workspace           = true
 image.workspace             = true
 rayon.workspace             = true
+serde_json.workspace        = true
 walkdir                     = "2"
 toml                        = "0.8"
 rfd                         = "0.15"
+ureq                        = "3"
+dirs                        = "6"
 
 egui        = "0.29"
 eframe      = { version = "0.29", features = ["default_fonts", "wgpu"] }
