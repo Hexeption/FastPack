@@ -37,7 +37,7 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
                     state.frames = state.sheets[state.current_sheet].frames.clone();
                     state.selected_frame = None;
                 }
-                ui.label(format!("{} / {}", cur + 1, sheet_count));
+                ui.label(format!("Sheet {} of {}", cur + 1, sheet_count));
                 if ui.small_button("◀").clicked() && cur > 0 {
                     state.current_sheet -= 1;
                     state.frames = state.sheets[state.current_sheet].frames.clone();
