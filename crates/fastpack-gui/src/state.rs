@@ -120,6 +120,41 @@ pub struct PendingActions {
     pub open_prefs: bool,
 }
 
+/// Playback state for the animation preview window.
+pub struct AnimPreviewState {
+    /// Whether the preview window is open.
+    pub open: bool,
+    /// Whether playback is running.
+    pub playing: bool,
+    /// Frames per second for playback.
+    pub fps: f32,
+    /// Whether to loop back to the first frame after the last.
+    pub looping: bool,
+    /// Index into `AppState.selected_frames` for the currently displayed frame.
+    pub current_frame: usize,
+    /// Accumulated time since the last frame advance (seconds).
+    pub elapsed_secs: f64,
+    /// Zoom scale for the canvas (1.0 = pixel-perfect).
+    pub zoom: f32,
+    /// Pan offset for the canvas (screen pixels from centre).
+    pub pan: [f32; 2],
+}
+
+impl Default for AnimPreviewState {
+    fn default() -> Self {
+        Self {
+            open: false,
+            playing: false,
+            fps: 24.0,
+            looping: true,
+            current_frame: 0,
+            elapsed_secs: 0.0,
+            zoom: 1.0,
+            pan: [0.0, 0.0],
+        }
+    }
+}
+
 /// All runtime state shared across the GUI.
 pub struct AppState {
     /// Project configuration and source specs (serialised to/from .fpsheet).
@@ -146,8 +181,12 @@ pub struct AppState {
     /// True while a pack is running in the background.
     pub packing: bool,
 
-    /// Index into `self.frames` of the highlighted frame, if any.
-    pub selected_frame: Option<usize>,
+    /// Indices into `self.frames` of highlighted frames, in click order.
+    pub selected_frames: Vec<usize>,
+    /// Anchor frame for shift+click range selection. Set on plain click.
+    pub anchor_frame: Option<usize>,
+    /// State for the animation preview window.
+    pub anim_preview: AnimPreviewState,
 
     /// Pan offset for the atlas preview (screen pixels from the centre).
     pub atlas_pan: [f32; 2],
@@ -174,7 +213,9 @@ impl Default for AppState {
             alias_count: 0,
             overflow_count: 0,
             packing: false,
-            selected_frame: None,
+            selected_frames: Vec::new(),
+            anchor_frame: None,
+            anim_preview: AnimPreviewState::default(),
             atlas_pan: [0.0, 0.0],
             atlas_zoom: 1.0,
             dark_mode: true,

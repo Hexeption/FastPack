@@ -21,7 +21,7 @@ use fastpack_formats::{
 
 use crate::{
     menu,
-    panels::{atlas_preview, output_log, prefs_window, settings, sprite_list},
+    panels::{anim_preview, atlas_preview, output_log, prefs_window, settings, sprite_list},
     preferences::Preferences,
     state::AppState,
     toolbar,
@@ -148,6 +148,8 @@ impl eframe::App for FastPackApp {
                 &mut self.update_rx,
             );
         }
+
+        anim_preview::show(ctx, &mut self.state, &self.atlas_textures);
     }
 }
 
@@ -166,7 +168,9 @@ impl FastPackApp {
                         self.state.sprite_count = output.sprite_count;
                         self.state.alias_count = output.alias_count;
                         self.state.overflow_count = output.overflow_count;
-                        self.state.selected_frame = None;
+                        self.state.selected_frames.clear();
+                        self.state.anchor_frame = None;
+                        self.state.anim_preview.open = false;
                         self.atlas_textures.clear();
                         self.state.sheets.clear();
 

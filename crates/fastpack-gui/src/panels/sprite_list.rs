@@ -112,20 +112,34 @@ fn draw_thumbnail(
     );
 }
 
+fn collect_visual_order(nodes: &[TreeNode]) -> Vec<usize> {
+    let mut out = Vec::new();
+    for node in nodes {
+        match node {
+            TreeNode::Sprite { frame_idx, .. } => out.push(*frame_idx),
+            TreeNode::Folder { children, .. } => out.extend(collect_visual_order(children)),
+        }
+    }
+    out
+}
+
+#[allow(clippy::too_many_arguments)]
 fn show_nodes(
     ui: &mut egui::Ui,
     nodes: &[TreeNode],
     frames: &[FrameInfo],
     sheets: &[SheetData],
     atlas_textures: &[egui::TextureHandle],
-    selected: &mut Option<usize>,
+    selected: &mut Vec<usize>,
+    anchor: &mut Option<usize>,
+    visual_order: &[usize],
 ) {
     for node in nodes {
         match node {
             TreeNode::Sprite { name, frame_idx } => {
                 let idx = *frame_idx;
                 let frame = &frames[idx];
-                let is_selected = *selected == Some(idx);
+                let is_selected = selected.contains(&idx);
 
                 let resp = ui.horizontal(|ui| {
                     draw_thumbnail(ui, frame, sheets, atlas_textures);
@@ -133,7 +147,44 @@ fn show_nodes(
                 });
 
                 if resp.inner.clicked() {
-                    *selected = if is_selected { None } else { Some(idx) };
+                    let shift = ui.input(|i| i.modifiers.shift);
+                    let ctrl = ui.input(|i| i.modifiers.ctrl);
+
+                    if shift {
+                        let range_start = anchor.unwrap_or(idx);
+                        let ps = visual_order.iter().position(|&x| x == range_start);
+                        let pe = visual_order.iter().position(|&x| x == idx);
+                        if let (Some(s), Some(e)) = (ps, pe) {
+                            let (lo, hi) = if s <= e { (s, e) } else { (e, s) };
+                            let range: Vec<usize> = visual_order[lo..=hi].to_vec();
+                            if ctrl {
+                                for &f in &range {
+                                    if !selected.contains(&f) {
+                                        selected.push(f);
+                                    }
+                                }
+                            } else {
+                                *selected = range;
+                            }
+                        } else {
+                            if !ctrl {
+                                selected.clear();
+                            }
+                            if !selected.contains(&idx) {
+                                selected.push(idx);
+                            }
+                        }
+                    } else if ctrl {
+                        if let Some(pos) = selected.iter().position(|&x| x == idx) {
+                            selected.remove(pos);
+                        } else {
+                            selected.push(idx);
+                        }
+                    } else {
+                        selected.clear();
+                        selected.push(idx);
+                        *anchor = Some(idx);
+                    }
                 }
             }
             TreeNode::Folder {
@@ -145,7 +196,16 @@ fn show_nodes(
                     .id_salt(full_path.as_str())
                     .default_open(true)
                     .show(ui, |ui| {
-                        show_nodes(ui, children, frames, sheets, atlas_textures, selected);
+                        show_nodes(
+                            ui,
+                            children,
+                            frames,
+                            sheets,
+                            atlas_textures,
+                            selected,
+                            anchor,
+                            visual_order,
+                        );
                     });
             }
         }
@@ -209,7 +269,9 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, atlas_textures: &[egui::Tex
     }
 
     let tree = build_tree(&state.frames);
-    let mut new_selected = state.selected_frame;
+    let visual_order = collect_visual_order(&tree);
+    let mut new_selected = state.selected_frames.clone();
+    let mut new_anchor = state.anchor_frame;
 
     egui::ScrollArea::vertical()
         .auto_shrink([false, false])
@@ -221,16 +283,31 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, atlas_textures: &[egui::Tex
                 &state.sheets,
                 atlas_textures,
                 &mut new_selected,
+                &mut new_anchor,
+                &visual_order,
             );
         });
 
-    state.selected_frame = new_selected;
+    state.selected_frames = new_selected;
+    state.anchor_frame = new_anchor;
+
+    if state.selected_frames.len() >= 2 {
+        ui.separator();
+        if ui.button("Preview Animation  [P]").clicked() {
+            state.anim_preview.open = true;
+            state.anim_preview.current_frame = 0;
+            state.anim_preview.elapsed_secs = 0.0;
+            state.anim_preview.playing = true;
+            state.anim_preview.zoom = 1.0;
+            state.anim_preview.pan = [0.0, 0.0];
+        }
+    }
 
     show_sprite_detail(ui, state);
 }
 
 fn show_sprite_detail(ui: &mut egui::Ui, state: &mut AppState) {
-    let Some(sel_idx) = state.selected_frame else {
+    let Some(&sel_idx) = state.selected_frames.last() else {
         return;
     };
     let Some(frame) = state.frames.get(sel_idx) else {

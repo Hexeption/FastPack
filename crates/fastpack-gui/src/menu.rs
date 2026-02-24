@@ -83,6 +83,19 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
             if i.consume_key(egui::Modifiers::CTRL, egui::Key::P) && !state.packing {
                 state.pending.export = true;
             }
+            if i.consume_key(egui::Modifiers::NONE, egui::Key::P)
+                && state.selected_frames.len() >= 2
+                && !state.frames.is_empty()
+            {
+                state.anim_preview.open = !state.anim_preview.open;
+                if state.anim_preview.open {
+                    state.anim_preview.current_frame = 0;
+                    state.anim_preview.elapsed_secs = 0.0;
+                    state.anim_preview.playing = true;
+                    state.anim_preview.zoom = 1.0;
+                    state.anim_preview.pan = [0.0, 0.0];
+                }
+            }
         });
     });
 }

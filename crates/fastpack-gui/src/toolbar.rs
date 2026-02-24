@@ -22,6 +22,19 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
             state.pending.add_source = true;
         }
 
+        let can_preview = state.selected_frames.len() >= 2 && !state.frames.is_empty();
+        if ui
+            .add_enabled(can_preview, egui::Button::new("Preview Animation [P]"))
+            .clicked()
+        {
+            state.anim_preview.open = true;
+            state.anim_preview.current_frame = 0;
+            state.anim_preview.elapsed_secs = 0.0;
+            state.anim_preview.playing = true;
+            state.anim_preview.zoom = 1.0;
+            state.anim_preview.pan = [0.0, 0.0];
+        }
+
         let count = state.project.sources.len();
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             let src_label = if count == 1 {

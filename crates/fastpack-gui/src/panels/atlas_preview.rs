@@ -88,8 +88,24 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, atlases: &[egui::TextureHan
                     }
                 }
             }
-            let new_sel = hit_id.and_then(|id| state.frames.iter().position(|f| f.id == id));
-            state.selected_frame = new_sel;
+
+            let ctrl = ui.input(|i| i.modifiers.ctrl);
+            if let Some(id) = hit_id {
+                if let Some(idx) = state.frames.iter().position(|f| f.id == id) {
+                    if ctrl {
+                        if let Some(pos) = state.selected_frames.iter().position(|&x| x == idx) {
+                            state.selected_frames.remove(pos);
+                        } else {
+                            state.selected_frames.push(idx);
+                        }
+                    } else {
+                        state.selected_frames.clear();
+                        state.selected_frames.push(idx);
+                    }
+                }
+            } else if !ctrl {
+                state.selected_frames.clear();
+            }
         }
     }
 
@@ -97,10 +113,13 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, atlases: &[egui::TextureHan
     painter.rect_filled(rect, 0.0, egui::Color32::from_rgb(35, 35, 35));
 
     let full_uv = egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0));
-    let selected_id: Option<String> = state
-        .selected_frame
-        .and_then(|i| state.frames.get(i))
-        .map(|f| f.id.clone());
+    let selected_ids: std::collections::HashSet<String> = state
+        .selected_frames
+        .iter()
+        .filter_map(|&i| state.frames.get(i))
+        .map(|f| f.id.clone())
+        .collect();
+    let has_selection = !selected_ids.is_empty();
 
     for (i, (sheet, texture)) in state.sheets.iter().zip(atlases.iter()).enumerate() {
         let origin = sheet_origins[i];
@@ -116,45 +135,47 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, atlases: &[egui::TextureHan
             draw_checker(&painter, checker_rect);
         }
 
-        // Is the selected frame on this sheet?
-        let sel_local: Option<usize> = selected_id
-            .as_deref()
-            .and_then(|sel_id| sheet.frames.iter().position(|f| f.id == sel_id));
+        // Collect selected frames on this sheet
+        let selected_local: Vec<usize> = sheet
+            .frames
+            .iter()
+            .enumerate()
+            .filter(|(_, f)| selected_ids.contains(&f.id))
+            .map(|(idx, _)| idx)
+            .collect();
 
-        if let Some(local_idx) = sel_local {
-            if let Some(frame) = sheet.frames.get(local_idx) {
-                // Draw full atlas dimmed
-                painter.image(
-                    texture.id(),
-                    img_rect,
-                    full_uv,
-                    egui::Color32::from_rgb(60, 60, 60),
-                );
+        if has_selection {
+            // Draw full atlas dimmed
+            painter.image(
+                texture.id(),
+                img_rect,
+                full_uv,
+                egui::Color32::from_rgb(60, 60, 60),
+            );
 
-                // Draw selected frame at full brightness
-                let fx = origin.x + frame.x as f32 * zoom;
-                let fy = origin.y + frame.y as f32 * zoom;
-                let frame_rect = egui::Rect::from_min_size(
-                    egui::pos2(fx, fy),
-                    egui::vec2(frame.w as f32 * zoom, frame.h as f32 * zoom),
-                );
-                let uv = egui::Rect::from_min_max(
-                    egui::pos2(frame.x as f32 / atlas_w, frame.y as f32 / atlas_h),
-                    egui::pos2(
-                        (frame.x + frame.w) as f32 / atlas_w,
-                        (frame.y + frame.h) as f32 / atlas_h,
-                    ),
-                );
-                painter.image(texture.id(), frame_rect, uv, egui::Color32::WHITE);
-
-                // Yellow highlight border
-                painter.rect_stroke(
-                    frame_rect,
-                    0.0,
-                    egui::Stroke::new(2.0, egui::Color32::from_rgb(255, 200, 0)),
-                );
-            } else {
-                painter.image(texture.id(), img_rect, full_uv, egui::Color32::WHITE);
+            // Draw each selected frame at full brightness with yellow border
+            for local_idx in selected_local {
+                if let Some(frame) = sheet.frames.get(local_idx) {
+                    let fx = origin.x + frame.x as f32 * zoom;
+                    let fy = origin.y + frame.y as f32 * zoom;
+                    let frame_rect = egui::Rect::from_min_size(
+                        egui::pos2(fx, fy),
+                        egui::vec2(frame.w as f32 * zoom, frame.h as f32 * zoom),
+                    );
+                    let uv = egui::Rect::from_min_max(
+                        egui::pos2(frame.x as f32 / atlas_w, frame.y as f32 / atlas_h),
+                        egui::pos2(
+                            (frame.x + frame.w) as f32 / atlas_w,
+                            (frame.y + frame.h) as f32 / atlas_h,
+                        ),
+                    );
+                    painter.image(texture.id(), frame_rect, uv, egui::Color32::WHITE);
+                    painter.rect_stroke(
+                        frame_rect,
+                        0.0,
+                        egui::Stroke::new(2.0, egui::Color32::from_rgb(255, 200, 0)),
+                    );
+                }
             }
         } else {
             painter.image(texture.id(), img_rect, full_uv, egui::Color32::WHITE);
