@@ -57,7 +57,7 @@ jobs:
             libxkbcommon-dev \
             libssl-dev
 
-      - run: cargo build --release --package fastpack --target ${{ matrix.target }}
+      - run: cargo build --release --package fastpack --target ${{ matrix.target }} --all-features
 
       - name: package Linux
         if: runner.os == 'Linux'

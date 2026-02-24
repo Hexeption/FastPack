@@ -18,7 +18,7 @@ path = "src/main.rs"
 [dependencies]
 fastpack-core.workspace     = true
 fastpack-formats.workspace  = true
-fastpack-compress.workspace = true
+fastpack-compress = { workspace = true, features = ["jpeg-turbo", "webp-encode"] }
 image.workspace             = true
 fastpack-gui.workspace      = true
 fastpack-tui.workspace      = true

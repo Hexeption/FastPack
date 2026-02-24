@@ -9,7 +9,7 @@ use fastpack_formats::{
 };
 use serde_json::Value;
 
-// --- Helpers ---
+// Helpers
 
 fn make_frame(id: &str, x: u32, y: u32, w: u32, h: u32) -> AtlasFrame {
     AtlasFrame {

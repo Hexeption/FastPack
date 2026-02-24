@@ -17,10 +17,10 @@ use std::path::PathBuf;
 
 // Helpers
 
-fn make_sprite(id: &str, w: u32, h: u32) -> Sprite {
+fn make_solid_sprite(id: &str, w: u32, h: u32, color: Rgba<u8>) -> Sprite {
     let mut img = RgbaImage::new(w, h);
     for pixel in img.pixels_mut() {
-        *pixel = Rgba([255, 128, 64, 255]);
+        *pixel = color;
     }
     Sprite {
         id: id.to_string(),
@@ -35,26 +35,17 @@ fn make_sprite(id: &str, w: u32, h: u32) -> Sprite {
         extrude: 0,
         alias_of: None,
     }
+}
+
+fn make_sprite(id: &str, w: u32, h: u32) -> Sprite {
+    make_solid_sprite(id, w, h, Rgba([255, 128, 64, 255]))
 }
 
 fn make_transparent_sprite(id: &str, w: u32, h: u32) -> Sprite {
-    let img = RgbaImage::new(w, h);
-    Sprite {
-        id: id.to_string(),
-        source_path: PathBuf::from(format!("{id}.png")),
-        image: DynamicImage::ImageRgba8(img),
-        trim_rect: None,
-        original_size: Size { w, h },
-        polygon: None,
-        nine_patch: None,
-        pivot: None,
-        content_hash: 0,
-        extrude: 0,
-        alias_of: None,
-    }
+    make_solid_sprite(id, w, h, Rgba([0, 0, 0, 0]))
 }
 
-/// Sprite with an opaque inner region and transparent `border`-px margin.
+// Sprite with an opaque inner region and transparent `border`-px margin.
 fn make_bordered_sprite(id: &str, w: u32, h: u32, border: u32) -> Sprite {
     let mut img = RgbaImage::new(w, h);
     for y in 0..h {
@@ -420,21 +411,7 @@ fn extrude_records_amount() {
 
 #[test]
 fn extrude_single_pixel_image_all_output_pixels_match() {
-    let mut img = RgbaImage::new(1, 1);
-    *img.get_pixel_mut(0, 0) = Rgba([200, 100, 50, 255]);
-    let mut sprite = Sprite {
-        id: "s".to_string(),
-        source_path: PathBuf::from("s.png"),
-        image: DynamicImage::ImageRgba8(img),
-        trim_rect: None,
-        original_size: Size { w: 1, h: 1 },
-        polygon: None,
-        nine_patch: None,
-        pivot: None,
-        content_hash: 0,
-        extrude: 0,
-        alias_of: None,
-    };
+    let mut sprite = make_solid_sprite("s", 1, 1, Rgba([200, 100, 50, 255]));
     extrude(&mut sprite, 1);
     let rgba = sprite.image.as_rgba8().unwrap();
     assert_eq!(rgba.dimensions(), (3, 3));
@@ -474,24 +451,8 @@ fn detect_aliases_different_dimensions_both_unique() {
 
 #[test]
 fn detect_aliases_different_pixels_same_dimensions_both_unique() {
-    let s1 = make_sprite("a", 8, 8); // red pixels
-    let mut img = RgbaImage::new(8, 8);
-    for pixel in img.pixels_mut() {
-        *pixel = Rgba([0, 0, 255, 255]);
-    }
-    let s2 = Sprite {
-        id: "b".to_string(),
-        source_path: PathBuf::from("b.png"),
-        image: DynamicImage::ImageRgba8(img),
-        trim_rect: None,
-        original_size: Size { w: 8, h: 8 },
-        polygon: None,
-        nine_patch: None,
-        pivot: None,
-        content_hash: 0,
-        extrude: 0,
-        alias_of: None,
-    };
+    let s1 = make_sprite("a", 8, 8); // opaque orange
+    let s2 = make_solid_sprite("b", 8, 8, Rgba([0, 0, 255, 255])); // opaque blue
     let (unique, aliases) = detect_aliases(vec![s1, s2]);
     assert_eq!(unique.len(), 2);
     assert_eq!(aliases.len(), 0);
