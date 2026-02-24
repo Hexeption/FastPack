@@ -12,6 +12,7 @@ use anyhow::{Result, bail};
 use clap::Parser;
 use fastpack_core::types::{
     config::{DataFormat, LayoutConfig, Project, ScaleVariant, SpriteConfig},
+    pixel_format::TextureFormat,
     rect::Point,
 };
 
@@ -42,6 +43,7 @@ fn main() -> Result<()> {
                 sprite_overrides,
                 variants,
                 data_format,
+                texture_format,
             ) = resolve_pack_fields(&args)?;
 
             let default_pivot = match (args.pivot_x, args.pivot_y) {
@@ -60,6 +62,7 @@ fn main() -> Result<()> {
                 sprite_overrides,
                 variants,
                 data_format,
+                texture_format,
             })?;
 
             let alias_note = if result.alias_count > 0 {
@@ -106,6 +109,7 @@ fn main() -> Result<()> {
                 sprite_overrides,
                 variants,
                 data_format,
+                texture_format,
             ) = resolve_pack_fields(&args)?;
 
             let default_pivot = match (args.pivot_x, args.pivot_y) {
@@ -124,6 +128,7 @@ fn main() -> Result<()> {
                 sprite_overrides,
                 variants,
                 data_format,
+                texture_format,
             })?;
             Ok(())
         }
@@ -160,6 +165,7 @@ type PackFields = (
     Vec<fastpack_core::types::config::SpriteOverride>,
     Vec<ScaleVariant>,
     DataFormat,
+    TextureFormat,
 );
 
 /// Resolve pack fields from either a project file or bare CLI flags.
@@ -184,6 +190,7 @@ fn resolve_pack_fields(args: &cli::PackArgs) -> Result<PackFields> {
             proj.config.sprite_overrides.clone(),
             proj.config.variants.clone(),
             proj.config.output.data_format,
+            args.texture_format.clone().into(),
         ))
     } else {
         if args.inputs.is_empty() {
@@ -225,6 +232,7 @@ fn resolve_pack_fields(args: &cli::PackArgs) -> Result<PackFields> {
             Vec::new(),
             vec![variant],
             args.data_format.clone().into(),
+            args.texture_format.clone().into(),
         ))
     }
 }

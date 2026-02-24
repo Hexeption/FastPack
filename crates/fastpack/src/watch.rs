@@ -3,6 +3,7 @@ use std::{path::PathBuf, sync::mpsc, time::Duration};
 use anyhow::Result;
 use fastpack_core::types::{
     config::{DataFormat, LayoutConfig, ScaleVariant, SpriteConfig, SpriteOverride},
+    pixel_format::TextureFormat,
     rect::Point,
 };
 use notify_debouncer_mini::new_debouncer;
@@ -32,6 +33,8 @@ pub struct WatchArgs {
     pub variants: Vec<ScaleVariant>,
     /// Output data serialization format.
     pub data_format: DataFormat,
+    /// Output texture container / hardware compression format.
+    pub texture_format: TextureFormat,
 }
 
 /// Watch input directories and repack on any change.
@@ -87,6 +90,7 @@ fn run_once(args: &WatchArgs) -> Result<()> {
         sprite_overrides: args.sprite_overrides.clone(),
         variants: args.variants.clone(),
         data_format: args.data_format,
+        texture_format: args.texture_format,
     })?;
 
     let alias_note = if result.alias_count > 0 {

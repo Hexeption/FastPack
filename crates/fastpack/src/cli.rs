@@ -1,7 +1,10 @@
 use std::path::PathBuf;
 
 use clap::{Args, Parser, Subcommand};
-use fastpack_core::types::config::{DataFormat, PackMode, ScaleMode, SizeConstraint, TrimMode};
+use fastpack_core::types::{
+    config::{DataFormat, PackMode, ScaleMode, SizeConstraint, TrimMode},
+    pixel_format::TextureFormat,
+};
 
 /// Root CLI entry point parsed by clap.
 #[derive(Debug, Parser)]
@@ -132,6 +135,10 @@ pub struct PackArgs {
     /// Output data format.
     #[arg(long, value_enum, default_value = "json-hash")]
     pub data_format: DataFormatArg,
+
+    /// Output texture format (png, jpeg, webp, dxt1, dxt5).
+    #[arg(long, value_enum, default_value = "png")]
+    pub texture_format: TextureFormatArg,
 }
 
 /// Arguments for the `init` subcommand.
@@ -268,6 +275,33 @@ impl From<DataFormatArg> for DataFormat {
             DataFormatArg::JsonArray => DataFormat::JsonArray,
             DataFormatArg::Phaser3 => DataFormat::Phaser3,
             DataFormatArg::Pixijs => DataFormat::Pixijs,
+        }
+    }
+}
+
+/// Clap-facing texture format enum.
+#[derive(Debug, Clone, clap::ValueEnum)]
+pub enum TextureFormatArg {
+    /// Lossless PNG. Default.
+    Png,
+    /// Lossy JPEG; no alpha channel.
+    Jpeg,
+    /// WebP (lossless or lossy depending on pack mode).
+    Webp,
+    /// DXT1 / BC1 hardware compression; no per-pixel alpha.
+    Dxt1,
+    /// DXT5 / BC3 hardware compression; full alpha channel.
+    Dxt5,
+}
+
+impl From<TextureFormatArg> for TextureFormat {
+    fn from(arg: TextureFormatArg) -> Self {
+        match arg {
+            TextureFormatArg::Png => TextureFormat::Png,
+            TextureFormatArg::Jpeg => TextureFormat::Jpeg,
+            TextureFormatArg::Webp => TextureFormat::WebP,
+            TextureFormatArg::Dxt1 => TextureFormat::Dxt1,
+            TextureFormatArg::Dxt5 => TextureFormat::Dxt5,
         }
     }
 }

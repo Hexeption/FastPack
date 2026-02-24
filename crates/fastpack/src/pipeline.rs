@@ -2,7 +2,12 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use fastpack_compress::{
-    backends::png::PngCompressor,
+    backends::{
+        dxt::{Dxt1Compressor, Dxt5Compressor},
+        jpeg::JpegCompressor,
+        png::PngCompressor,
+        webp::WebpCompressor,
+    },
     compressor::{CompressInput, Compressor},
 };
 use fastpack_core::{
@@ -14,6 +19,7 @@ use fastpack_core::{
     types::{
         atlas::{AtlasFrame, PackedAtlas},
         config::{DataFormat, LayoutConfig, ScaleVariant, SpriteConfig, SpriteOverride},
+        pixel_format::TextureFormat,
         rect::{Point, Rect, Size, SourceRect},
         sprite::Sprite,
     },
@@ -58,6 +64,8 @@ pub struct PackArgs {
     pub variants: Vec<ScaleVariant>,
     /// Output data serialization format.
     pub data_format: DataFormat,
+    /// Output texture container / hardware compression format.
+    pub texture_format: TextureFormat,
 }
 
 /// Per-sheet output produced by a pack run.
@@ -235,18 +243,20 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
 
             // 8. Compress
             let compress_pb = progress::spinner(&mp, "Compressing...");
-            let compressed = PngCompressor
+            let compressor = select_compressor(args.texture_format);
+            let compressed = compressor
                 .compress(&CompressInput {
                     image: &atlas_image,
                     pack_mode: layout.pack_mode,
                     quality: 95,
                 })
-                .context("png compression failed")?;
+                .context("compression failed")?;
             compress_pb.finish_and_clear();
 
             // 9. Write texture; accumulate atlas for deferred data export.
+            let tex_ext = args.texture_format.extension();
             let (texture_filename, _) =
-                sheet_filename(&args.name, &variant.suffix, variant_sheet_index);
+                sheet_filename(&args.name, &variant.suffix, variant_sheet_index, tex_ext);
             let texture_path = args.output_dir.join(&texture_filename);
             std::fs::write(&texture_path, &compressed.data).context("failed to write texture")?;
 
@@ -282,7 +292,7 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
             .map(|(atlas, fname)| ExportInput {
                 atlas,
                 texture_filename: fname.clone(),
-                pixel_format: "RGBA8888".to_string(),
+                pixel_format: args.texture_format.to_string().to_uppercase(),
             })
             .collect();
 
@@ -302,7 +312,12 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
             None => {
                 for (i, input) in export_inputs.iter().enumerate() {
                     let content = exporter.export(input).context("data export failed")?;
-                    let (_, base_name) = sheet_filename(&args.name, &variant.suffix, i);
+                    let (_, base_name) = sheet_filename(
+                        &args.name,
+                        &variant.suffix,
+                        i,
+                        args.texture_format.extension(),
+                    );
                     let data_path = args.output_dir.join(format!("{base_name}.json"));
                     std::fs::write(&data_path, content.as_bytes())
                         .context("failed to write data file")?;
@@ -322,13 +337,13 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
 }
 
 /// Returns `(texture_filename, base_name_without_ext)` for a sheet index.
-/// Sheet 0 uses `<name><suffix>.png`; subsequent sheets append the index.
-fn sheet_filename(name: &str, suffix: &str, index: usize) -> (String, String) {
+/// Sheet 0 uses `<name><suffix>.<ext>`; subsequent sheets append the index.
+fn sheet_filename(name: &str, suffix: &str, index: usize, ext: &str) -> (String, String) {
     if index == 0 {
-        (format!("{name}{suffix}.png"), format!("{name}{suffix}"))
+        (format!("{name}{suffix}.{ext}"), format!("{name}{suffix}"))
     } else {
         (
-            format!("{name}{suffix}{index}.png"),
+            format!("{name}{suffix}{index}.{ext}"),
             format!("{name}{suffix}{index}"),
         )
     }
@@ -340,6 +355,18 @@ fn select_exporter(data_format: DataFormat) -> Box<dyn Exporter> {
         DataFormat::Phaser3 => Box::new(Phaser3Exporter),
         DataFormat::Pixijs => Box::new(PixiJsExporter),
         DataFormat::JsonHash => Box::new(JsonHashExporter),
+    }
+}
+
+fn select_compressor(texture_format: TextureFormat) -> Box<dyn Compressor> {
+    match texture_format {
+        TextureFormat::Png => Box::new(PngCompressor),
+        TextureFormat::Jpeg => Box::new(JpegCompressor),
+        TextureFormat::WebP => Box::new(WebpCompressor),
+        TextureFormat::Dxt1 => Box::new(Dxt1Compressor),
+        TextureFormat::Dxt5 => Box::new(Dxt5Compressor),
+        // Formats requiring external toolchains fall back to PNG.
+        _ => Box::new(PngCompressor),
     }
 }
 
