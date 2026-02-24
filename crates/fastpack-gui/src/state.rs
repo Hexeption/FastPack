@@ -1,6 +1,9 @@
 use std::path::PathBuf;
 
-use fastpack_core::types::config::{Project, SourceSpec};
+use fastpack_core::types::{
+    atlas::AtlasFrame,
+    config::{Project, SourceSpec},
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LogLevel {
@@ -65,6 +68,7 @@ pub struct FrameInfo {
 #[derive(Default)]
 pub struct PendingActions {
     pub pack: bool,
+    pub export: bool,
     pub new_project: bool,
     pub open_project: bool,
     pub save_project: bool,
@@ -87,6 +91,8 @@ pub struct AppState {
     pub frames: Vec<FrameInfo>,
     /// Raw RGBA8888 pixel data from the last pack, plus (width, height).
     pub atlas_rgba: Option<(Vec<u8>, u32, u32)>,
+    /// Full atlas frame metadata for export.
+    pub atlas_frames: Vec<AtlasFrame>,
     /// Counts from the last pack run.
     pub sprite_count: usize,
     pub alias_count: usize,
@@ -119,6 +125,7 @@ impl Default for AppState {
             log: Vec::new(),
             frames: Vec::new(),
             atlas_rgba: None,
+            atlas_frames: Vec::new(),
             sprite_count: 0,
             alias_count: 0,
             overflow_count: 0,

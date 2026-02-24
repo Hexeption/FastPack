@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use eframe::egui;
 use fastpack_core::types::{
     config::{
@@ -52,8 +54,6 @@ fn setting_row(ui: &mut egui::Ui, label: &str, widget: impl FnOnce(&mut egui::Ui
     });
 }
 
-// ─── Texture ────────────────────────────────────────────────────────────────
-
 fn show_texture(ui: &mut egui::Ui, state: &mut AppState) {
     let cfg = &mut state.project.config.output;
     let dirty = &mut state.dirty;
@@ -70,11 +70,17 @@ fn show_texture(ui: &mut egui::Ui, state: &mut AppState) {
     setting_row(ui, "Directory", |ui| {
         let mut dir_str = cfg.directory.to_string_lossy().into_owned();
         if ui
-            .add(egui::TextEdit::singleline(&mut dir_str).desired_width(f32::INFINITY))
+            .add(egui::TextEdit::singleline(&mut dir_str).desired_width(120.0))
             .changed()
         {
-            cfg.directory = std::path::PathBuf::from(&dir_str);
+            cfg.directory = PathBuf::from(&dir_str);
             *dirty = true;
+        }
+        if ui.button("Browse...").clicked() {
+            if let Some(path) = rfd::FileDialog::new().pick_folder() {
+                cfg.directory = path;
+                *dirty = true;
+            }
         }
     });
 
@@ -163,11 +169,14 @@ fn show_texture(ui: &mut egui::Ui, state: &mut AppState) {
     });
 }
 
-// ─── Layout ─────────────────────────────────────────────────────────────────
-
 fn show_layout(ui: &mut egui::Ui, state: &mut AppState) {
-    let cfg = &mut state.project.config.layout;
-    let dirty = &mut state.dirty;
+    let AppState {
+        project,
+        dirty,
+        pending,
+        ..
+    } = state;
+    let cfg = &mut project.config.layout;
 
     setting_row(ui, "Max size", |ui| {
         if ui
@@ -179,8 +188,9 @@ fn show_layout(ui: &mut egui::Ui, state: &mut AppState) {
             .changed()
         {
             *dirty = true;
+            pending.pack = true;
         }
-        ui.label("×");
+        ui.label("x");
         if ui
             .add(
                 egui::DragValue::new(&mut cfg.max_height)
@@ -190,6 +200,7 @@ fn show_layout(ui: &mut egui::Ui, state: &mut AppState) {
             .changed()
         {
             *dirty = true;
+            pending.pack = true;
         }
     });
 
@@ -198,10 +209,12 @@ fn show_layout(ui: &mut egui::Ui, state: &mut AppState) {
         if ui.checkbox(&mut enabled, "").changed() {
             cfg.fixed_width = if enabled { Some(256) } else { None };
             *dirty = true;
+            pending.pack = true;
         }
         if let Some(ref mut v) = cfg.fixed_width {
             if ui.add(egui::DragValue::new(v).range(1..=16384)).changed() {
                 *dirty = true;
+                pending.pack = true;
             }
         }
     });
@@ -211,10 +224,12 @@ fn show_layout(ui: &mut egui::Ui, state: &mut AppState) {
         if ui.checkbox(&mut enabled, "").changed() {
             cfg.fixed_height = if enabled { Some(256) } else { None };
             *dirty = true;
+            pending.pack = true;
         }
         if let Some(ref mut v) = cfg.fixed_height {
             if ui.add(egui::DragValue::new(v).range(1..=16384)).changed() {
                 *dirty = true;
+                pending.pack = true;
             }
         }
     });
@@ -249,18 +264,21 @@ fn show_layout(ui: &mut egui::Ui, state: &mut AppState) {
             });
         if cfg.size_constraint != prev {
             *dirty = true;
+            pending.pack = true;
         }
     });
 
     setting_row(ui, "Force squared", |ui| {
         if ui.checkbox(&mut cfg.force_square, "").changed() {
             *dirty = true;
+            pending.pack = true;
         }
     });
 
     setting_row(ui, "Allow rotation", |ui| {
         if ui.checkbox(&mut cfg.allow_rotation, "").changed() {
             *dirty = true;
+            pending.pack = true;
         }
     });
 
@@ -270,6 +288,7 @@ fn show_layout(ui: &mut egui::Ui, state: &mut AppState) {
             .changed()
         {
             *dirty = true;
+            pending.pack = true;
         }
     });
 
@@ -279,13 +298,14 @@ fn show_layout(ui: &mut egui::Ui, state: &mut AppState) {
             .changed()
         {
             *dirty = true;
+            pending.pack = true;
         }
     });
 
     ui.add_space(4.0);
 
     // Algorithm
-    let algo = &mut state.project.config.algorithm;
+    let algo = &mut project.config.algorithm;
     let algo_label = match algo {
         AlgorithmConfig::Grid { .. } => "Grid",
         AlgorithmConfig::Basic => "Basic",
@@ -330,11 +350,12 @@ fn show_layout(ui: &mut egui::Ui, state: &mut AppState) {
             });
     });
     if let Some(a) = new_algo {
-        state.project.config.algorithm = a;
-        state.dirty = true;
+        project.config.algorithm = a;
+        *dirty = true;
+        pending.pack = true;
     }
 
-    if let AlgorithmConfig::MaxRects { heuristic } = &mut state.project.config.algorithm {
+    if let AlgorithmConfig::MaxRects { heuristic } = &mut project.config.algorithm {
         setting_row(ui, "Heuristics", |ui| {
             let prev = *heuristic;
             egui::ComboBox::from_id_salt("maxrects_heuristic")
@@ -366,7 +387,8 @@ fn show_layout(ui: &mut egui::Ui, state: &mut AppState) {
                     );
                 });
             if *heuristic != prev {
-                state.dirty = true;
+                *dirty = true;
+                pending.pack = true;
             }
         });
     }
@@ -374,23 +396,24 @@ fn show_layout(ui: &mut egui::Ui, state: &mut AppState) {
     if let AlgorithmConfig::Grid {
         cell_width,
         cell_height,
-    } = &mut state.project.config.algorithm
+    } = &mut project.config.algorithm
     {
         setting_row(ui, "Cell width (0=auto)", |ui| {
             if ui.add(egui::DragValue::new(cell_width)).changed() {
-                state.dirty = true;
+                *dirty = true;
+                pending.pack = true;
             }
         });
         setting_row(ui, "Cell height (0=auto)", |ui| {
             if ui.add(egui::DragValue::new(cell_height)).changed() {
-                state.dirty = true;
+                *dirty = true;
+                pending.pack = true;
             }
         });
     }
 
-    // Pack mode lives on LayoutConfig
+    // Pack mode
     setting_row(ui, "Pack", |ui| {
-        let cfg = &mut state.project.config.layout;
         let prev = cfg.pack_mode;
         egui::ComboBox::from_id_salt("pack_mode")
             .selected_text(match cfg.pack_mode {
@@ -405,25 +428,30 @@ fn show_layout(ui: &mut egui::Ui, state: &mut AppState) {
                 ui.selectable_value(&mut cfg.pack_mode, PackMode::Best, "Best");
             });
         if cfg.pack_mode != prev {
-            state.dirty = true;
+            *dirty = true;
+            pending.pack = true;
         }
     });
 
     setting_row(ui, "Detect identical sprites", |ui| {
         if ui
-            .checkbox(&mut state.project.config.sprites.detect_aliases, "")
+            .checkbox(&mut project.config.sprites.detect_aliases, "")
             .changed()
         {
-            state.dirty = true;
+            *dirty = true;
+            pending.pack = true;
         }
     });
 }
 
-// ─── Sprites ─────────────────────────────────────────────────────────────────
-
 fn show_sprites(ui: &mut egui::Ui, state: &mut AppState) {
-    let cfg = &mut state.project.config.sprites;
-    let dirty = &mut state.dirty;
+    let AppState {
+        project,
+        dirty,
+        pending,
+        ..
+    } = state;
+    let cfg = &mut project.config.sprites;
 
     setting_row(ui, "Trim mode", |ui| {
         let prev = cfg.trim_mode;
@@ -445,6 +473,7 @@ fn show_sprites(ui: &mut egui::Ui, state: &mut AppState) {
             });
         if cfg.trim_mode != prev {
             *dirty = true;
+            pending.pack = true;
         }
     });
 
@@ -454,6 +483,7 @@ fn show_sprites(ui: &mut egui::Ui, state: &mut AppState) {
             .changed()
         {
             *dirty = true;
+            pending.pack = true;
         }
     });
 
@@ -463,6 +493,7 @@ fn show_sprites(ui: &mut egui::Ui, state: &mut AppState) {
             .changed()
         {
             *dirty = true;
+            pending.pack = true;
         }
     });
 
@@ -472,26 +503,7 @@ fn show_sprites(ui: &mut egui::Ui, state: &mut AppState) {
             .changed()
         {
             *dirty = true;
-        }
-    });
-
-    setting_row(ui, "Border padding", |ui| {
-        if ui
-            .add(
-                egui::DragValue::new(&mut state.project.config.layout.border_padding).range(0..=64),
-            )
-            .changed()
-        {
-            *dirty = true;
-        }
-    });
-
-    setting_row(ui, "Shape Padding", |ui| {
-        if ui
-            .add(egui::DragValue::new(&mut state.project.config.layout.shape_padding).range(0..=64))
-            .changed()
-        {
-            *dirty = true;
+            pending.pack = true;
         }
     });
 
@@ -501,6 +513,7 @@ fn show_sprites(ui: &mut egui::Ui, state: &mut AppState) {
             .changed()
         {
             *dirty = true;
+            pending.pack = true;
         }
     });
 
@@ -510,6 +523,7 @@ fn show_sprites(ui: &mut egui::Ui, state: &mut AppState) {
             .changed()
         {
             *dirty = true;
+            pending.pack = true;
         }
     });
 
@@ -531,8 +545,6 @@ fn show_sprites(ui: &mut egui::Ui, state: &mut AppState) {
         }
     });
 }
-
-// ─── Variants ────────────────────────────────────────────────────────────────
 
 fn show_variants(ui: &mut egui::Ui, state: &mut AppState) {
     let mut remove_idx: Option<usize> = None;

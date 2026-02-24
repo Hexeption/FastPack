@@ -250,8 +250,8 @@ pub struct LayoutConfig {
 impl Default for LayoutConfig {
     fn default() -> Self {
         Self {
-            max_width: 4096,
-            max_height: 4096,
+            max_width: 2048,
+            max_height: 2048,
             fixed_width: None,
             fixed_height: None,
             size_constraint: SizeConstraint::AnySize,
@@ -437,30 +437,12 @@ pub struct SourceSpec {
     pub filter: String,
 }
 
-impl Default for SourceSpec {
-    fn default() -> Self {
-        Self {
-            path: PathBuf::from("sprites"),
-            filter: "**/*.png".to_string(),
-        }
-    }
-}
-
 /// Full project as stored in a `.fpsheet` TOML file.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Project {
     /// Packer configuration for this project.
     #[serde(flatten)]
     pub config: PackerConfig,
     /// Input directories and glob filters.
     pub sources: Vec<SourceSpec>,
-}
-
-impl Default for Project {
-    fn default() -> Self {
-        Self {
-            config: PackerConfig::default(),
-            sources: vec![SourceSpec::default()],
-        }
-    }
 }

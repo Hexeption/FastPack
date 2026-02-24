@@ -3,11 +3,18 @@ use std::path::{Path, PathBuf};
 use anyhow::Result;
 use fastpack_core::{
     algorithms::{
+        basic::Basic,
+        grid::Grid,
         maxrects::MaxRects,
         packer::{PackInput, Packer},
     },
     imaging::{alias::detect_aliases, extrude, loader, trim},
-    types::{config::Project, sprite::Sprite},
+    types::{
+        atlas::AtlasFrame,
+        config::{AlgorithmConfig, Project},
+        rect::{Rect, Size, SourceRect},
+        sprite::Sprite,
+    },
 };
 use rayon::prelude::*;
 use walkdir::WalkDir;
@@ -38,6 +45,8 @@ pub struct WorkerOutput {
     pub overflow_count: usize,
     /// Frame list for the sprite list and atlas preview.
     pub frames: Vec<FrameInfo>,
+    /// Full atlas frame metadata for data-file export.
+    pub atlas_frames: Vec<AtlasFrame>,
 }
 
 /// Messages sent from the worker thread to the UI thread.
@@ -138,7 +147,29 @@ pub fn run_pack(project: &Project) -> Result<WorkerOutput> {
     let alias_count = base_aliases.len();
 
     // 5. Pack
-    let pack_output = MaxRects::default()
+    let packer: Box<dyn Packer> = match &project.config.algorithm {
+        AlgorithmConfig::Grid {
+            cell_width,
+            cell_height,
+        } => Box::new(Grid {
+            cell_width: if *cell_width == 0 {
+                None
+            } else {
+                Some(*cell_width)
+            },
+            cell_height: if *cell_height == 0 {
+                None
+            } else {
+                Some(*cell_height)
+            },
+        }),
+        AlgorithmConfig::Basic => Box::new(Basic),
+        AlgorithmConfig::MaxRects { heuristic } => Box::new(MaxRects {
+            heuristic: *heuristic,
+        }),
+        AlgorithmConfig::Polygon => Box::new(MaxRects::default()),
+    };
+    let pack_output = packer
         .pack(PackInput {
             sprites: base_sprites,
             config: project.config.layout.clone(),
@@ -197,6 +228,37 @@ pub fn run_pack(project: &Project) -> Result<WorkerOutput> {
         })
         .collect();
 
+    let mut atlas_frames: Vec<AtlasFrame> = pack_output
+        .placed
+        .iter()
+        .map(|ps| {
+            let trimmed = ps.sprite.trim_rect.is_some();
+            let sss = ps.sprite.trim_rect.unwrap_or(SourceRect {
+                x: 0,
+                y: 0,
+                w: ps.sprite.original_size.w,
+                h: ps.sprite.original_size.h,
+            });
+            AtlasFrame {
+                id: ps.placement.sprite_id.clone(),
+                frame: Rect::new(
+                    ps.placement.dest.x,
+                    ps.placement.dest.y,
+                    ps.placement.dest.w,
+                    ps.placement.dest.h,
+                ),
+                rotated: ps.placement.rotated,
+                trimmed,
+                sprite_source_size: sss,
+                source_size: ps.sprite.original_size,
+                polygon: ps.sprite.polygon.clone(),
+                nine_patch: ps.sprite.nine_patch,
+                pivot: ps.sprite.pivot,
+                alias_of: None,
+            }
+        })
+        .collect();
+
     for alias in &base_aliases {
         let canon = alias.alias_of.as_deref().unwrap_or("");
         let (x, y, w, h) = frame_id_to_rect.get(canon).copied().unwrap_or_default();
@@ -206,6 +268,23 @@ pub fn run_pack(project: &Project) -> Result<WorkerOutput> {
             y,
             w,
             h,
+            alias_of: alias.alias_of.clone(),
+        });
+        atlas_frames.push(AtlasFrame {
+            id: alias.id.clone(),
+            frame: Rect::new(x, y, w, h),
+            rotated: false,
+            trimmed: false,
+            sprite_source_size: SourceRect {
+                x: 0,
+                y: 0,
+                w: alias.original_size.w,
+                h: alias.original_size.h,
+            },
+            source_size: alias.original_size,
+            polygon: None,
+            nine_patch: alias.nine_patch,
+            pivot: alias.pivot,
             alias_of: alias.alias_of.clone(),
         });
     }
@@ -222,5 +301,6 @@ pub fn run_pack(project: &Project) -> Result<WorkerOutput> {
         alias_count,
         overflow_count,
         frames,
+        atlas_frames,
     })
 }

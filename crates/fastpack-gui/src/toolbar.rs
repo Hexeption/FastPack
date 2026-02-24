@@ -4,12 +4,16 @@ use crate::state::AppState;
 
 pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
     ui.horizontal(|ui| {
-        let pack_label = if state.packing { "Packing…" } else { "Pack" };
+        let export_label = if state.packing {
+            "Exporting..."
+        } else {
+            "Export"
+        };
         if ui
-            .add_enabled(!state.packing, egui::Button::new(pack_label))
+            .add_enabled(!state.packing, egui::Button::new(export_label))
             .clicked()
         {
-            state.pending.pack = true;
+            state.pending.export = true;
         }
 
         if ui.button("Add Sprites…").clicked() {

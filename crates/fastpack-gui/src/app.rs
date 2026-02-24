@@ -1,6 +1,22 @@
 use std::sync::mpsc;
 
 use eframe::egui;
+use fastpack_compress::{
+    backends::{jpeg::JpegCompressor, png::PngCompressor, webp::WebpCompressor},
+    compressor::{CompressInput, Compressor},
+};
+use fastpack_core::types::{
+    atlas::PackedAtlas,
+    pixel_format::{PixelFormat, TextureFormat},
+    rect::Size,
+};
+use fastpack_formats::{
+    exporter::{ExportInput, Exporter},
+    formats::{
+        json_array::JsonArrayExporter, json_hash::JsonHashExporter, phaser3::Phaser3Exporter,
+        pixijs::PixiJsExporter,
+    },
+};
 
 use crate::{
     menu,
@@ -115,6 +131,7 @@ impl FastPackApp {
                             egui::TextureOptions::default(),
                         ));
                         self.state.atlas_rgba = Some((output.rgba, output.width, output.height));
+                        self.state.atlas_frames = output.atlas_frames;
                         self.state.log_info(format!(
                             "Packed {} sprites — {}×{}  ({} aliases, {} overflow)",
                             self.state.sprite_count,
@@ -146,6 +163,9 @@ impl FastPackApp {
     fn handle_pending(&mut self, ctx: &egui::Context) {
         if std::mem::take(&mut self.state.pending.pack) {
             self.spawn_pack(ctx.clone());
+        }
+        if std::mem::take(&mut self.state.pending.export) {
+            self.do_export();
         }
         if std::mem::take(&mut self.state.pending.new_project) {
             self.state.new_project();
@@ -246,6 +266,132 @@ impl FastPackApp {
     fn do_add_source(&mut self) {
         if let Some(path) = rfd::FileDialog::new().pick_folder() {
             self.state.add_source_path(path);
+        }
+    }
+
+    fn do_export(&mut self) {
+        let Some((ref rgba, width, height)) = self.state.atlas_rgba else {
+            self.state
+                .log_warn("Nothing to export. Pack sprites first.");
+            return;
+        };
+
+        let out_cfg = &self.state.project.config.output;
+        let out_dir = out_cfg.directory.clone();
+        if out_dir.as_os_str().is_empty() {
+            self.state
+                .log_warn("No output directory set. Configure it in the Texture settings.");
+            return;
+        }
+
+        let texture_format = out_cfg.texture_format;
+        let pixel_format = out_cfg.pixel_format;
+        let quality = out_cfg.quality;
+        let data_format = out_cfg.data_format.clone();
+        let name = out_cfg.name.clone();
+        let pack_mode = self.state.project.config.layout.pack_mode;
+
+        if let Err(e) = std::fs::create_dir_all(&out_dir) {
+            self.state
+                .log_error(format!("Failed to create output directory: {e}"));
+            return;
+        }
+
+        // Compress texture
+        let compressor: Box<dyn Compressor> = match texture_format {
+            TextureFormat::Jpeg => Box::new(JpegCompressor),
+            TextureFormat::WebP => Box::new(WebpCompressor),
+            _ => Box::new(PngCompressor),
+        };
+
+        let atlas_image =
+            image::RgbaImage::from_raw(width, height, rgba.clone()).expect("valid rgba buffer");
+        let dyn_image = image::DynamicImage::from(atlas_image);
+
+        let compress_result = compressor.compress(&CompressInput {
+            image: &dyn_image,
+            pack_mode,
+            quality,
+        });
+
+        let texture_bytes = match compress_result {
+            Ok(output) => output.data,
+            Err(e) => {
+                self.state
+                    .log_error(format!("Texture compression failed: {e}"));
+                return;
+            }
+        };
+
+        let tex_ext = compressor.file_extension();
+        let tex_filename = format!("{}.{}", name, tex_ext);
+        let tex_path = out_dir.join(&tex_filename);
+
+        if let Err(e) = std::fs::write(&tex_path, &texture_bytes) {
+            self.state
+                .log_error(format!("Failed to write texture: {e}"));
+            return;
+        }
+
+        let tex_kb = texture_bytes.len() as f64 / 1024.0;
+        self.state
+            .log_info(format!("Wrote {} ({:.1} KB)", tex_path.display(), tex_kb));
+
+        // Export data file
+        let exporter: Box<dyn Exporter> = match data_format.as_str() {
+            "json_array" => Box::new(JsonArrayExporter),
+            "phaser3" => Box::new(Phaser3Exporter),
+            "pixijs" => Box::new(PixiJsExporter),
+            _ => Box::new(JsonHashExporter),
+        };
+
+        let pixel_format_str = match pixel_format {
+            PixelFormat::Rgba8888 => "RGBA8888",
+            PixelFormat::Rgb888 => "RGB888",
+            PixelFormat::Rgb565 => "RGB565",
+            PixelFormat::Rgba4444 => "RGBA4444",
+            PixelFormat::Rgba5551 => "RGBA5551",
+            PixelFormat::Alpha8 => "ALPHA8",
+        };
+
+        let packed_atlas = PackedAtlas {
+            frames: self.state.atlas_frames.clone(),
+            size: Size {
+                w: width,
+                h: height,
+            },
+            image: None,
+            name: name.clone(),
+            scale: 1.0,
+        };
+
+        let export_input = ExportInput {
+            atlas: &packed_atlas,
+            texture_filename: tex_filename,
+            pixel_format: pixel_format_str.to_string(),
+        };
+
+        match exporter.export(&export_input) {
+            Ok(data_content) => {
+                let data_filename = format!("{}.{}", name, exporter.file_extension());
+                let data_path = out_dir.join(&data_filename);
+                match std::fs::write(&data_path, data_content.as_bytes()) {
+                    Ok(()) => {
+                        self.state.log_info(format!(
+                            "Wrote {} ({} bytes)",
+                            data_path.display(),
+                            data_content.len(),
+                        ));
+                    }
+                    Err(e) => {
+                        self.state
+                            .log_error(format!("Failed to write data file: {e}"));
+                    }
+                }
+            }
+            Err(e) => {
+                self.state.log_error(format!("Data export failed: {e}"));
+            }
         }
     }
 

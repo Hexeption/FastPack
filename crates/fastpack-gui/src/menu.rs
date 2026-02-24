@@ -37,11 +37,11 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
             }
         });
 
-        ui.menu_button("Pack", |ui| {
+        ui.menu_button("Atlas", |ui| {
             let label = if state.packing {
-                "Packing…"
+                "Exporting..."
             } else {
-                "Pack Now"
+                "Export"
             };
             if ui
                 .add_enabled(
@@ -50,11 +50,11 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
                 )
                 .clicked()
             {
-                state.pending.pack = true;
+                state.pending.export = true;
                 ui.close_menu();
             }
             ui.separator();
-            if ui.button("Add Sprites…").clicked() {
+            if ui.button("Add Sprites...").clicked() {
                 state.pending.add_source = true;
                 ui.close_menu();
             }
@@ -73,7 +73,7 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
                 state.pending.save_project = true;
             }
             if i.consume_key(egui::Modifiers::CTRL, egui::Key::P) && !state.packing {
-                state.pending.pack = true;
+                state.pending.export = true;
             }
         });
     });

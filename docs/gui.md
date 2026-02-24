@@ -14,15 +14,15 @@ fastpack gui project.fpsheet  # open the GUI with the project preloaded
 
 The window is divided into five panels.
 
-**Menu bar** — top strip with File and Pack menus.
+**Menu bar** — top strip with File and Atlas menus.
 
-**Toolbar** — below the menu bar. Has a Pack button, an Add Sprites button, source count indicator, and a Light/Dark theme toggle.
+**Toolbar** — below the menu bar. Has an Export button, an Add Sprites button, source count indicator, and a Light/Dark theme toggle.
 
 **Sprite list** (left panel) — shows source directories at the top and packed frame list below. Resizable by dragging its border.
 
 **Settings** (right panel) — all packing configuration. Resizable.
 
-**Atlas preview** (center) — the composited atlas texture after each pack run.
+**Atlas preview** (center) — the composited atlas texture. Updates automatically when any layout, sprite, or algorithm setting changes.
 
 **Output log** (bottom panel) — timestamped messages from pack operations. Resizable.
 
@@ -53,7 +53,7 @@ A blue overlay with "Drop folders or .fpsheet here" appears when files are dragg
 
 The settings panel has four collapsible sections.
 
-**Texture** controls output path, name prefix, texture format (PNG/JPEG/WebP), pixel format, data format (JSON Hash/JSON Array/Phaser 3/PixiJS), quality, premultiply alpha, and texture path prefix.
+**Texture** controls output path (text field + Browse button), name prefix, texture format (PNG/JPEG/WebP), pixel format, data format (JSON Hash/JSON Array/Phaser 3/PixiJS), quality, premultiply alpha, and texture path prefix. These settings affect export output only and do not trigger a repack.
 
 **Layout** controls max width/height, optional fixed width/height, size constraint (Any/Power of 2/Multiple of 4/Word aligned), force square toggle, allow rotation toggle, border padding, shape padding, algorithm (Grid/Basic/MaxRects/Polygon), MaxRects heuristic, and pack mode (Fast/Good/Best).
 
@@ -61,7 +61,15 @@ The settings panel has four collapsible sections.
 
 **Variants** lists scale variants. Each variant has a scale factor, scale mode (Smooth/Fast/Scale2x/Scale3x/HQ2x — pixel art modes are planned but not yet implemented), and a filename suffix. Add and remove variants with the + and − buttons.
 
-Any change to a setting marks the project as dirty (asterisk in the window title).
+Any change to a layout, sprite, or algorithm setting repacks the atlas automatically and updates the preview. Any change to a setting marks the project as dirty (asterisk in the window title).
+
+## Auto-Repack
+
+Changing any layout, sprite, or algorithm setting triggers an immediate repack. The atlas preview updates in place without needing to click a button. Output-only settings (texture format, data format, quality, output directory, name) do not repack.
+
+## Exporting
+
+The Export button in the toolbar and the Atlas > Export menu item write the atlas to disk. Set an output directory in the Texture settings first. Export compresses the atlas image using the configured texture format (PNG/JPEG/WebP) and writes a data file in the selected data format alongside it. File sizes are logged in the output panel.
 
 ## Output Log Panel
 
@@ -73,7 +81,7 @@ Messages appear with a timestamp prefix. Info messages are grey, warnings are or
 Ctrl+N   New project
 Ctrl+O   Open project file
 Ctrl+S   Save project file
-Ctrl+P   Pack now
+Ctrl+P   Export atlas to disk
 ```
 
 Shortcuts work both through the menus and directly while any panel has focus.
