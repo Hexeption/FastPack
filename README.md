@@ -6,6 +6,8 @@
 
 Texture atlas packer written in Rust. Native GUI as the primary interface, plus a full CLI and TUI. Designed as an open-source replacement for TexturePacker.
 
+<img width="800" height="889" alt="wDwJf1hcLi" src="https://github.com/user-attachments/assets/215867c4-0fd8-44a4-8255-a943a4ec42c1" />
+
 ## Features
 
 **Packing**
