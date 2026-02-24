@@ -1,3 +1,4 @@
+//! GUI front-end for FastPack built on egui/eframe.
 rust_i18n::i18n!("locales");
 
 pub mod app;
@@ -7,8 +8,11 @@ pub mod preferences;
 pub mod state;
 pub mod theme;
 pub mod toolbar;
+/// Auto-update checking and download logic.
 pub mod updater;
+/// Reusable egui widget components.
 pub mod widgets;
+/// Background pack worker thread and message types.
 pub mod worker;
 
 use std::path::PathBuf;

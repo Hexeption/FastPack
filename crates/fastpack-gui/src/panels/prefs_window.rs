@@ -19,6 +19,7 @@ enum Tab {
     Updates,
 }
 
+/// Render the preferences window and poll pending update messages.
 pub fn show(
     ctx: &egui::Context,
     prefs: &mut Preferences,

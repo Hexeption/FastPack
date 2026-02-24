@@ -7,5 +7,6 @@ pub enum FormatError {
     Json(#[from] serde_json::Error),
 
     #[error("{0}")]
+    /// An error not covered by the other variants.
     Other(String),
 }

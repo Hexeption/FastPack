@@ -7,27 +7,43 @@ const REPO: &str = "Hexeption/FastPack";
 #[derive(Debug, Clone)]
 pub struct ReleaseInfo {
     pub version: String,
+    /// Release notes text from GitHub.
     pub notes: String,
+    /// Direct download URL for the platform-specific binary.
     pub asset_url: String,
 }
 
+/// Messages sent from the update background thread to the UI.
 pub enum UpdateMsg {
+    /// Current version is the latest.
     UpToDate { latest: String },
+    /// A newer release is available.
     Available(ReleaseInfo),
+    /// The update binary was downloaded to the given path.
     Downloaded(PathBuf),
+    /// The update check or download failed.
     Error(String),
 }
 
+/// Current state of the update check shown in the preferences window.
 pub enum UpdateStatus {
+    /// No check has been started.
     Idle,
+    /// A check is running in the background.
     Checking,
+    /// Check completed; running version is the latest.
     UpToDate { latest: String },
+    /// A newer release was found.
     Available(ReleaseInfo),
+    /// The update binary is being downloaded.
     Downloading,
+    /// Download finished; binary is at the given path.
     Downloaded(PathBuf),
+    /// The check or download failed with this message.
     Error(String),
 }
 
+/// Spawn a background thread to check GitHub for the latest release.
 pub fn spawn_check(tx: mpsc::Sender<UpdateMsg>) {
     std::thread::spawn(move || {
         let msg = match check_latest() {
@@ -51,6 +67,7 @@ pub fn spawn_check(tx: mpsc::Sender<UpdateMsg>) {
     });
 }
 
+/// Spawn a background thread to download the release asset.
 pub fn spawn_download(release: ReleaseInfo, tx: mpsc::Sender<UpdateMsg>) {
     std::thread::spawn(move || {
         let msg = match download_asset(&release.asset_url) {
@@ -61,6 +78,7 @@ pub fn spawn_download(release: ReleaseInfo, tx: mpsc::Sender<UpdateMsg>) {
     });
 }
 
+/// Replace the running binary with the downloaded update file and restart.
 pub fn apply_update(downloaded: &std::path::Path) -> Result<(), String> {
     do_apply(downloaded)
 }

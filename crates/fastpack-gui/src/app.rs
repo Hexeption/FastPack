@@ -29,10 +29,14 @@ use crate::{
 };
 use rust_i18n::t;
 
+/// The root application type that implements `eframe::App`.
 pub struct FastPackApp {
+    /// Shared GUI state and active project data.
     pub state: AppState,
+    /// Rendered atlas texture handles for the current pack result.
     pub atlas_textures: Vec<egui::TextureHandle>,
     worker_rx: Option<mpsc::Receiver<WorkerMessage>>,
+    /// Persistent user preferences loaded from disk.
     pub prefs: Preferences,
     prefs_open: bool,
     update_status: UpdateStatus,

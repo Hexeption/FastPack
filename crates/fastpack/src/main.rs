@@ -1,3 +1,4 @@
+//! FastPack CLI: pack sprites into atlases, watch for changes, and export data files.
 mod cli;
 mod error;
 mod pipeline;

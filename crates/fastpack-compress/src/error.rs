@@ -7,7 +7,9 @@ pub enum CompressError {
     ImageEncode(#[from] image::ImageError),
     #[cfg(feature = "png")]
     #[error("png optimization failed: {0}")]
+    /// PNG optimization via oxipng failed.
     PngOptimize(#[from] oxipng::PngError),
     #[error("{0}")]
+    /// An error not covered by the other variants.
     Other(String),
 }

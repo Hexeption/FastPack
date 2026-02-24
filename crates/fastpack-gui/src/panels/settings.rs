@@ -12,6 +12,7 @@ use rust_i18n::t;
 
 use crate::state::AppState;
 
+/// Render the full project settings panel.
 pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
     egui::ScrollArea::vertical().show(ui, |ui| {
         ui.add_space(2.0);
@@ -61,6 +62,7 @@ fn setting_row(ui: &mut egui::Ui, label: &str, widget: impl FnOnce(&mut egui::Ui
     });
 }
 
+/// Render the texture and output format settings section.
 pub fn show_texture(ui: &mut egui::Ui, state: &mut AppState) {
     let AppState {
         project,
@@ -192,6 +194,7 @@ pub fn show_texture(ui: &mut egui::Ui, state: &mut AppState) {
     });
 }
 
+/// Render the atlas layout and algorithm settings section.
 pub fn show_layout(ui: &mut egui::Ui, state: &mut AppState) {
     let AppState {
         project,
@@ -461,6 +464,7 @@ pub fn show_layout(ui: &mut egui::Ui, state: &mut AppState) {
     });
 }
 
+/// Render the sprite trim, extrude, and alias settings section.
 pub fn show_sprites(ui: &mut egui::Ui, state: &mut AppState) {
     let AppState {
         project,
@@ -588,6 +592,7 @@ pub fn show_sprites(ui: &mut egui::Ui, state: &mut AppState) {
     });
 }
 
+/// Render the scale variant list editor.
 pub fn show_variants(ui: &mut egui::Ui, state: &mut AppState) {
     let mut remove_idx: Option<usize> = None;
 

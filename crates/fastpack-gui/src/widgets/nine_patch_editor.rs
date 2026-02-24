@@ -2,6 +2,7 @@ use eframe::egui;
 use fastpack_core::types::sprite::NinePatch;
 use rust_i18n::t;
 
+/// Render a nine-patch slice editor with a visual preview.
 pub fn show(
     ui: &mut egui::Ui,
     nine_patch: &mut Option<NinePatch>,

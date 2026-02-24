@@ -6,16 +6,24 @@ use fastpack_core::types::{
 };
 use rust_i18n::t;
 
+/// Severity level for a log entry.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LogLevel {
+    /// Informational message.
     Info,
+    /// Non-fatal warning.
     Warn,
+    /// Operation failure.
     Error,
 }
 
+/// A single timestamped output log entry.
 pub struct LogEntry {
+    /// Severity of the message.
     pub level: LogLevel,
+    /// Human-readable message text.
     pub message: String,
+    /// Local time string in HH:MM:SS format.
     pub time: String,
 }
 
@@ -32,6 +40,7 @@ fn format_time() -> String {
 }
 
 impl LogEntry {
+    /// Create an info-level log entry.
     pub fn info(msg: impl Into<String>) -> Self {
         Self {
             level: LogLevel::Info,
@@ -39,6 +48,7 @@ impl LogEntry {
             time: format_time(),
         }
     }
+    /// Create a warn-level log entry.
     pub fn warn(msg: impl Into<String>) -> Self {
         Self {
             level: LogLevel::Warn,
@@ -46,6 +56,7 @@ impl LogEntry {
             time: format_time(),
         }
     }
+    /// Create an error-level log entry.
     pub fn error(msg: impl Into<String>) -> Self {
         Self {
             level: LogLevel::Error,
@@ -58,36 +69,56 @@ impl LogEntry {
 /// A single frame in the packed atlas (used by sprite list + preview).
 #[derive(Clone)]
 pub struct FrameInfo {
+    /// Sprite identifier used in export data.
     pub id: String,
+    /// Packed X position in atlas pixels.
     pub x: u32,
+    /// Packed Y position in atlas pixels.
     pub y: u32,
+    /// Packed frame width in pixels.
     pub w: u32,
+    /// Packed frame height in pixels.
     pub h: u32,
+    /// Set to the canonical sprite ID if this frame is a duplicate.
     pub alias_of: Option<String>,
 }
 
 /// Per-sheet atlas data kept in AppState after a pack run.
 pub struct SheetData {
+    /// Raw RGBA pixel data.
     pub rgba: Vec<u8>,
+    /// Atlas width in pixels.
     pub width: u32,
+    /// Atlas height in pixels.
     pub height: u32,
+    /// UI-facing frame metadata for this sheet.
     pub frames: Vec<FrameInfo>,
+    /// Full atlas frame data used by exporters.
     pub atlas_frames: Vec<AtlasFrame>,
 }
 
 /// One-shot flags set by menus/toolbar and consumed by the app's update loop.
 #[derive(Default)]
 pub struct PendingActions {
+    /// Trigger a new pack run.
     pub pack: bool,
+    /// Export the last packed result.
     pub export: bool,
+    /// Clear state and start a new project.
     pub new_project: bool,
+    /// Open an existing `.fpsheet` file.
     pub open_project: bool,
+    /// Save the project to its current path.
     pub save_project: bool,
+    /// Save the project to a user-chosen path.
     pub save_project_as: bool,
+    /// Open a folder picker and add a source directory.
     pub add_source: bool,
+    /// Open the preferences window.
     pub open_prefs: bool,
 }
 
+/// All runtime state shared across the GUI.
 pub struct AppState {
     /// Project configuration and source specs (serialised to/from .fpsheet).
     pub project: Project,
@@ -105,7 +136,9 @@ pub struct AppState {
     pub frames: Vec<FrameInfo>,
     /// Counts from the last pack run.
     pub sprite_count: usize,
+    /// Sprites deduplicated as aliases in the last pack.
     pub alias_count: usize,
+    /// Sprites that did not fit when multipack is disabled.
     pub overflow_count: usize,
 
     /// True while a pack is running in the background.
@@ -149,12 +182,15 @@ impl Default for AppState {
 }
 
 impl AppState {
+    /// Append an info message to the output log.
     pub fn log_info(&mut self, msg: impl Into<String>) {
         self.log.push(LogEntry::info(msg));
     }
+    /// Append a warning message to the output log.
     pub fn log_warn(&mut self, msg: impl Into<String>) {
         self.log.push(LogEntry::warn(msg));
     }
+    /// Append an error message to the output log.
     pub fn log_error(&mut self, msg: impl Into<String>) {
         self.log.push(LogEntry::error(msg));
     }

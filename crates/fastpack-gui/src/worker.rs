@@ -21,25 +21,37 @@ use walkdir::WalkDir;
 
 /// A single packed frame returned to the UI thread.
 pub struct FrameInfo {
+    /// Sprite identifier.
     pub id: String,
+    /// Packed X position in atlas pixels.
     pub x: u32,
+    /// Packed Y position in atlas pixels.
     pub y: u32,
+    /// Packed frame width in pixels.
     pub w: u32,
+    /// Packed frame height in pixels.
     pub h: u32,
+    /// Canonical sprite ID if this frame is a duplicate.
     pub alias_of: Option<String>,
 }
 
 /// One packed sheet (atlas texture + frame metadata).
 pub struct SheetOutput {
+    /// Raw RGBA pixel data for this sheet.
     pub rgba: Vec<u8>,
+    /// Atlas width in pixels.
     pub width: u32,
+    /// Atlas height in pixels.
     pub height: u32,
+    /// Per-frame positioning data for the UI.
     pub frames: Vec<FrameInfo>,
+    /// Full atlas frame data for exporters.
     pub atlas_frames: Vec<AtlasFrame>,
 }
 
 /// Data returned to the UI after a successful pack.
 pub struct WorkerOutput {
+    /// All packed sheets produced by this run.
     pub sheets: Vec<SheetOutput>,
     /// Unique sprites packed (excluding aliases).
     pub sprite_count: usize,
@@ -51,9 +63,13 @@ pub struct WorkerOutput {
 
 /// Messages sent from the worker thread to the UI thread.
 pub enum WorkerMessage {
+    /// The worker thread has begun processing.
     Started,
+    /// Incremental progress update.
     Progress { done: usize, total: usize },
+    /// Pack completed successfully.
     Finished(Box<WorkerOutput>),
+    /// Pack failed with this error message.
     Failed(String),
 }
 
