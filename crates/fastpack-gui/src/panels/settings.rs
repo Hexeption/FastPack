@@ -171,14 +171,22 @@ fn show_layout(ui: &mut egui::Ui, state: &mut AppState) {
 
     setting_row(ui, "Max size", |ui| {
         if ui
-            .add(egui::DragValue::new(&mut cfg.max_width).range(1..=16384).prefix("W "))
+            .add(
+                egui::DragValue::new(&mut cfg.max_width)
+                    .range(1..=16384)
+                    .prefix("W "),
+            )
             .changed()
         {
             *dirty = true;
         }
         ui.label("×");
         if ui
-            .add(egui::DragValue::new(&mut cfg.max_height).range(1..=16384).prefix("H "))
+            .add(
+                egui::DragValue::new(&mut cfg.max_height)
+                    .range(1..=16384)
+                    .prefix("H "),
+            )
             .changed()
         {
             *dirty = true;
@@ -222,7 +230,11 @@ fn show_layout(ui: &mut egui::Ui, state: &mut AppState) {
             })
             .width(120.0)
             .show_ui(ui, |ui| {
-                ui.selectable_value(&mut cfg.size_constraint, SizeConstraint::AnySize, "Any size");
+                ui.selectable_value(
+                    &mut cfg.size_constraint,
+                    SizeConstraint::AnySize,
+                    "Any size",
+                );
                 ui.selectable_value(&mut cfg.size_constraint, SizeConstraint::Pot, "Power of 2");
                 ui.selectable_value(
                     &mut cfg.size_constraint,
@@ -346,11 +358,7 @@ fn show_layout(ui: &mut egui::Ui, state: &mut AppState) {
                         "LongSideFit",
                     );
                     ui.selectable_value(heuristic, MaxRectsHeuristic::BestAreaFit, "AreaFit");
-                    ui.selectable_value(
-                        heuristic,
-                        MaxRectsHeuristic::BottomLeftRule,
-                        "BottomLeft",
-                    );
+                    ui.selectable_value(heuristic, MaxRectsHeuristic::BottomLeftRule, "BottomLeft");
                     ui.selectable_value(
                         heuristic,
                         MaxRectsHeuristic::ContactPointRule,
@@ -469,7 +477,9 @@ fn show_sprites(ui: &mut egui::Ui, state: &mut AppState) {
 
     setting_row(ui, "Border padding", |ui| {
         if ui
-            .add(egui::DragValue::new(&mut state.project.config.layout.border_padding).range(0..=64))
+            .add(
+                egui::DragValue::new(&mut state.project.config.layout.border_padding).range(0..=64),
+            )
             .changed()
         {
             *dirty = true;

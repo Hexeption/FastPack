@@ -2,7 +2,7 @@ use std::{path::PathBuf, sync::mpsc, time::Duration};
 
 use anyhow::Result;
 use fastpack_core::types::{
-    config::{PackMode, ScaleVariant, SpriteOverride},
+    config::{LayoutConfig, ScaleVariant, SpriteConfig, SpriteOverride},
     rect::Point,
 };
 use notify_debouncer_mini::new_debouncer;
@@ -18,17 +18,13 @@ pub struct WatchArgs {
     pub output_dir: PathBuf,
     /// Base name for output files (no extension).
     pub name: String,
-    /// Maximum atlas width in pixels.
-    pub max_width: u32,
-    /// Maximum atlas height in pixels.
-    pub max_height: u32,
-    /// Packing effort level; controls speed vs. atlas density trade-off.
-    pub pack_mode: PackMode,
-    /// When `true`, pixel-identical sprites share a single atlas frame.
-    pub detect_aliases: bool,
+    /// Full layout configuration (dimensions, padding, constraints, rotation, etc.).
+    pub layout: LayoutConfig,
+    /// Sprite pre-processing options (trim, extrude, alias detection, etc.).
+    pub sprite_config: SpriteConfig,
     /// Emit additional sheets when sprites overflow the first atlas.
     pub multipack: bool,
-    /// Pivot applied to every frame that has no per-sprite override.
+    /// Default pivot written to data files. `None` omits the pivot field entirely.
     pub default_pivot: Option<Point>,
     /// Per-sprite metadata (pivot, nine-patch) read from the project file.
     pub sprite_overrides: Vec<SpriteOverride>,
@@ -84,10 +80,8 @@ fn run_once(args: &WatchArgs) -> Result<()> {
         inputs: args.inputs.clone(),
         output_dir: args.output_dir.clone(),
         name: args.name.clone(),
-        max_width: args.max_width,
-        max_height: args.max_height,
-        pack_mode: args.pack_mode,
-        detect_aliases: args.detect_aliases,
+        layout: args.layout.clone(),
+        sprite_config: args.sprite_config.clone(),
         multipack: args.multipack,
         default_pivot: args.default_pivot,
         sprite_overrides: args.sprite_overrides.clone(),

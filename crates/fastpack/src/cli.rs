@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use clap::{Args, Parser, Subcommand};
-use fastpack_core::types::config::{PackMode, ScaleMode};
+use fastpack_core::types::config::{PackMode, ScaleMode, SizeConstraint, TrimMode};
 
 /// Root CLI entry point parsed by clap.
 #[derive(Debug, Parser)]
@@ -64,6 +64,46 @@ pub struct PackArgs {
     /// Compression effort level.
     #[arg(long, value_enum, default_value = "good")]
     pub pack_mode: PackModeArg,
+
+    /// Constraint applied to atlas dimensions (any, pot, multiple-of-4, word-aligned).
+    #[arg(long, value_enum, default_value = "any")]
+    pub size_constraint: SizeConstraintArg,
+
+    /// Force the atlas to be square (width == height).
+    #[arg(long)]
+    pub force_square: bool,
+
+    /// Allow 90° sprite rotation to improve packing density.
+    #[arg(long, default_value_t = true)]
+    pub allow_rotation: bool,
+
+    /// Transparent pixels added around the atlas edge.
+    #[arg(long, default_value_t = 2)]
+    pub border_padding: u32,
+
+    /// Transparent gap between adjacent sprites.
+    #[arg(long, default_value_t = 2)]
+    pub shape_padding: u32,
+
+    /// How to strip transparent borders from sprites.
+    #[arg(long, value_enum, default_value = "trim")]
+    pub trim_mode: TrimModeArg,
+
+    /// Pixels of transparent margin to keep around trimmed edges.
+    #[arg(long, default_value_t = 0)]
+    pub trim_margin: u32,
+
+    /// Alpha threshold: pixels at or below this value are considered transparent.
+    #[arg(long, default_value_t = 1)]
+    pub trim_threshold: u8,
+
+    /// Pixels of border extrusion added to each sprite edge.
+    #[arg(long, default_value_t = 0)]
+    pub extrude: u32,
+
+    /// Deduplicate pixel-identical sprites as aliases.
+    #[arg(long, default_value_t = true)]
+    pub detect_aliases: bool,
 
     /// Emit additional sheets when sprites overflow the first atlas.
     #[arg(long)]
@@ -153,6 +193,57 @@ impl From<ScaleModeArg> for ScaleMode {
         match arg {
             ScaleModeArg::Smooth => ScaleMode::Smooth,
             ScaleModeArg::Fast => ScaleMode::Fast,
+        }
+    }
+}
+
+/// Clap-facing size constraint enum.
+#[derive(Debug, Clone, clap::ValueEnum)]
+pub enum SizeConstraintArg {
+    /// No constraint — smallest rectangle that fits.
+    Any,
+    /// Width and height must be powers of two.
+    Pot,
+    /// Width and height must each be divisible by 4.
+    MultipleOf4,
+    /// Width and height must each be divisible by 2.
+    WordAligned,
+}
+
+impl From<SizeConstraintArg> for SizeConstraint {
+    fn from(arg: SizeConstraintArg) -> Self {
+        match arg {
+            SizeConstraintArg::Any => SizeConstraint::AnySize,
+            SizeConstraintArg::Pot => SizeConstraint::Pot,
+            SizeConstraintArg::MultipleOf4 => SizeConstraint::MultipleOf4,
+            SizeConstraintArg::WordAligned => SizeConstraint::WordAligned,
+        }
+    }
+}
+
+/// Clap-facing trim mode enum.
+#[derive(Debug, Clone, clap::ValueEnum)]
+pub enum TrimModeArg {
+    /// Pack the full image including transparent borders.
+    None,
+    /// Strip transparent borders; store offset for engine reconstruction.
+    Trim,
+    /// Crop tightly to the opaque region.
+    Crop,
+    /// Like Crop but offsets may be negative to keep original registration.
+    CropKeepPos,
+    /// Build convex hull polygon; pack its bounding box.
+    Polygon,
+}
+
+impl From<TrimModeArg> for TrimMode {
+    fn from(arg: TrimModeArg) -> Self {
+        match arg {
+            TrimModeArg::None => TrimMode::None,
+            TrimModeArg::Trim => TrimMode::Trim,
+            TrimModeArg::Crop => TrimMode::Crop,
+            TrimModeArg::CropKeepPos => TrimMode::CropKeepPos,
+            TrimModeArg::Polygon => TrimMode::Polygon,
         }
     }
 }

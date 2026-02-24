@@ -168,9 +168,7 @@ fn exhaustive_width_search(
         .min_by_key(|(area, _)| *area)
         .map(|(_, c)| c)
     {
-        if candidate.atlas_size.w * candidate.atlas_size.h
-            < best.atlas_size.w * best.atlas_size.h
-        {
+        if candidate.atlas_size.w * candidate.atlas_size.h < best.atlas_size.w * best.atlas_size.h {
             best = candidate;
         }
     }

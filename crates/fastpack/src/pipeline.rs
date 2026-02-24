@@ -13,7 +13,7 @@ use fastpack_core::{
     imaging::{alias::detect_aliases, extrude, loader, scale, trim},
     types::{
         atlas::{AtlasFrame, PackedAtlas},
-        config::{LayoutConfig, PackMode, ScaleVariant, SpriteConfig, SpriteOverride},
+        config::{LayoutConfig, ScaleVariant, SpriteConfig, SpriteOverride},
         rect::{Point, Rect, Size, SourceRect},
         sprite::Sprite,
     },
@@ -44,18 +44,13 @@ pub struct PackArgs {
     pub output_dir: PathBuf,
     /// Base name for output files (no extension).
     pub name: String,
-    /// Maximum atlas width in pixels.
-    pub max_width: u32,
-    /// Maximum atlas height in pixels.
-    pub max_height: u32,
-    /// Packing effort level; controls speed vs. atlas density trade-off.
-    pub pack_mode: PackMode,
-    /// When `true`, pixel-identical sprites share a single atlas frame.
-    pub detect_aliases: bool,
+    /// Full layout configuration (dimensions, padding, constraints, rotation, etc.).
+    pub layout: LayoutConfig,
+    /// Sprite pre-processing options (trim, extrude, alias detection, etc.).
+    pub sprite_config: SpriteConfig,
     /// Emit additional sheets when sprites overflow the first atlas.
     pub multipack: bool,
-    /// Pivot applied to every frame that has no per-sprite override.
-    /// `None` means no pivot is written to the data file.
+    /// Default pivot written to data files. `None` omits the pivot field entirely.
     pub default_pivot: Option<Point>,
     /// Per-sprite metadata (pivot, nine-patch) read from the project file.
     pub sprite_overrides: Vec<SpriteOverride>,
@@ -126,10 +121,10 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
     }
 
     // 3. Trim
-    let sprite_cfg = SpriteConfig::default();
+    let sprite_cfg = &args.sprite_config;
     let mut sprites = sprites;
     for s in &mut sprites {
-        trim::trim(s, &sprite_cfg);
+        trim::trim(s, sprite_cfg);
     }
 
     // 3.5. Extrude
@@ -161,18 +156,14 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
     }
 
     // 4. Alias detection
-    let (base_sprites, base_aliases) = if args.detect_aliases {
+    let (base_sprites, base_aliases) = if sprite_cfg.detect_aliases {
         detect_aliases(sprites)
     } else {
         (sprites, Vec::new())
     };
     let alias_count = base_aliases.len();
 
-    let layout = LayoutConfig {
-        max_width: args.max_width,
-        max_height: args.max_height,
-        ..LayoutConfig::default()
-    };
+    let layout = args.layout;
 
     std::fs::create_dir_all(&args.output_dir).context("failed to create output directory")?;
 
@@ -225,7 +216,7 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
                 .pack(PackInput {
                     sprites: remaining,
                     config: layout.clone(),
-                    sprite_config: SpriteConfig::default(),
+                    sprite_config: sprite_cfg.clone(),
                 })
                 .context("packing failed")?;
             pack_pb.finish_and_clear();
@@ -247,7 +238,7 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
             let compressed = PngCompressor
                 .compress(&CompressInput {
                     image: &atlas_image,
-                    pack_mode: args.pack_mode,
+                    pack_mode: layout.pack_mode,
                     quality: 95,
                 })
                 .context("png compression failed")?;
