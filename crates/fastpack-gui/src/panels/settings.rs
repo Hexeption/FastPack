@@ -155,11 +155,15 @@ fn show_texture(ui: &mut egui::Ui, state: &mut AppState) {
         }
     });
 
-    setting_row(ui, "Premultiply alpha", |ui| {
-        if ui.checkbox(&mut cfg.premultiply_alpha, "").changed() {
-            *dirty = true;
-        }
-    });
+    let is_phaser3 = cfg.data_format == "phaser3";
+
+    if !is_phaser3 {
+        setting_row(ui, "Premultiply alpha", |ui| {
+            if ui.checkbox(&mut cfg.premultiply_alpha, "").changed() {
+                *dirty = true;
+            }
+        });
+    }
 
     setting_row(ui, "Texture prefix", |ui| {
         if ui
@@ -453,6 +457,12 @@ fn show_sprites(ui: &mut egui::Ui, state: &mut AppState) {
         pending,
         ..
     } = state;
+    let is_phaser3 = project.config.output.data_format == "phaser3";
+    if is_phaser3 && project.config.sprites.trim_mode == TrimMode::Polygon {
+        project.config.sprites.trim_mode = TrimMode::Trim;
+        *dirty = true;
+        pending.pack = true;
+    }
     let cfg = &mut project.config.sprites;
 
     setting_row(ui, "Trim mode", |ui| {
@@ -471,7 +481,9 @@ fn show_sprites(ui: &mut egui::Ui, state: &mut AppState) {
                 ui.selectable_value(&mut cfg.trim_mode, TrimMode::Trim, "Trim");
                 ui.selectable_value(&mut cfg.trim_mode, TrimMode::Crop, "Crop");
                 ui.selectable_value(&mut cfg.trim_mode, TrimMode::CropKeepPos, "Crop keep pos");
-                ui.selectable_value(&mut cfg.trim_mode, TrimMode::Polygon, "Polygon");
+                if !is_phaser3 {
+                    ui.selectable_value(&mut cfg.trim_mode, TrimMode::Polygon, "Polygon");
+                }
             });
         if cfg.trim_mode != prev {
             *dirty = true;
@@ -529,23 +541,25 @@ fn show_sprites(ui: &mut egui::Ui, state: &mut AppState) {
         }
     });
 
-    setting_row(ui, "Pivot X", |ui| {
-        if ui
-            .add(egui::Slider::new(&mut cfg.default_pivot.x, 0.0..=1.0))
-            .changed()
-        {
-            *dirty = true;
-        }
-    });
+    if !is_phaser3 {
+        setting_row(ui, "Pivot X", |ui| {
+            if ui
+                .add(egui::Slider::new(&mut cfg.default_pivot.x, 0.0..=1.0))
+                .changed()
+            {
+                *dirty = true;
+            }
+        });
 
-    setting_row(ui, "Pivot Y", |ui| {
-        if ui
-            .add(egui::Slider::new(&mut cfg.default_pivot.y, 0.0..=1.0))
-            .changed()
-        {
-            *dirty = true;
-        }
-    });
+        setting_row(ui, "Pivot Y", |ui| {
+            if ui
+                .add(egui::Slider::new(&mut cfg.default_pivot.y, 0.0..=1.0))
+                .changed()
+            {
+                *dirty = true;
+            }
+        });
+    }
 
     setting_row(ui, "Detect identical sprites", |ui| {
         if ui.checkbox(&mut cfg.detect_aliases, "").changed() {
