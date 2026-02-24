@@ -143,6 +143,10 @@ pub struct PackArgs {
     /// Pixel bit depth; Floyd-Steinberg dithering is applied when not rgba8888.
     #[arg(long, value_enum, default_value = "rgba8888")]
     pub pixel_format: PixelFormatArg,
+
+    /// Premultiply RGB channels by alpha before compression.
+    #[arg(long)]
+    pub premultiply_alpha: bool,
 }
 
 /// Arguments for the `init` subcommand.

@@ -5,5 +5,6 @@ pub mod loader;
 pub mod ninepatch;
 pub mod pivot;
 pub mod pixel_art;
+pub mod premultiply;
 pub mod scale;
 pub mod trim;

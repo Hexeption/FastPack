@@ -15,7 +15,7 @@ use fastpack_core::{
         maxrects::MaxRects,
         packer::{PackInput, PackOutput, Packer, PlacedSprite},
     },
-    imaging::{alias::detect_aliases, dither, extrude, loader, scale, trim},
+    imaging::{alias::detect_aliases, dither, extrude, loader, premultiply, scale, trim},
     types::{
         atlas::{AtlasFrame, PackedAtlas},
         config::{DataFormat, LayoutConfig, ScaleVariant, SpriteConfig, SpriteOverride},
@@ -68,6 +68,8 @@ pub struct PackArgs {
     pub texture_format: TextureFormat,
     /// Pixel-level bit depth. Dithering is applied when this is not Rgba8888.
     pub pixel_format: PixelFormat,
+    /// Premultiply RGB channels by alpha before compression.
+    pub premultiply_alpha: bool,
 }
 
 /// Per-sheet output produced by a pack run.
@@ -233,6 +235,13 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
 
             // 6. Compose
             let atlas_image = compose(&pack_output.placed, &pack_output.atlas_size);
+
+            // 6.25. Premultiply alpha if requested.
+            let atlas_image = if args.premultiply_alpha {
+                premultiply::premultiply(&atlas_image)
+            } else {
+                atlas_image
+            };
 
             // 6.5. Dither to target pixel format (no-op for Rgba8888).
             let atlas_image = dither::dither(&atlas_image, args.pixel_format);

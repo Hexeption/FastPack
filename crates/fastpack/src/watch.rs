@@ -37,6 +37,8 @@ pub struct WatchArgs {
     pub texture_format: TextureFormat,
     /// Pixel-level bit depth for dithering.
     pub pixel_format: PixelFormat,
+    /// Premultiply RGB channels by alpha before compression.
+    pub premultiply_alpha: bool,
 }
 
 /// Watch input directories and repack on any change.
@@ -94,6 +96,7 @@ fn run_once(args: &WatchArgs) -> Result<()> {
         data_format: args.data_format,
         texture_format: args.texture_format,
         pixel_format: args.pixel_format,
+        premultiply_alpha: args.premultiply_alpha,
     })?;
 
     let alias_note = if result.alias_count > 0 {
