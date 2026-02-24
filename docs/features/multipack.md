@@ -27,7 +27,7 @@ Enable via CLI `--multipack` or set in the project file. When no `--multipack` f
 
 Open the **Texture** section of the settings panel and check **Multipack**. The project re-packs immediately.
 
-When the result has more than one sheet, the toolbar shows a `◀ N / M ▶` pager. Click the arrows to switch between sheets. The sprite list and atlas preview update to show the selected sheet.
+When the result has more than one sheet, all sheets appear side by side in the atlas preview. Pan and zoom apply to the entire group. Each sheet shows a `Sheet N: W×H` label. The sprite list includes frames from all sheets. Clicking a sprite on any sheet selects it.
 
 ## Examples
 

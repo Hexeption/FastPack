@@ -75,8 +75,7 @@ impl eframe::App for FastPackApp {
             });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            let cur = self.state.current_sheet;
-            atlas_preview::show(ui, &mut self.state, self.atlas_textures.get(cur));
+            atlas_preview::show(ui, &mut self.state, &self.atlas_textures);
 
             let hovering = ctx.input(|i| !i.raw.hovered_files.is_empty());
             if hovering {
@@ -113,7 +112,6 @@ impl FastPackApp {
                         self.state.sprite_count = output.sprite_count;
                         self.state.alias_count = output.alias_count;
                         self.state.overflow_count = output.overflow_count;
-                        self.state.current_sheet = 0;
                         self.state.selected_frame = None;
                         self.atlas_textures.clear();
                         self.state.sheets.clear();
@@ -152,9 +150,9 @@ impl FastPackApp {
                         self.state.frames = self
                             .state
                             .sheets
-                            .first()
-                            .map(|s| s.frames.clone())
-                            .unwrap_or_default();
+                            .iter()
+                            .flat_map(|s| s.frames.iter().cloned())
+                            .collect();
 
                         let sheet_count = self.state.sheets.len();
                         let (w, h) = self

@@ -2,8 +2,10 @@ use eframe::egui;
 
 use crate::state::AppState;
 
-pub fn show(ui: &mut egui::Ui, state: &mut AppState, atlas: Option<&egui::TextureHandle>) {
-    let Some(atlas) = atlas else {
+const GAP: f32 = 16.0;
+
+pub fn show(ui: &mut egui::Ui, state: &mut AppState, atlases: &[egui::TextureHandle]) {
+    if atlases.is_empty() {
         if state.packing {
             ui.centered_and_justified(|ui| {
                 ui.spinner();
@@ -14,7 +16,7 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, atlas: Option<&egui::Textur
             });
         }
         return;
-    };
+    }
 
     let available = ui.available_size();
     let (response, painter) = ui.allocate_painter(available, egui::Sense::click_and_drag());
@@ -39,88 +41,168 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, atlas: Option<&egui::Textur
     let rect = response.rect;
     let zoom = state.atlas_zoom;
     let pan = egui::vec2(state.atlas_pan[0], state.atlas_pan[1]);
+    let n = atlases.len();
 
-    let atlas_size = atlas.size();
-    let img_w = atlas_size[0] as f32 * zoom;
-    let img_h = atlas_size[1] as f32 * zoom;
-    let img_origin = rect.center() + pan - egui::vec2(img_w * 0.5, img_h * 0.5);
-    let img_rect = egui::Rect::from_min_size(img_origin, egui::vec2(img_w, img_h));
+    let total_atlas_w: f32 =
+        state.sheets.iter().map(|s| s.width as f32).sum::<f32>() + (n as f32 - 1.0) * GAP;
+    let max_atlas_h: f32 = state
+        .sheets
+        .iter()
+        .map(|s| s.height as f32)
+        .fold(0.0_f32, f32::max);
+
+    let group_origin =
+        rect.center() + pan - egui::vec2(total_atlas_w * zoom * 0.5, max_atlas_h * zoom * 0.5);
+
+    let sheet_origins: Vec<egui::Pos2> = {
+        let mut cx = 0.0_f32;
+        state
+            .sheets
+            .iter()
+            .map(|sheet| {
+                let x = group_origin.x + cx;
+                let y = group_origin.y + (max_atlas_h - sheet.height as f32) * zoom * 0.5;
+                cx += (sheet.width as f32 + GAP) * zoom;
+                egui::pos2(x, y)
+            })
+            .collect()
+    };
+
+    let frame_offsets: Vec<usize> = {
+        let mut off = 0;
+        state
+            .sheets
+            .iter()
+            .map(|s| {
+                let o = off;
+                off += s.frames.len();
+                o
+            })
+            .collect()
+    };
 
     // Click to select a sprite
     if response.clicked() {
         if let Some(pos) = response.interact_pointer_pos() {
-            let ax = ((pos.x - img_origin.x) / zoom) as i32;
-            let ay = ((pos.y - img_origin.y) / zoom) as i32;
-            let hit = state.frames.iter().enumerate().find(|(_, f)| {
-                ax >= f.x as i32
-                    && ax < (f.x + f.w) as i32
-                    && ay >= f.y as i32
-                    && ay < (f.y + f.h) as i32
-            });
-            state.selected_frame = hit.map(|(i, _)| i);
+            let mut hit = None;
+            'search: for (si, sheet) in state.sheets.iter().enumerate() {
+                let origin = sheet_origins[si];
+                let ax = ((pos.x - origin.x) / zoom) as i32;
+                let ay = ((pos.y - origin.y) / zoom) as i32;
+                for (fi, f) in sheet.frames.iter().enumerate() {
+                    if ax >= f.x as i32
+                        && ax < (f.x + f.w) as i32
+                        && ay >= f.y as i32
+                        && ay < (f.y + f.h) as i32
+                    {
+                        hit = Some(frame_offsets[si] + fi);
+                        break 'search;
+                    }
+                }
+            }
+            state.selected_frame = hit;
         }
     }
 
-    // Dark background, then checkerboard only within atlas bounds
+    // Dark panel background
     painter.rect_filled(rect, 0.0, egui::Color32::from_rgb(35, 35, 35));
-    let checker_rect = img_rect.intersect(rect);
-    if checker_rect.is_positive() {
-        draw_checker(&painter, checker_rect);
-    }
 
     let full_uv = egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0));
-    let atlas_w = atlas_size[0] as f32;
-    let atlas_h = atlas_size[1] as f32;
+    let selected_frame = state.selected_frame;
 
-    if let Some(idx) = state.selected_frame {
-        if let Some(frame) = state.frames.get(idx) {
-            // Draw the full atlas dimmed
-            painter.image(
-                atlas.id(),
-                img_rect,
-                full_uv,
-                egui::Color32::from_rgb(60, 60, 60),
-            );
+    for (i, (sheet, texture)) in state.sheets.iter().zip(atlases.iter()).enumerate() {
+        let origin = sheet_origins[i];
+        let iw = sheet.width as f32 * zoom;
+        let ih = sheet.height as f32 * zoom;
+        let img_rect = egui::Rect::from_min_size(origin, egui::vec2(iw, ih));
+        let atlas_w = sheet.width as f32;
+        let atlas_h = sheet.height as f32;
 
-            // Draw the selected frame at full brightness
-            let fx = img_origin.x + frame.x as f32 * zoom;
-            let fy = img_origin.y + frame.y as f32 * zoom;
-            let fw = frame.w as f32 * zoom;
-            let fh = frame.h as f32 * zoom;
-            let frame_rect = egui::Rect::from_min_size(egui::pos2(fx, fy), egui::vec2(fw, fh));
-
-            let uv = egui::Rect::from_min_max(
-                egui::pos2(frame.x as f32 / atlas_w, frame.y as f32 / atlas_h),
-                egui::pos2(
-                    (frame.x + frame.w) as f32 / atlas_w,
-                    (frame.y + frame.h) as f32 / atlas_h,
-                ),
-            );
-            painter.image(atlas.id(), frame_rect, uv, egui::Color32::WHITE);
-
-            // Yellow highlight border
-            painter.rect_stroke(
-                frame_rect,
-                0.0,
-                egui::Stroke::new(2.0, egui::Color32::from_rgb(255, 200, 0)),
-            );
-        } else {
-            painter.image(atlas.id(), img_rect, full_uv, egui::Color32::WHITE);
+        // Checkerboard within this sheet's bounds
+        let checker_rect = img_rect.intersect(rect);
+        if checker_rect.is_positive() {
+            draw_checker(&painter, checker_rect);
         }
-    } else {
-        painter.image(atlas.id(), img_rect, full_uv, egui::Color32::WHITE);
+
+        // Is the selected frame on this sheet?
+        let sel_local = selected_frame
+            .filter(|&g| g >= frame_offsets[i] && g < frame_offsets[i] + sheet.frames.len())
+            .map(|g| g - frame_offsets[i]);
+
+        if let Some(local_idx) = sel_local {
+            if let Some(frame) = sheet.frames.get(local_idx) {
+                // Draw full atlas dimmed
+                painter.image(
+                    texture.id(),
+                    img_rect,
+                    full_uv,
+                    egui::Color32::from_rgb(60, 60, 60),
+                );
+
+                // Draw selected frame at full brightness
+                let fx = origin.x + frame.x as f32 * zoom;
+                let fy = origin.y + frame.y as f32 * zoom;
+                let frame_rect = egui::Rect::from_min_size(
+                    egui::pos2(fx, fy),
+                    egui::vec2(frame.w as f32 * zoom, frame.h as f32 * zoom),
+                );
+                let uv = egui::Rect::from_min_max(
+                    egui::pos2(frame.x as f32 / atlas_w, frame.y as f32 / atlas_h),
+                    egui::pos2(
+                        (frame.x + frame.w) as f32 / atlas_w,
+                        (frame.y + frame.h) as f32 / atlas_h,
+                    ),
+                );
+                painter.image(texture.id(), frame_rect, uv, egui::Color32::WHITE);
+
+                // Yellow highlight border
+                painter.rect_stroke(
+                    frame_rect,
+                    0.0,
+                    egui::Stroke::new(2.0, egui::Color32::from_rgb(255, 200, 0)),
+                );
+            } else {
+                painter.image(texture.id(), img_rect, full_uv, egui::Color32::WHITE);
+            }
+        } else {
+            painter.image(texture.id(), img_rect, full_uv, egui::Color32::WHITE);
+        }
+
+        // Per-sheet label when multiple sheets are present
+        if n > 1 {
+            painter.text(
+                egui::pos2(origin.x + 4.0, origin.y + ih - 4.0),
+                egui::Align2::LEFT_BOTTOM,
+                format!("Sheet {}: {}×{}", i + 1, sheet.width, sheet.height),
+                egui::FontId::proportional(10.0),
+                egui::Color32::WHITE,
+            );
+        }
     }
 
-    if let Some(sheet) = state.sheets.get(state.current_sheet) {
-        let text = format!(
-            "{}×{}   {} sprites   {} aliases   {} overflow   {:.0}%",
-            sheet.width,
-            sheet.height,
+    // Stats label at bottom-left of the panel
+    let stats_text = if n == 1 {
+        state.sheets.first().map(|sheet| {
+            format!(
+                "{}×{}   {} sprites   {} aliases   {} overflow   {:.0}%",
+                sheet.width,
+                sheet.height,
+                state.sprite_count,
+                state.alias_count,
+                state.overflow_count,
+                zoom * 100.0
+            )
+        })
+    } else {
+        Some(format!(
+            "{} sprites   {} aliases   {} overflow   {:.0}%",
             state.sprite_count,
             state.alias_count,
             state.overflow_count,
             zoom * 100.0
-        );
+        ))
+    };
+    if let Some(text) = stats_text {
         painter.text(
             rect.left_bottom() + egui::vec2(6.0, -6.0),
             egui::Align2::LEFT_BOTTOM,

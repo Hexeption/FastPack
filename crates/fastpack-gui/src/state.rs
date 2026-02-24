@@ -99,9 +99,7 @@ pub struct AppState {
 
     /// All packed sheets from the last successful pack.
     pub sheets: Vec<SheetData>,
-    /// Index of the sheet currently displayed in the atlas preview.
-    pub current_sheet: usize,
-    /// Frame entries for the currently displayed sheet (mirrors `sheets[current_sheet].frames`).
+    /// Frame entries from all sheets concatenated, in sheet order.
     pub frames: Vec<FrameInfo>,
     /// Counts from the last pack run.
     pub sprite_count: usize,
@@ -134,7 +132,6 @@ impl Default for AppState {
             dirty: false,
             log: Vec::new(),
             sheets: Vec::new(),
-            current_sheet: 0,
             frames: Vec::new(),
             sprite_count: 0,
             alias_count: 0,
