@@ -68,39 +68,27 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, atlases: &[egui::TextureHan
             .collect()
     };
 
-    let frame_offsets: Vec<usize> = {
-        let mut off = 0;
-        state
-            .sheets
-            .iter()
-            .map(|s| {
-                let o = off;
-                off += s.frames.len();
-                o
-            })
-            .collect()
-    };
-
     // Click to select a sprite
     if response.clicked() {
         if let Some(pos) = response.interact_pointer_pos() {
-            let mut hit = None;
+            let mut hit_id: Option<String> = None;
             'search: for (si, sheet) in state.sheets.iter().enumerate() {
                 let origin = sheet_origins[si];
                 let ax = ((pos.x - origin.x) / zoom) as i32;
                 let ay = ((pos.y - origin.y) / zoom) as i32;
-                for (fi, f) in sheet.frames.iter().enumerate() {
+                for f in sheet.frames.iter() {
                     if ax >= f.x as i32
                         && ax < (f.x + f.w) as i32
                         && ay >= f.y as i32
                         && ay < (f.y + f.h) as i32
                     {
-                        hit = Some(frame_offsets[si] + fi);
+                        hit_id = Some(f.id.clone());
                         break 'search;
                     }
                 }
             }
-            state.selected_frame = hit;
+            let new_sel = hit_id.and_then(|id| state.frames.iter().position(|f| f.id == id));
+            state.selected_frame = new_sel;
         }
     }
 
@@ -108,7 +96,10 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, atlases: &[egui::TextureHan
     painter.rect_filled(rect, 0.0, egui::Color32::from_rgb(35, 35, 35));
 
     let full_uv = egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0));
-    let selected_frame = state.selected_frame;
+    let selected_id: Option<String> = state
+        .selected_frame
+        .and_then(|i| state.frames.get(i))
+        .map(|f| f.id.clone());
 
     for (i, (sheet, texture)) in state.sheets.iter().zip(atlases.iter()).enumerate() {
         let origin = sheet_origins[i];
@@ -125,9 +116,9 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, atlases: &[egui::TextureHan
         }
 
         // Is the selected frame on this sheet?
-        let sel_local = selected_frame
-            .filter(|&g| g >= frame_offsets[i] && g < frame_offsets[i] + sheet.frames.len())
-            .map(|g| g - frame_offsets[i]);
+        let sel_local: Option<usize> = selected_id
+            .as_deref()
+            .and_then(|sel_id| sheet.frames.iter().position(|f| f.id == sel_id));
 
         if let Some(local_idx) = sel_local {
             if let Some(frame) = sheet.frames.get(local_idx) {

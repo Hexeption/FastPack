@@ -153,6 +153,7 @@ impl FastPackApp {
                             .iter()
                             .flat_map(|s| s.frames.iter().cloned())
                             .collect();
+                        self.state.frames.sort_unstable_by(|a, b| a.id.cmp(&b.id));
 
                         let sheet_count = self.state.sheets.len();
                         let (w, h) = self
