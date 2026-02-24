@@ -1,4 +1,5 @@
 pub mod alias;
+pub mod dither;
 pub mod extrude;
 pub mod loader;
 pub mod ninepatch;

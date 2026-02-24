@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use clap::{Args, Parser, Subcommand};
 use fastpack_core::types::{
     config::{DataFormat, PackMode, ScaleMode, SizeConstraint, TrimMode},
-    pixel_format::TextureFormat,
+    pixel_format::{PixelFormat, TextureFormat},
 };
 
 /// Root CLI entry point parsed by clap.
@@ -139,6 +139,10 @@ pub struct PackArgs {
     /// Output texture format (png, jpeg, webp, dxt1, dxt5).
     #[arg(long, value_enum, default_value = "png")]
     pub texture_format: TextureFormatArg,
+
+    /// Pixel bit depth; Floyd-Steinberg dithering is applied when not rgba8888.
+    #[arg(long, value_enum, default_value = "rgba8888")]
+    pub pixel_format: PixelFormatArg,
 }
 
 /// Arguments for the `init` subcommand.
@@ -302,6 +306,36 @@ impl From<TextureFormatArg> for TextureFormat {
             TextureFormatArg::Webp => TextureFormat::WebP,
             TextureFormatArg::Dxt1 => TextureFormat::Dxt1,
             TextureFormatArg::Dxt5 => TextureFormat::Dxt5,
+        }
+    }
+}
+
+/// Clap-facing pixel format enum.
+#[derive(Debug, Clone, clap::ValueEnum)]
+pub enum PixelFormatArg {
+    /// 32-bit RGBA (8 bits per channel). Default; no dithering applied.
+    Rgba8888,
+    /// 24-bit RGB (8 bits per channel, alpha forced to 255).
+    Rgb888,
+    /// 16-bit RGB (5-6-5). Floyd-Steinberg dithering applied.
+    Rgb565,
+    /// 16-bit RGBA (4 bits per channel). Floyd-Steinberg dithering applied.
+    Rgba4444,
+    /// 16-bit RGBA (5-5-5-1). Floyd-Steinberg dithering; alpha thresholded at 128.
+    Rgba5551,
+    /// 8-bit alpha only.
+    Alpha8,
+}
+
+impl From<PixelFormatArg> for PixelFormat {
+    fn from(arg: PixelFormatArg) -> Self {
+        match arg {
+            PixelFormatArg::Rgba8888 => PixelFormat::Rgba8888,
+            PixelFormatArg::Rgb888 => PixelFormat::Rgb888,
+            PixelFormatArg::Rgb565 => PixelFormat::Rgb565,
+            PixelFormatArg::Rgba4444 => PixelFormat::Rgba4444,
+            PixelFormatArg::Rgba5551 => PixelFormat::Rgba5551,
+            PixelFormatArg::Alpha8 => PixelFormat::Alpha8,
         }
     }
 }

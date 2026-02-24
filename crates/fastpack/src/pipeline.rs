@@ -15,11 +15,11 @@ use fastpack_core::{
         maxrects::MaxRects,
         packer::{PackInput, PackOutput, Packer, PlacedSprite},
     },
-    imaging::{alias::detect_aliases, extrude, loader, scale, trim},
+    imaging::{alias::detect_aliases, dither, extrude, loader, scale, trim},
     types::{
         atlas::{AtlasFrame, PackedAtlas},
         config::{DataFormat, LayoutConfig, ScaleVariant, SpriteConfig, SpriteOverride},
-        pixel_format::TextureFormat,
+        pixel_format::{PixelFormat, TextureFormat},
         rect::{Point, Rect, Size, SourceRect},
         sprite::Sprite,
     },
@@ -66,6 +66,8 @@ pub struct PackArgs {
     pub data_format: DataFormat,
     /// Output texture container / hardware compression format.
     pub texture_format: TextureFormat,
+    /// Pixel-level bit depth. Dithering is applied when this is not Rgba8888.
+    pub pixel_format: PixelFormat,
 }
 
 /// Per-sheet output produced by a pack run.
@@ -232,6 +234,9 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
             // 6. Compose
             let atlas_image = compose(&pack_output.placed, &pack_output.atlas_size);
 
+            // 6.5. Dither to target pixel format (no-op for Rgba8888).
+            let atlas_image = dither::dither(&atlas_image, args.pixel_format);
+
             // 7. Build packed atlas metadata (variant aliases only on the first sheet).
             let sheet_aliases = if variant_sheet_index == 0 {
                 &variant_aliases[..]
@@ -292,7 +297,7 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
             .map(|(atlas, fname)| ExportInput {
                 atlas,
                 texture_filename: fname.clone(),
-                pixel_format: args.texture_format.to_string().to_uppercase(),
+                pixel_format: args.pixel_format.to_string(),
             })
             .collect();
 
