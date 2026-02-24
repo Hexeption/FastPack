@@ -3,8 +3,8 @@ use std::path::PathBuf;
 use eframe::egui;
 use fastpack_core::types::{
     config::{
-        AlgorithmConfig, MaxRectsHeuristic, PackMode, ScaleMode, ScaleVariant, SizeConstraint,
-        TrimMode,
+        AlgorithmConfig, DataFormat, MaxRectsHeuristic, PackMode, ScaleMode, ScaleVariant,
+        SizeConstraint, TrimMode,
     },
     pixel_format::{PixelFormat, TextureFormat},
 };
@@ -150,21 +150,27 @@ pub fn show_texture(ui: &mut egui::Ui, state: &mut AppState) {
     });
 
     setting_row(ui, &t!("settings.data_format"), |ui| {
-        let prev = cfg.data_format.clone();
+        let prev = cfg.data_format;
         egui::ComboBox::from_id_salt("data_format")
-            .selected_text(&cfg.data_format)
+            .selected_text(match cfg.data_format {
+                DataFormat::JsonHash => "json_hash",
+                DataFormat::JsonArray => "json_array",
+                DataFormat::Phaser3 => "phaser3",
+                DataFormat::Pixijs => "pixijs",
+            })
             .width(120.0)
             .show_ui(ui, |ui| {
-                for fmt in ["json_hash", "phaser3", "pixijs"] {
-                    ui.selectable_value(&mut cfg.data_format, fmt.to_string(), fmt);
-                }
+                ui.selectable_value(&mut cfg.data_format, DataFormat::JsonHash, "json_hash");
+                ui.selectable_value(&mut cfg.data_format, DataFormat::JsonArray, "json_array");
+                ui.selectable_value(&mut cfg.data_format, DataFormat::Phaser3, "phaser3");
+                ui.selectable_value(&mut cfg.data_format, DataFormat::Pixijs, "pixijs");
             });
         if cfg.data_format != prev {
             *dirty = true;
         }
     });
 
-    let is_phaser3 = cfg.data_format == "phaser3";
+    let is_phaser3 = cfg.data_format == DataFormat::Phaser3;
 
     if !is_phaser3 {
         setting_row(ui, &t!("settings.premultiply_alpha"), |ui| {
@@ -472,7 +478,7 @@ pub fn show_sprites(ui: &mut egui::Ui, state: &mut AppState) {
         pending,
         ..
     } = state;
-    let is_phaser3 = project.config.output.data_format == "phaser3";
+    let is_phaser3 = project.config.output.data_format == DataFormat::Phaser3;
     if is_phaser3 && project.config.sprites.trim_mode == TrimMode::Polygon {
         project.config.sprites.trim_mode = TrimMode::Trim;
         *dirty = true;

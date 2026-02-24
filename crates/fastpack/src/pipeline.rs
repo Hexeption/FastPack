@@ -13,7 +13,7 @@ use fastpack_core::{
     imaging::{alias::detect_aliases, extrude, loader, scale, trim},
     types::{
         atlas::{AtlasFrame, PackedAtlas},
-        config::{LayoutConfig, ScaleVariant, SpriteConfig, SpriteOverride},
+        config::{DataFormat, LayoutConfig, ScaleVariant, SpriteConfig, SpriteOverride},
         rect::{Point, Rect, Size, SourceRect},
         sprite::Sprite,
     },
@@ -56,8 +56,8 @@ pub struct PackArgs {
     pub sprite_overrides: Vec<SpriteOverride>,
     /// Scale variants to produce. An empty list is treated as a single @1x variant.
     pub variants: Vec<ScaleVariant>,
-    /// Export data format identifier (e.g. `"json_hash"`, `"phaser3"`).
-    pub data_format: String,
+    /// Output data serialization format.
+    pub data_format: DataFormat,
 }
 
 /// Per-sheet output produced by a pack run.
@@ -275,7 +275,7 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
         }
 
         // 10. Export data files for this variant.
-        let exporter = select_exporter(&args.data_format);
+        let exporter = select_exporter(args.data_format);
         let export_inputs: Vec<ExportInput<'_>> = variant_atlases
             .iter()
             .zip(&variant_tex_filenames)
@@ -334,12 +334,12 @@ fn sheet_filename(name: &str, suffix: &str, index: usize) -> (String, String) {
     }
 }
 
-fn select_exporter(data_format: &str) -> Box<dyn Exporter> {
+fn select_exporter(data_format: DataFormat) -> Box<dyn Exporter> {
     match data_format {
-        "json_array" => Box::new(JsonArrayExporter),
-        "phaser3" => Box::new(Phaser3Exporter),
-        "pixijs" => Box::new(PixiJsExporter),
-        _ => Box::new(JsonHashExporter),
+        DataFormat::JsonArray => Box::new(JsonArrayExporter),
+        DataFormat::Phaser3 => Box::new(Phaser3Exporter),
+        DataFormat::Pixijs => Box::new(PixiJsExporter),
+        DataFormat::JsonHash => Box::new(JsonHashExporter),
     }
 }
 

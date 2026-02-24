@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use clap::{Args, Parser, Subcommand};
-use fastpack_core::types::config::{PackMode, ScaleMode, SizeConstraint, TrimMode};
+use fastpack_core::types::config::{DataFormat, PackMode, ScaleMode, SizeConstraint, TrimMode};
 
 /// Root CLI entry point parsed by clap.
 #[derive(Debug, Parser)]
@@ -129,9 +129,9 @@ pub struct PackArgs {
     #[arg(long, value_enum, default_value = "smooth")]
     pub scale_mode: ScaleModeArg,
 
-    /// Output data format (e.g. json_hash, phaser3).
-    #[arg(long, default_value = "json_hash")]
-    pub data_format: String,
+    /// Output data format.
+    #[arg(long, value_enum, default_value = "json-hash")]
+    pub data_format: DataFormatArg,
 }
 
 /// Arguments for the `init` subcommand.
@@ -244,6 +244,30 @@ impl From<TrimModeArg> for TrimMode {
             TrimModeArg::Crop => TrimMode::Crop,
             TrimModeArg::CropKeepPos => TrimMode::CropKeepPos,
             TrimModeArg::Polygon => TrimMode::Polygon,
+        }
+    }
+}
+
+/// Clap-facing data format enum.
+#[derive(Debug, Clone, clap::ValueEnum)]
+pub enum DataFormatArg {
+    /// Generic JSON object keyed by sprite name.
+    JsonHash,
+    /// JSON array of frame objects.
+    JsonArray,
+    /// Phaser 3 multi-atlas format.
+    Phaser3,
+    /// PixiJS sprite sheet format.
+    Pixijs,
+}
+
+impl From<DataFormatArg> for DataFormat {
+    fn from(arg: DataFormatArg) -> Self {
+        match arg {
+            DataFormatArg::JsonHash => DataFormat::JsonHash,
+            DataFormatArg::JsonArray => DataFormat::JsonArray,
+            DataFormatArg::Phaser3 => DataFormat::Phaser3,
+            DataFormatArg::Pixijs => DataFormat::Pixijs,
         }
     }
 }

@@ -2,7 +2,7 @@ use std::{path::PathBuf, sync::mpsc, time::Duration};
 
 use anyhow::Result;
 use fastpack_core::types::{
-    config::{LayoutConfig, ScaleVariant, SpriteConfig, SpriteOverride},
+    config::{DataFormat, LayoutConfig, ScaleVariant, SpriteConfig, SpriteOverride},
     rect::Point,
 };
 use notify_debouncer_mini::new_debouncer;
@@ -30,8 +30,8 @@ pub struct WatchArgs {
     pub sprite_overrides: Vec<SpriteOverride>,
     /// Scale variants to produce. An empty list is treated as a single @1x variant.
     pub variants: Vec<ScaleVariant>,
-    /// Export data format identifier (e.g. `"json_hash"`, `"phaser3"`).
-    pub data_format: String,
+    /// Output data serialization format.
+    pub data_format: DataFormat,
 }
 
 /// Watch input directories and repack on any change.
@@ -86,7 +86,7 @@ fn run_once(args: &WatchArgs) -> Result<()> {
         default_pivot: args.default_pivot,
         sprite_overrides: args.sprite_overrides.clone(),
         variants: args.variants.clone(),
-        data_format: args.data_format.clone(),
+        data_format: args.data_format,
     })?;
 
     let alias_note = if result.alias_count > 0 {

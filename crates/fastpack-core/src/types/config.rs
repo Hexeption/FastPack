@@ -300,6 +300,21 @@ impl Default for SpriteConfig {
     }
 }
 
+/// Output data serialization format.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum DataFormat {
+    /// Generic JSON object keyed by sprite name.
+    JsonHash,
+    /// JSON array of frame objects.
+    JsonArray,
+    /// Phaser 3 multi-atlas format.
+    #[default]
+    Phaser3,
+    /// PixiJS sprite sheet format.
+    Pixijs,
+}
+
 /// Output file format and path settings.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OutputConfig {
@@ -313,8 +328,8 @@ pub struct OutputConfig {
     pub pixel_format: PixelFormat,
     /// Multiply RGB by alpha before encoding.
     pub premultiply_alpha: bool,
-    /// Data format key (e.g. `"json_hash"`, `"phaser3"`, `"pixijs"`).
-    pub data_format: String,
+    /// Output data serialization format.
+    pub data_format: DataFormat,
     /// Quality for lossy codecs (0–100).
     pub quality: u8,
     /// Path prefix inserted into texture filenames within data files.
@@ -331,7 +346,7 @@ impl Default for OutputConfig {
             texture_format: TextureFormat::Png,
             pixel_format: PixelFormat::Rgba8888,
             premultiply_alpha: false,
-            data_format: "phaser3".to_string(),
+            data_format: DataFormat::Phaser3,
             quality: 95,
             texture_path_prefix: String::new(),
             multipack: false,

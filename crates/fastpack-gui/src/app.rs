@@ -7,6 +7,7 @@ use fastpack_compress::{
 };
 use fastpack_core::types::{
     atlas::PackedAtlas,
+    config::DataFormat,
     pixel_format::{PixelFormat, TextureFormat},
     rect::Size,
 };
@@ -378,7 +379,7 @@ impl FastPackApp {
         let texture_format = out_cfg.texture_format;
         let pixel_format = out_cfg.pixel_format;
         let quality = out_cfg.quality;
-        let data_format = out_cfg.data_format.clone();
+        let data_format = out_cfg.data_format;
         let name = out_cfg.name.clone();
         let pack_mode = self.state.project.config.layout.pack_mode;
 
@@ -403,11 +404,11 @@ impl FastPackApp {
             PixelFormat::Alpha8 => "ALPHA8",
         };
 
-        let exporter: Box<dyn Exporter> = match data_format.as_str() {
-            "json_array" => Box::new(JsonArrayExporter),
-            "phaser3" => Box::new(Phaser3Exporter),
-            "pixijs" => Box::new(PixiJsExporter),
-            _ => Box::new(JsonHashExporter),
+        let exporter: Box<dyn Exporter> = match data_format {
+            DataFormat::JsonArray => Box::new(JsonArrayExporter),
+            DataFormat::Phaser3 => Box::new(Phaser3Exporter),
+            DataFormat::Pixijs => Box::new(PixiJsExporter),
+            DataFormat::JsonHash => Box::new(JsonHashExporter),
         };
 
         let sheet_base = |i: usize| -> String {

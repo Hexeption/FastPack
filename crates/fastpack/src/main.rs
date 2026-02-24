@@ -10,7 +10,7 @@ mod watch;
 use anyhow::{Result, bail};
 use clap::Parser;
 use fastpack_core::types::{
-    config::{LayoutConfig, Project, ScaleVariant, SpriteConfig},
+    config::{DataFormat, LayoutConfig, Project, ScaleVariant, SpriteConfig},
     rect::Point,
 };
 
@@ -148,7 +148,7 @@ type PackFields = (
     SpriteConfig,
     Vec<fastpack_core::types::config::SpriteOverride>,
     Vec<ScaleVariant>,
-    String,
+    DataFormat,
 );
 
 /// Resolve pack fields from either a project file or bare CLI flags.
@@ -172,7 +172,7 @@ fn resolve_pack_fields(args: &cli::PackArgs) -> Result<PackFields> {
             proj.config.sprites.clone(),
             proj.config.sprite_overrides.clone(),
             proj.config.variants.clone(),
-            proj.config.output.data_format.clone(),
+            proj.config.output.data_format,
         ))
     } else {
         if args.inputs.is_empty() {
@@ -213,7 +213,7 @@ fn resolve_pack_fields(args: &cli::PackArgs) -> Result<PackFields> {
             sprite_config,
             Vec::new(),
             vec![variant],
-            args.data_format.clone(),
+            args.data_format.clone().into(),
         ))
     }
 }
