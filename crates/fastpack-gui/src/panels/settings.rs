@@ -432,16 +432,6 @@ fn show_layout(ui: &mut egui::Ui, state: &mut AppState) {
             pending.pack = true;
         }
     });
-
-    setting_row(ui, "Detect identical sprites", |ui| {
-        if ui
-            .checkbox(&mut project.config.sprites.detect_aliases, "")
-            .changed()
-        {
-            *dirty = true;
-            pending.pack = true;
-        }
-    });
 }
 
 fn show_sprites(ui: &mut egui::Ui, state: &mut AppState) {
@@ -542,6 +532,13 @@ fn show_sprites(ui: &mut egui::Ui, state: &mut AppState) {
             .changed()
         {
             *dirty = true;
+        }
+    });
+
+    setting_row(ui, "Detect identical sprites", |ui| {
+        if ui.checkbox(&mut cfg.detect_aliases, "").changed() {
+            *dirty = true;
+            pending.pack = true;
         }
     });
 }
