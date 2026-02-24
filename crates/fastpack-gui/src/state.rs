@@ -71,6 +71,8 @@ impl LogEntry {
 pub struct FrameInfo {
     /// Sprite identifier used in export data.
     pub id: String,
+    /// Index of the atlas sheet this frame lives on.
+    pub sheet_idx: usize,
     /// Packed X position in atlas pixels.
     pub x: u32,
     /// Packed Y position in atlas pixels.

@@ -106,7 +106,7 @@ impl eframe::App for FastPackApp {
             .default_width(220.0)
             .resizable(true)
             .show(ctx, |ui| {
-                sprite_list::show(ui, &mut self.state);
+                sprite_list::show(ui, &mut self.state, &self.atlas_textures);
             });
 
         egui::SidePanel::right("settings")
@@ -169,7 +169,7 @@ impl FastPackApp {
                         self.atlas_textures.clear();
                         self.state.sheets.clear();
 
-                        for sheet in output.sheets {
+                        for (sheet_idx, sheet) in output.sheets.into_iter().enumerate() {
                             let color_image = egui::ColorImage::from_rgba_unmultiplied(
                                 [sheet.width as usize, sheet.height as usize],
                                 &sheet.rgba,
@@ -184,6 +184,7 @@ impl FastPackApp {
                                 .into_iter()
                                 .map(|f| crate::state::FrameInfo {
                                     id: f.id,
+                                    sheet_idx,
                                     x: f.x,
                                     y: f.y,
                                     w: f.w,
