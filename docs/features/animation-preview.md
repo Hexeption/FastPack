@@ -13,10 +13,10 @@ Pack your atlas, then select two or more sprites in the sprite list. Sprites can
 
 Once two or more sprites are selected, open the animation preview with:
 
-- The **Preview Animation [P]** button at the bottom of the sprite list, or
-- The **P** key (no modifier)
+- The **Preview Animation [P]** button in the toolbar or at the bottom of the sprite list, or
+- The **P** key (no modifier, default binding)
 
-Pressing P again closes the window.
+Pressing P again closes the window. The P binding is the default — it can be changed in Edit → Preferences → Keybinds.
 
 ## Controls
 
@@ -44,6 +44,6 @@ The canvas is a fixed viewport. It does not resize when switching between frames
 
 Frame advance uses the frame's delta time (`unstable_dt`) accumulated against the selected FPS. If a frame takes longer than expected (e.g. the window is hidden or the process is paused), accumulated time is consumed in a loop to catch up rather than skipping frames entirely.
 
-Zoom and pan persist while the window is open. They reset to defaults when the window is reopened from the button or P key.
+Zoom and pan persist while the window is open. They reset to defaults when the window is reopened from the button or the animation preview keybind.
 
 Alias sprites (detected duplicates) appear in the list and can be included in an animation selection. They share the same atlas region as their canonical sprite, so they render identically.

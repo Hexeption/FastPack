@@ -70,6 +70,96 @@ impl Language {
     ];
 }
 
+/// A single configurable keyboard shortcut.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct KeyBind {
+    pub key: String,
+    #[serde(default)]
+    pub ctrl: bool,
+    #[serde(default)]
+    pub shift: bool,
+    #[serde(default)]
+    pub alt: bool,
+}
+
+impl KeyBind {
+    pub fn ctrl(key: &str) -> Self {
+        Self {
+            key: key.to_owned(),
+            ctrl: true,
+            shift: false,
+            alt: false,
+        }
+    }
+
+    pub fn bare(key: &str) -> Self {
+        Self {
+            key: key.to_owned(),
+            ctrl: false,
+            shift: false,
+            alt: false,
+        }
+    }
+
+    pub fn display(&self) -> String {
+        let mut parts: Vec<&str> = Vec::new();
+        if self.ctrl {
+            parts.push("Ctrl");
+        }
+        if self.alt {
+            parts.push("Alt");
+        }
+        if self.shift {
+            parts.push("Shift");
+        }
+        parts.push(self.key.as_str());
+        parts.join("+")
+    }
+
+    pub fn default_new_project() -> Self {
+        Self::ctrl("N")
+    }
+    pub fn default_open_project() -> Self {
+        Self::ctrl("O")
+    }
+    pub fn default_save_project() -> Self {
+        Self::ctrl("S")
+    }
+    pub fn default_export() -> Self {
+        Self::ctrl("P")
+    }
+    pub fn default_anim_preview() -> Self {
+        Self::bare("P")
+    }
+}
+
+/// All configurable keyboard shortcuts.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Keybinds {
+    #[serde(default = "KeyBind::default_new_project")]
+    pub new_project: KeyBind,
+    #[serde(default = "KeyBind::default_open_project")]
+    pub open_project: KeyBind,
+    #[serde(default = "KeyBind::default_save_project")]
+    pub save_project: KeyBind,
+    #[serde(default = "KeyBind::default_export")]
+    pub export: KeyBind,
+    #[serde(default = "KeyBind::default_anim_preview")]
+    pub anim_preview: KeyBind,
+}
+
+impl Default for Keybinds {
+    fn default() -> Self {
+        Self {
+            new_project: KeyBind::default_new_project(),
+            open_project: KeyBind::default_open_project(),
+            save_project: KeyBind::default_save_project(),
+            export: KeyBind::default_export(),
+            anim_preview: KeyBind::default_anim_preview(),
+        }
+    }
+}
+
 /// Persistent user preferences saved to `~/.config/FastPack/prefs.toml`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Preferences {
@@ -85,6 +175,9 @@ pub struct Preferences {
     /// UI display language.
     #[serde(default)]
     pub language: Language,
+    /// Keyboard shortcuts.
+    #[serde(default)]
+    pub keybinds: Keybinds,
 }
 
 fn default_true() -> bool {
@@ -98,6 +191,7 @@ impl Default for Preferences {
             auto_check_updates: true,
             default_config: PackerConfig::default(),
             language: Language::En,
+            keybinds: Keybinds::default(),
         }
     }
 }

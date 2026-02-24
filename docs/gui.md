@@ -16,7 +16,7 @@ The window is divided into five panels.
 
 **Menu bar** — top strip with File and Atlas menus.
 
-**Toolbar** — below the menu bar. Has an Export button, an Add Sprites button, source count indicator, and a Light/Dark theme toggle.
+**Toolbar** — below the menu bar. Has an Export button, an Add Sprites button, a Preview Animation button (enabled when two or more sprites are selected), source count indicator, and a Light/Dark theme toggle.
 
 **Sprite list** (left panel) — shows source directories at the top and packed frame list below. Resizable by dragging its border.
 
@@ -82,9 +82,10 @@ Ctrl+N   New project
 Ctrl+O   Open project file
 Ctrl+S   Save project file
 Ctrl+P   Export atlas to disk
+P        Open/close animation preview (when two or more sprites are selected)
 ```
 
-Shortcuts work both through the menus and directly while any panel has focus.
+Shortcuts work both through the menus and directly while any panel has focus. All shortcuts can be rebound in Edit → Preferences → Keybinds. See `docs/features/keybinds.md`.
 
 ## Drag and Drop
 

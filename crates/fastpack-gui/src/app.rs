@@ -87,7 +87,7 @@ impl eframe::App for FastPackApp {
         ctx.send_viewport_cmd(egui::ViewportCommand::Title(self.state.window_title()));
 
         egui::TopBottomPanel::top("menu_bar").show(ctx, |ui| {
-            menu::show(ui, &mut self.state);
+            menu::show(ui, &mut self.state, &self.prefs.keybinds);
         });
 
         egui::TopBottomPanel::top("toolbar").show(ctx, |ui| {

@@ -6,7 +6,7 @@ use rust_i18n::t;
 
 use crate::{
     panels::settings,
-    preferences::{Language, Preferences},
+    preferences::{KeyBind, Keybinds, Language, Preferences},
     state::AppState,
     updater::{self, UpdateMsg, UpdateStatus},
 };
@@ -17,6 +17,7 @@ enum Tab {
     General,
     Defaults,
     Updates,
+    Keybinds,
 }
 
 /// Render the preferences window and poll pending update messages.
@@ -42,6 +43,7 @@ pub fn show(
                 ui.selectable_value(&mut tab, Tab::General, t!("prefs.tab_general"));
                 ui.selectable_value(&mut tab, Tab::Defaults, t!("prefs.tab_defaults"));
                 ui.selectable_value(&mut tab, Tab::Updates, t!("prefs.tab_updates"));
+                ui.selectable_value(&mut tab, Tab::Keybinds, "Keybinds");
             });
             ui.separator();
 
@@ -51,6 +53,7 @@ pub fn show(
                 Tab::General => show_general(ui, prefs),
                 Tab::Defaults => show_defaults(ui, prefs),
                 Tab::Updates => show_updates(ui, prefs, update_status, update_rx),
+                Tab::Keybinds => show_keybinds(ui, prefs),
             }
         });
 }
@@ -260,4 +263,108 @@ fn show_updates(
             }
         }
     }
+}
+
+fn show_keybinds(ui: &mut egui::Ui, prefs: &mut Preferences) {
+    let cap_id = egui::Id::new("kb_capturing");
+    let mut cap: u8 = ui.ctx().data(|d| d.get_temp(cap_id).unwrap_or(0));
+    let mut save = false;
+
+    if cap != 0 {
+        let mut captured: Option<KeyBind> = None;
+        let mut canceled = false;
+        ui.ctx().input(|i| {
+            for event in &i.events {
+                if let egui::Event::Key {
+                    key,
+                    pressed: true,
+                    modifiers,
+                    ..
+                } = event
+                {
+                    if *key == egui::Key::Escape {
+                        canceled = true;
+                    } else if let Some(name) = crate::menu::egui_key_to_str(*key) {
+                        captured = Some(KeyBind {
+                            key: name.to_owned(),
+                            ctrl: modifiers.ctrl,
+                            shift: modifiers.shift,
+                            alt: modifiers.alt,
+                        });
+                    }
+                }
+            }
+        });
+        if canceled {
+            cap = 0;
+        }
+        if let Some(bind) = captured {
+            match cap {
+                1 => prefs.keybinds.new_project = bind,
+                2 => prefs.keybinds.open_project = bind,
+                3 => prefs.keybinds.save_project = bind,
+                4 => prefs.keybinds.export = bind,
+                5 => prefs.keybinds.anim_preview = bind,
+                _ => {}
+            }
+            cap = 0;
+            save = true;
+        }
+        ui.ctx().request_repaint();
+    }
+
+    ui.ctx().data_mut(|d| d.insert_temp(cap_id, cap));
+
+    ui.add_space(4.0);
+    if keybind_row(ui, "New Project", &prefs.keybinds.new_project, cap == 1) {
+        cap = 1;
+    }
+    if keybind_row(ui, "Open Project", &prefs.keybinds.open_project, cap == 2) {
+        cap = 2;
+    }
+    if keybind_row(ui, "Save Project", &prefs.keybinds.save_project, cap == 3) {
+        cap = 3;
+    }
+    if keybind_row(ui, "Export", &prefs.keybinds.export, cap == 4) {
+        cap = 4;
+    }
+    if keybind_row(
+        ui,
+        "Animation Preview",
+        &prefs.keybinds.anim_preview,
+        cap == 5,
+    ) {
+        cap = 5;
+    }
+
+    ui.ctx().data_mut(|d| d.insert_temp(cap_id, cap));
+
+    ui.add_space(8.0);
+    if ui.button("Reset to defaults").clicked() {
+        prefs.keybinds = Keybinds::default();
+        save = true;
+    }
+
+    if save {
+        prefs.save();
+    }
+}
+
+fn keybind_row(ui: &mut egui::Ui, label: &str, bind: &KeyBind, capturing: bool) -> bool {
+    let mut clicked = false;
+    ui.horizontal(|ui| {
+        ui.label(egui::RichText::new(label).strong());
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            if capturing {
+                ui.label(egui::RichText::new("Press any key...").weak().italics());
+            } else {
+                if ui.small_button("Change").clicked() {
+                    clicked = true;
+                }
+                ui.label(bind.display());
+            }
+        });
+    });
+    ui.separator();
+    clicked
 }

@@ -3,6 +3,10 @@
 The Preferences window lets you set app-wide options that persist across projects.
 Open it from Edit → Preferences…
 
+## General tab
+
+Sets the UI language. FastPack ships with translations for English, French, Spanish, German, Italian, Portuguese, Japanese, Simplified Chinese, and Korean. Changing the language takes effect immediately.
+
 ## Defaults tab
 
 Every setting from the right-side panel is available here: Texture, Layout, Sprites, and Variants.
@@ -18,6 +22,14 @@ The preferences file is stored at:
 - Linux: `~/.config/FastPack/prefs.toml`
 
 It is plain TOML. You can edit it by hand or delete it to reset all defaults.
+
+## Keybinds tab
+
+All five keyboard shortcuts can be rebound here. Click **Change** next to an action, then press the new key combination. Modifier keys (Ctrl, Alt, Shift) are captured as part of the binding. Press **Escape** to cancel without making a change. **Reset to defaults** restores all five shortcuts at once.
+
+Supported keys: A–Z, 0–9, F1–F12, Enter, Space, Tab, Delete, Backspace, Home, End, Insert.
+
+Bindings are stored in the `[keybinds]` section of the preferences file. See `docs/features/keybinds.md` for the full list of defaults.
 
 ## Updates tab
 
