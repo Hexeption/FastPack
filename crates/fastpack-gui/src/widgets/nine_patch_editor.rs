@@ -28,7 +28,7 @@ pub fn show(
         return changed;
     };
 
-    let preview_size = egui::vec2(96.0, 96.0);
+    let preview_size = egui::vec2(64.0, 64.0);
     let (_, painter) = ui.allocate_painter(preview_size, egui::Sense::hover());
     let rect = painter.clip_rect();
     draw_checker(&painter, rect);

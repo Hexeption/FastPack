@@ -52,20 +52,23 @@ impl eframe::App for FastPackApp {
 
         egui::TopBottomPanel::bottom("output_log")
             .min_height(80.0)
+            .default_height(100.0)
             .resizable(true)
             .show(ctx, |ui| {
                 output_log::show(ui, &mut self.state);
             });
 
         egui::SidePanel::left("sprite_list")
-            .min_width(160.0)
+            .min_width(180.0)
+            .default_width(220.0)
             .resizable(true)
             .show(ctx, |ui| {
                 sprite_list::show(ui, &mut self.state);
             });
 
         egui::SidePanel::right("settings")
-            .min_width(220.0)
+            .min_width(260.0)
+            .default_width(280.0)
             .resizable(true)
             .show(ctx, |ui| {
                 settings::show(ui, &mut self.state);

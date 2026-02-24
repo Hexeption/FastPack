@@ -18,7 +18,7 @@ pub fn show(ui: &mut egui::Ui, pivot: &mut Option<Point>) -> bool {
         return changed;
     };
 
-    let preview_size = egui::vec2(80.0, 80.0);
+    let preview_size = egui::vec2(56.0, 56.0);
     let (response, painter) = ui.allocate_painter(preview_size, egui::Sense::click_and_drag());
     let rect = response.rect;
 

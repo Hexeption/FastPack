@@ -55,7 +55,7 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
     }
 
     egui::ScrollArea::vertical()
-        .max_height(200.0)
+        .auto_shrink([false, false])
         .show(ui, |ui| {
             for (i, frame) in state.frames.iter().enumerate() {
                 let selected = state.selected_frame == Some(i);
@@ -117,12 +117,9 @@ fn show_sprite_detail(ui: &mut egui::Ui, state: &mut AppState) {
         if np_chg || pv_chg {
             state.dirty = true;
         }
-        let empty = state.project.config.sprite_overrides[idx]
-            .nine_patch
-            .is_none()
-            && state.project.config.sprite_overrides[idx].pivot.is_none();
-        if empty {
+        if ui.small_button("Remove Override").clicked() {
             state.project.config.sprite_overrides.remove(idx);
+            state.dirty = true;
         }
     } else if ui.small_button("Add Override").clicked() {
         state.project.config.sprite_overrides.push(SpriteOverride {

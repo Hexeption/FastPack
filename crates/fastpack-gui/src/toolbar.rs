@@ -3,6 +3,7 @@ use eframe::egui;
 use crate::state::AppState;
 
 pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
+    ui.add_space(2.0);
     ui.horizontal(|ui| {
         let export_label = if state.packing {
             "Exporting..."
@@ -33,4 +34,5 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
             }
         });
     });
+    ui.add_space(2.0);
 }

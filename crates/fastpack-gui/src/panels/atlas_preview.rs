@@ -27,7 +27,7 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, atlas: Option<&egui::Textur
 
     let scroll_y = ui.input(|i| i.smooth_scroll_delta.y);
     if response.hovered() && scroll_y != 0.0 {
-        let factor: f32 = if scroll_y > 0.0 { 1.1 } else { 1.0 / 1.1 };
+        let factor: f32 = if scroll_y > 0.0 { 1.04 } else { 1.0 / 1.04 };
         state.atlas_zoom = (state.atlas_zoom * factor).clamp(0.05, 64.0);
     }
 
@@ -40,7 +40,7 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, atlas: Option<&egui::Textur
     let zoom = state.atlas_zoom;
     let pan = egui::vec2(state.atlas_pan[0], state.atlas_pan[1]);
 
-    painter.rect_filled(rect, 0.0, egui::Color32::from_gray(35));
+    painter.rect_filled(rect, 0.0, egui::Color32::from_rgb(35, 35, 35));
     draw_checker(&painter, rect);
 
     let atlas_size = atlas.size();
@@ -93,8 +93,8 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, atlas: Option<&egui::Textur
 
 fn draw_checker(painter: &egui::Painter, rect: egui::Rect) {
     let tile = 8.0_f32;
-    let c1 = egui::Color32::from_gray(50);
-    let c2 = egui::Color32::from_gray(70);
+    let c1 = egui::Color32::from_rgb(50, 50, 50);
+    let c2 = egui::Color32::from_rgb(60, 60, 60);
     let mut x = (rect.min.x / tile).floor() * tile;
     while x < rect.max.x {
         let mut y = (rect.min.y / tile).floor() * tile;

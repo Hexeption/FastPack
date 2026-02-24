@@ -11,6 +11,8 @@ pub mod worker;
 
 use std::path::PathBuf;
 
+use eframe::egui;
+
 /// Launch the native GUI window.
 ///
 /// `project_path` is the optional `.fpsheet` file to open on startup.
@@ -28,7 +30,10 @@ pub fn run(project_path: Option<PathBuf>) -> anyhow::Result<()> {
             Err(e) => app.state.log_error(format!("Failed to read project: {e}")),
         }
     }
-    let options = eframe::NativeOptions::default();
+    let options = eframe::NativeOptions {
+        viewport: egui::ViewportBuilder::default().with_inner_size([1280.0, 800.0]),
+        ..Default::default()
+    };
     eframe::run_native(
         "FastPack",
         options,
