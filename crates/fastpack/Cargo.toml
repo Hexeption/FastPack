@@ -45,3 +45,6 @@ humansize             = "2"
 [dev-dependencies]
 tempfile           = "3"
 serde_json.workspace = true
+
+[target.'cfg(windows)'.build-dependencies]
+winresource = "0.1"

@@ -4,3 +4,5 @@
 tmp*
 examples/output/
 examples/sprites/
+crates/fastpack/wix/AppIcon.ico
+.wix/

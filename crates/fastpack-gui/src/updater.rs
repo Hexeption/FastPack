@@ -148,59 +148,86 @@ fn parse_version(v: &str) -> (u32, u32, u32) {
 
 #[cfg(target_os = "windows")]
 fn platform_asset_suffix() -> &'static str {
-    "windows-x86_64.exe"
+    "windows-x86_64.msi"
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
 fn platform_asset_suffix() -> &'static str {
-    "macos-aarch64"
+    "macos-aarch64.dmg"
+}
+
+#[cfg(all(target_os = "macos", target_arch = "x86_64"))]
+fn platform_asset_suffix() -> &'static str {
+    "macos-x86_64.dmg"
 }
 
 #[cfg(not(any(target_os = "windows", target_os = "macos")))]
 fn platform_asset_suffix() -> &'static str {
-    "linux-x86_64"
+    "linux-x86_64.tar.gz"
 }
 
 #[cfg(target_os = "windows")]
 fn download_filename() -> &'static str {
-    "fastpack_update_download.exe"
+    "fastpack_update.msi"
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(target_os = "macos")]
 fn download_filename() -> &'static str {
-    "fastpack_update_download"
+    "fastpack_update.dmg"
+}
+
+#[cfg(not(any(target_os = "windows", target_os = "macos")))]
+fn download_filename() -> &'static str {
+    "fastpack_update.tar.gz"
 }
 
 #[cfg(target_os = "windows")]
 fn do_apply(downloaded: &std::path::Path) -> Result<(), String> {
-    let current = std::env::current_exe().map_err(|e| e.to_string())?;
-    let bat = format!(
-        "@echo off\r\ntimeout /t 2 /nobreak >nul\r\ncopy /y \"{src}\" \"{dst}\"\r\nstart \"\" \"{dst}\"\r\n",
-        src = downloaded.display(),
-        dst = current.display(),
-    );
-    let bat_path = std::env::temp_dir().join("fastpack_update.bat");
-    std::fs::write(&bat_path, bat.as_bytes()).map_err(|e| e.to_string())?;
-    std::process::Command::new("cmd")
-        .args(["/C", bat_path.to_str().unwrap_or("")])
+    std::process::Command::new("msiexec")
+        .args(["/i", downloaded.to_str().unwrap_or(""), "/passive"])
         .spawn()
         .map_err(|e| e.to_string())?;
     std::process::exit(0);
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(target_os = "macos")]
+fn do_apply(downloaded: &std::path::Path) -> Result<(), String> {
+    std::process::Command::new("open")
+        .arg(downloaded)
+        .spawn()
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[cfg(not(any(target_os = "windows", target_os = "macos")))]
 fn do_apply(downloaded: &std::path::Path) -> Result<(), String> {
     let current = std::env::current_exe().map_err(|e| e.to_string())?;
-    #[cfg(unix)]
+    let extract_dir = std::env::temp_dir().join("fastpack_update_extract");
+    std::fs::create_dir_all(&extract_dir).map_err(|e| e.to_string())?;
+
+    let status = std::process::Command::new("tar")
+        .args([
+            "-xzf",
+            downloaded.to_str().unwrap_or(""),
+            "-C",
+            extract_dir.to_str().unwrap_or(""),
+        ])
+        .status()
+        .map_err(|e| e.to_string())?;
+    if !status.success() {
+        return Err("failed to extract update archive".to_string());
+    }
+
+    let extracted = extract_dir.join("fastpack");
     {
         use std::os::unix::fs::PermissionsExt;
-        let mut perms = std::fs::metadata(downloaded)
+        let mut perms = std::fs::metadata(&extracted)
             .map_err(|e| e.to_string())?
             .permissions();
         perms.set_mode(0o755);
-        std::fs::set_permissions(downloaded, perms).map_err(|e| e.to_string())?;
+        std::fs::set_permissions(&extracted, perms).map_err(|e| e.to_string())?;
     }
-    std::fs::copy(downloaded, &current).map_err(|e| e.to_string())?;
+    std::fs::copy(&extracted, &current).map_err(|e| e.to_string())?;
     std::process::Command::new(&current)
         .spawn()
         .map_err(|e| e.to_string())?;

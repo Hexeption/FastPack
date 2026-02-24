@@ -1,6 +1,8 @@
 //! GUI front-end for FastPack built on egui/eframe.
 rust_i18n::i18n!("locales");
 
+include!(concat!(env!("OUT_DIR"), "/icon_meta.rs"));
+
 pub mod app;
 pub mod menu;
 pub mod panels;
@@ -43,7 +45,9 @@ pub fn run(project_path: Option<PathBuf>) -> anyhow::Result<()> {
         }
     }
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default().with_inner_size([1280.0, 800.0]),
+        viewport: egui::ViewportBuilder::default()
+            .with_inner_size([1280.0, 800.0])
+            .with_icon(load_icon()),
         ..Default::default()
     };
     eframe::run_native(
@@ -55,4 +59,13 @@ pub fn run(project_path: Option<PathBuf>) -> anyhow::Result<()> {
         }),
     )
     .map_err(|e| anyhow::anyhow!("eframe error: {e}"))
+}
+
+fn load_icon() -> egui::IconData {
+    let rgba = include_bytes!(concat!(env!("OUT_DIR"), "/icon.rgba")).to_vec();
+    egui::IconData {
+        rgba,
+        width: ICON_WIDTH,
+        height: ICON_HEIGHT,
+    }
 }

@@ -1,4 +1,5 @@
 //! FastPack CLI: pack sprites into atlases, watch for changes, and export data files.
+#![cfg_attr(windows, windows_subsystem = "windows")]
 mod cli;
 mod error;
 mod pipeline;
@@ -15,6 +16,16 @@ use fastpack_core::types::{
 };
 
 fn main() -> Result<()> {
+    // Re-attach to the parent console so CLI subcommands produce visible
+    // output when launched from a terminal even though this is a GUI subsystem binary.
+    #[cfg(windows)]
+    unsafe {
+        unsafe extern "system" {
+            fn AttachConsole(dwProcessId: u32) -> i32;
+        }
+        AttachConsole(0xFFFF_FFFF);
+    }
+
     let cli = cli::Cli::parse();
     match cli.command {
         None | Some(cli::Commands::Gui(cli::GuiArgs { project: None })) => fastpack_gui::run(None),

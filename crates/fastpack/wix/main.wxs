@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+
+  <Package Name="FastPack"
+           Manufacturer="FastPack"
+           Version="0.14.0"
+           UpgradeCode="803B4E26-FC7C-47A0-9B18-E900670ED48A"
+           Scope="perMachine">
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of FastPack is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Feature Id="Main">
+      <ComponentGroupRef Id="MainComponents" />
+      <ComponentGroupRef Id="Shortcuts" />
+    </Feature>
+
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1" />
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Launch FastPack" />
+
+    <CustomAction Id="LaunchApp"
+                  FileRef="FastPackExe"
+                  ExeCommand=""
+                  Execute="immediate"
+                  Impersonate="yes"
+                  Return="asyncNoWait" />
+
+    <UI>
+      <Publish Dialog="ExitDialog"
+               Control="Finish"
+               Event="DoAction"
+               Value="LaunchApp"
+               Condition="WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 AND NOT Installed" />
+    </UI>
+
+    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+    <WixVariable Id="WixUILicenseRtf" Value="License.rtf" />
+
+  </Package>
+
+  <Fragment>
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="FastPack" />
+    </StandardDirectory>
+  </Fragment>
+
+  <Fragment>
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="AppMenuFolder" Name="FastPack" />
+    </StandardDirectory>
+  </Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="MainComponents" Directory="INSTALLFOLDER">
+      <Component>
+        <File Id="FastPackExe" Source="fastpack.exe" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="Shortcuts" Directory="AppMenuFolder">
+      <Component>
+        <Shortcut Id="StartMenuShortcut"
+                  Name="FastPack"
+                  Target="[INSTALLFOLDER]fastpack.exe"
+                  WorkingDirectory="INSTALLFOLDER" />
+        <RemoveFolder Id="RemoveAppMenuFolder" On="uninstall" />
+        <RegistryValue Root="HKCU"
+                       Key="Software\FastPack"
+                       Name="installed"
+                       Type="integer"
+                       Value="1"
+                       KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+
+</Wix>

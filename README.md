@@ -4,24 +4,43 @@
 [![CI](https://github.com/Hexeption/FastPack/actions/workflows/ci.yml/badge.svg)](https://github.com/Hexeption/FastPack/actions/workflows/ci.yml)
 [![rustc 1.85+](https://img.shields.io/badge/rustc-1.85%2B-orange.svg)](https://www.rust-lang.org)
 
-Texture atlas packer written in Rust 2024. Replaces TexturePacker with a native GUI as the primary interface, plus a full-featured CLI and TUI.
+Texture atlas packer written in Rust. Native GUI as the primary interface, plus a full CLI and TUI. Designed as an open-source replacement for TexturePacker.
 
 ## Features
 
-- **Packing algorithms** — MaxRects (5 heuristics), Grid, Basic strip
-- **Trim modes** — None, Trim, Crop, CropKeepPos, Polygon (convex hull)
-- **Export formats** — JSON Hash, JSON Array, Phaser 3, PixiJS
-- **Compression** — PNG via oxipng (lossless), JPEG via mozjpeg, WebP, lossy PNG via imagequant
-- **Alias detection** — content-hash dedup with pixel verification
-- **Sprite features** — extrusion, rotation, nine-patch metadata, pivot points
-- **Multi-resolution** — scale variants with per-variant suffix and resampling filter
-- **Watch mode** — repack on file change
-- **Project files** — `.fpsheet` TOML format
-- **Multipack** — overflow sprites across multiple atlas sheets
+**Packing**
+- MaxRects (5 heuristics), Grid, and Basic strip algorithms
+- Trim modes: None, Trim, Crop, CropKeepPos, Polygon (convex hull)
+- Extrusion, rotation, nine-patch metadata, pivot points
+- Alias detection — deduplicates pixel-identical sprites
+- Multipack — overflow sprites across multiple sheets
+- Multi-resolution scale variants with per-variant suffix
+
+**Export**
+- JSON Hash, JSON Array, Phaser 3, PixiJS
+- PNG (oxipng lossless), JPEG (mozjpeg), WebP, lossy PNG (imagequant)
+
+**GUI**
+- Real-time atlas preview
+- Collapsible sprite tree with thumbnail previews
+- Watch mode — repacks on file change
+- `.fpsheet` project files (TOML)
+- Multi-language UI
 
 ## Install
 
-Download a prebuilt binary from the [releases page](https://github.com/Hexeption/FastPack/releases).
+Download the installer for your platform from the [releases page](https://github.com/Hexeption/FastPack/releases):
+
+- **Windows** — `fastpack-windows-x86_64.msi`
+- **macOS (Apple Silicon)** — `fastpack-macos-aarch64.dmg`
+- **macOS (Intel)** — `fastpack-macos-x86_64.dmg`
+- **Linux** — `fastpack-linux-x86_64.tar.gz`
+
+**macOS note:** The app is not code-signed, so macOS will show "FastPack is damaged and can't be opened." after mounting the DMG. Run this once after copying the app to `/Applications`:
+
+```sh
+xattr -cr /Applications/FastPack.app
+```
 
 Or install from crates.io:
 
@@ -56,9 +75,6 @@ fastpack split atlas.png atlas.json --output-dir sprites/
 
 # Generate a default project file
 fastpack init --output atlas.fpsheet
-
-# Open the TUI
-fastpack tui atlas.fpsheet
 ```
 
 ## Project File
@@ -114,7 +130,19 @@ filter = "**/*.png"
 - `json_hash` — TexturePacker-compatible JSON with frames as an object keyed by sprite ID. Default.
 - `json_array` — Same structure but frames as an array, each entry with a `filename` field.
 - `phaser3` — Single JSON file with a `textures` array. Compatible with `scene.load.multiatlas()`.
-- `pixijs` — JSON Hash format; identical output to `json_hash`, distinguished by format ID.
+- `pixijs` — JSON Hash format compatible with PixiJS sprite sheet loaders.
+
+## Building from Source
+
+Requires Rust 1.85+.
+
+```sh
+git clone https://github.com/Hexeption/FastPack
+cd FastPack
+cargo build --release -p fastpack
+```
+
+The binary is at `target/release/fastpack`.
 
 ## License
 

@@ -20,16 +20,18 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            archive: fastpack-linux-x86_64.tar.gz
+            artifact: fastpack-linux-x86_64.tar.gz
           - os: macos-15-intel
             target: x86_64-apple-darwin
-            archive: fastpack-macos-x86_64.tar.gz
+            artifact: fastpack-macos-x86_64.dmg
+            arch: x86_64
           - os: macos-latest
             target: aarch64-apple-darwin
-            archive: fastpack-macos-aarch64.tar.gz
+            artifact: fastpack-macos-aarch64.dmg
+            arch: aarch64
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            archive: fastpack-windows-x86_64.zip
+            artifact: fastpack-windows-x86_64.msi
 
     steps:
       - uses: actions/checkout@v4
@@ -43,7 +45,7 @@ jobs:
           shared-key: "release-${{ matrix.target }}"
           cache-on-failure: "true"
 
-      - name: install system deps
+      - name: system deps (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update -q
@@ -57,24 +59,40 @@ jobs:
 
       - run: cargo build --release --package fastpack --target ${{ matrix.target }}
 
-      - name: package (unix)
-        if: runner.os != 'Windows'
+      - name: package Linux
+        if: runner.os == 'Linux'
         run: |
           strip target/${{ matrix.target }}/release/fastpack
-          tar -czf ${{ matrix.archive }} -C target/${{ matrix.target }}/release fastpack
+          tar -czf ${{ matrix.artifact }} \
+            -C target/${{ matrix.target }}/release fastpack
 
-      - name: package (windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
+      - name: package macOS DMG
+        if: runner.os == 'macOS'
         run: |
-          Compress-Archive `
-            -Path target/${{ matrix.target }}/release/fastpack.exe `
-            -DestinationPath ${{ matrix.archive }}
+          bash .github/scripts/package-macos.sh \
+            "target/${{ matrix.target }}/release/fastpack" \
+            "${{ matrix.artifact }}"
+
+      - name: install WiX v4
+        if: runner.os == 'Windows'
+        run: |
+          dotnet tool install --global wix
+          wix extension add WixToolset.UI.wixext/6.0.2
+
+      - name: package Windows MSI
+        if: runner.os == 'Windows'
+        run: >-
+          wix build crates/fastpack/wix/main.wxs
+          -arch x64
+          -bindpath target/${{ matrix.target }}/release
+          -bindpath crates/fastpack/wix
+          -ext WixToolset.UI.wixext/6.0.2
+          -o ${{ matrix.artifact }}
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.archive }}
-          path: ${{ matrix.archive }}
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact }}
 
   release:
     name: release
