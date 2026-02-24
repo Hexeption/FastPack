@@ -295,8 +295,10 @@ impl FastPackApp {
     }
 
     fn do_add_source(&mut self) {
-        if let Some(path) = rfd::FileDialog::new().pick_folder() {
-            self.state.add_source_path(path);
+        if let Some(paths) = rfd::FileDialog::new().pick_folders() {
+            for path in paths {
+                self.state.add_source_path(path);
+            }
         }
     }
 
