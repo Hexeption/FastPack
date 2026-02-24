@@ -331,7 +331,7 @@ impl Default for OutputConfig {
             texture_format: TextureFormat::Png,
             pixel_format: PixelFormat::Rgba8888,
             premultiply_alpha: false,
-            data_format: "json_hash".to_string(),
+            data_format: "phaser3".to_string(),
             quality: 95,
             texture_path_prefix: String::new(),
             multipack: false,
