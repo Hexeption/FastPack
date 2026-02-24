@@ -1589,7 +1589,7 @@ dependencies = [
 
 [[package]]
 name = "fastpack"
-version = "0.6.1"
+version = "0.7.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -1620,7 +1620,7 @@ dependencies = [
 
 [[package]]
 name = "fastpack-compress"
-version = "0.6.1"
+version = "0.7.0"
 dependencies = [
  "anyhow",
  "fastpack-core",
@@ -1637,7 +1637,7 @@ dependencies = [
 
 [[package]]
 name = "fastpack-core"
-version = "0.6.1"
+version = "0.7.0"
 dependencies = [
  "anyhow",
  "criterion",
@@ -1655,7 +1655,7 @@ dependencies = [
 
 [[package]]
 name = "fastpack-formats"
-version = "0.6.1"
+version = "0.7.0"
 dependencies = [
  "anyhow",
  "fastpack-core",
@@ -1668,7 +1668,7 @@ dependencies = [
 
 [[package]]
 name = "fastpack-gui"
-version = "0.6.1"
+version = "0.7.0"
 dependencies = [
  "anyhow",
  "eframe",
@@ -1689,7 +1689,7 @@ dependencies = [
 
 [[package]]
 name = "fastpack-tui"
-version = "0.6.1"
+version = "0.7.0"
 dependencies = [
  "anyhow",
  "crossterm",
