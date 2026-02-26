@@ -7,6 +7,8 @@ Open it from Edit → Preferences…
 
 Sets the UI language. FastPack ships with translations for English, French, Spanish, German, Italian, Portuguese, Japanese, Simplified Chinese, and Korean. Changing the language takes effect immediately.
 
+**UI Scale** adjusts the size of every panel, text, and widget relative to your system DPI. The options are 75%, 100%, 125%, 150%, 175%, and 200%. 100% matches your operating system's DPI setting. The change takes effect on the next frame with no restart required. The selected scale is saved to the preferences file under `ui_scale`.
+
 ## Defaults tab
 
 Every setting from the right-side panel is available here: Texture, Layout, Sprites, and Variants.

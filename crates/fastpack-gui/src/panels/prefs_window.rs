@@ -122,6 +122,42 @@ fn show_general(ui: &mut egui::Ui, prefs: &mut Preferences) {
             prefs.save();
         }
     });
+
+    const SCALE_STEPS: &[(f32, &str)] = &[
+        (0.75, "75%"),
+        (1.0, "100%"),
+        (1.25, "125%"),
+        (1.5, "150%"),
+        (1.75, "175%"),
+        (2.0, "200%"),
+    ];
+
+    ui.add_space(4.0);
+    ui.horizontal(|ui| {
+        ui.label("UI Scale");
+        let current_label = SCALE_STEPS
+            .iter()
+            .find(|&&(v, _)| (v - prefs.ui_scale).abs() < 0.01)
+            .map(|&(_, s)| s)
+            .unwrap_or("Custom");
+        let mut changed = false;
+        egui::ComboBox::from_id_salt("ui_scale_selector")
+            .selected_text(current_label)
+            .show_ui(ui, |ui| {
+                for &(value, label) in SCALE_STEPS {
+                    if ui
+                        .selectable_label((prefs.ui_scale - value).abs() < 0.01, label)
+                        .clicked()
+                    {
+                        prefs.ui_scale = value;
+                        changed = true;
+                    }
+                }
+            });
+        if changed {
+            prefs.save();
+        }
+    });
 }
 
 fn show_defaults(ui: &mut egui::Ui, prefs: &mut Preferences) {

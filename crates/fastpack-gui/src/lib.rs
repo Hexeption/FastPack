@@ -58,6 +58,10 @@ pub fn run(project_path: Option<PathBuf>) -> anyhow::Result<()> {
             egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Regular);
             cc.egui_ctx.set_fonts(fonts);
             theme::apply(&cc.egui_ctx, app.state.dark_mode);
+            let native_ppp = cc.egui_ctx.pixels_per_point();
+            app.native_pixels_per_point = native_ppp;
+            cc.egui_ctx
+                .set_pixels_per_point(native_ppp * app.prefs.ui_scale);
             Ok(Box::new(app))
         }),
     )

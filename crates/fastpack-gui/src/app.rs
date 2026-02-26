@@ -47,6 +47,8 @@ pub struct FastPackApp {
     update_rx: Option<mpsc::Receiver<UpdateMsg>>,
     file_watcher: Option<Box<dyn Send>>,
     watch_rx: Option<mpsc::Receiver<DebounceEventResult>>,
+    /// System DPI pixels-per-point captured at startup; used to apply ui_scale.
+    pub native_pixels_per_point: f32,
 }
 
 impl Default for FastPackApp {
@@ -67,6 +69,7 @@ impl Default for FastPackApp {
             update_rx: None,
             file_watcher: None,
             watch_rx: None,
+            native_pixels_per_point: 0.0,
         };
         if app.prefs.auto_check_updates {
             let (tx, rx) = mpsc::channel();
@@ -81,6 +84,7 @@ impl Default for FastPackApp {
 impl eframe::App for FastPackApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         crate::theme::apply(ctx, self.state.dark_mode);
+        self.apply_ui_scale(ctx);
         self.poll_worker(ctx);
         self.poll_watcher(ctx);
         self.handle_pending(ctx);
@@ -670,6 +674,16 @@ impl FastPackApp {
         if changed && !self.state.packing {
             self.state.pending.pack = true;
             ctx.request_repaint();
+        }
+    }
+
+    fn apply_ui_scale(&mut self, ctx: &egui::Context) {
+        if self.native_pixels_per_point <= 0.0 {
+            self.native_pixels_per_point = ctx.pixels_per_point();
+        }
+        let target = self.native_pixels_per_point * self.prefs.ui_scale;
+        if (ctx.pixels_per_point() - target).abs() > 0.01 {
+            ctx.set_pixels_per_point(target);
         }
     }
 }

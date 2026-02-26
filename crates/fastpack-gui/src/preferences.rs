@@ -178,10 +178,17 @@ pub struct Preferences {
     /// Keyboard shortcuts.
     #[serde(default)]
     pub keybinds: Keybinds,
+    /// UI scale multiplier applied on top of system DPI (1.0 = system default).
+    #[serde(default = "default_ui_scale")]
+    pub ui_scale: f32,
 }
 
 fn default_true() -> bool {
     true
+}
+
+fn default_ui_scale() -> f32 {
+    1.0
 }
 
 impl Default for Preferences {
@@ -192,6 +199,7 @@ impl Default for Preferences {
             default_config: PackerConfig::default(),
             language: Language::En,
             keybinds: Keybinds::default(),
+            ui_scale: 1.0,
         }
     }
 }
