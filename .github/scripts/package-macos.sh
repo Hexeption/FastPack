@@ -75,10 +75,11 @@ if [ -n "${APPLE_CERT_P12:-}" ]; then
     -s -k "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
   security list-keychains -d user -s "$KEYCHAIN_PATH" login.keychain
 
-  codesign --force --options runtime \
-    --sign "Developer ID Application: $APPLE_TEAM_ID" \
-    --entitlements /dev/stdin \
-    FastPack.app << 'ENTITLEMENTS'
+  SIGNING_IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" \
+    | awk '/Developer ID/{print $2; exit}')
+
+  ENTITLEMENTS_FILE="$RUNNER_TEMP/entitlements.plist"
+  cat > "$ENTITLEMENTS_FILE" << 'ENTITLEMENTS'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
   "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -86,6 +87,11 @@ if [ -n "${APPLE_CERT_P12:-}" ]; then
   <key>com.apple.security.cs.allow-unsigned-executable-memory</key><false/>
 </dict></plist>
 ENTITLEMENTS
+
+  codesign --force --options runtime \
+    --sign "$SIGNING_IDENTITY" \
+    --entitlements "$ENTITLEMENTS_FILE" \
+    FastPack.app
 fi
 
 # Convert DMG background SVG to PNG
@@ -118,7 +124,7 @@ CONFIG
 appdmg appdmg_config.json "$ARTIFACT"
 
 if [ -n "${APPLE_CERT_P12:-}" ]; then
-  codesign --force --sign "Developer ID Application: $APPLE_TEAM_ID" "$ARTIFACT"
+  codesign --force --sign "$SIGNING_IDENTITY" "$ARTIFACT"
 
   xcrun notarytool submit "$ARTIFACT" \
     --apple-id "$APPLE_ID" \
