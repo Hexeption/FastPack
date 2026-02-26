@@ -264,8 +264,16 @@ impl AppState {
         self.log.push(LogEntry::info(t!("state.new_project")));
     }
 
-    /// Add a source directory and schedule an auto-pack.
+    /// Add a source directory and schedule an auto-pack. No-ops if already tracked.
     pub fn add_source_path(&mut self, path: PathBuf) {
+        let path = std::fs::canonicalize(&path).unwrap_or(path);
+        // Skip if any existing source already covers this path (same dir or parent of it).
+        if self.project.sources.iter().any(|s| {
+            let stored = std::fs::canonicalize(&s.path).unwrap_or_else(|_| s.path.clone());
+            path.starts_with(&stored)
+        }) {
+            return;
+        }
         let display = path.display().to_string();
         self.project.sources.push(SourceSpec {
             path,

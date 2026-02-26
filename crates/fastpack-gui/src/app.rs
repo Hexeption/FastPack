@@ -567,6 +567,9 @@ impl FastPackApp {
 
     fn handle_dropped_files(&mut self, ctx: &egui::Context) {
         let dropped = ctx.input(|i| i.raw.dropped_files.clone());
+        let mut new_sources: std::collections::BTreeSet<std::path::PathBuf> =
+            std::collections::BTreeSet::new();
+
         for file in dropped {
             let Some(path) = file.path else { continue };
 
@@ -591,12 +594,23 @@ impl FastPackApp {
                         .log_error(t!("log.read_file_failed", err = e.to_string())),
                 }
             } else if path.is_dir() {
-                self.state.add_source_path(path);
+                new_sources.insert(std::fs::canonicalize(&path).unwrap_or(path));
             } else if path.is_file() {
                 if let Some(parent) = path.parent() {
-                    self.state.add_source_path(parent.to_path_buf());
+                    new_sources.insert(
+                        std::fs::canonicalize(parent).unwrap_or_else(|_| parent.to_path_buf()),
+                    );
                 }
             }
+        }
+
+        // If both /a and /a/b are in the drop, keep only /a — the walker covers children anyway.
+        let all: Vec<_> = new_sources.iter().cloned().collect();
+        for path in all.iter().filter(|p| {
+            !all.iter()
+                .any(|other| other != *p && p.starts_with(other))
+        }) {
+            self.state.add_source_path(path.clone());
         }
     }
 
