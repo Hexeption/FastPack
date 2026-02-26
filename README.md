@@ -38,12 +38,6 @@ Download the installer for your platform from the [releases page](https://github
 - **macOS (Intel)** — `fastpack-macos-x86_64.dmg`
 - **Linux** — `fastpack-linux-x86_64.tar.gz`
 
-**macOS note:** The app is not code-signed, so macOS will show "FastPack is damaged and can't be opened." after mounting the DMG. Run this once after copying the app to `/Applications`:
-
-```sh
-xattr -cr /Applications/FastPack.app
-```
-
 Or install from crates.io:
 
 ```sh
