@@ -1,0 +1,120 @@
+use std::path::PathBuf;
+
+use fastpack_core::types::config::PackerConfig;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum Language {
+    #[default]
+    En,
+    Fr,
+    Es,
+    De,
+    It,
+    Pt,
+    Ja,
+    Zh,
+    Ko,
+}
+
+impl Language {
+    pub fn code(self) -> &'static str {
+        match self {
+            Self::En => "en",
+            Self::Fr => "fr",
+            Self::Es => "es",
+            Self::De => "de",
+            Self::It => "it",
+            Self::Pt => "pt",
+            Self::Ja => "ja",
+            Self::Zh => "zh",
+            Self::Ko => "ko",
+        }
+    }
+
+    pub fn display(self) -> &'static str {
+        match self {
+            Self::En => "English",
+            Self::Fr => "Français",
+            Self::Es => "Español",
+            Self::De => "Deutsch",
+            Self::It => "Italiano",
+            Self::Pt => "Português",
+            Self::Ja => "日本語",
+            Self::Zh => "中文（简体）",
+            Self::Ko => "한국어",
+        }
+    }
+
+    pub const ALL: &'static [Language] = &[
+        Self::En,
+        Self::Fr,
+        Self::Es,
+        Self::De,
+        Self::It,
+        Self::Pt,
+        Self::Ja,
+        Self::Zh,
+        Self::Ko,
+    ];
+}
+
+/// Persistent user preferences saved to `~/.config/FastPack/prefs.toml`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Preferences {
+    #[serde(default = "default_true")]
+    pub dark_mode: bool,
+    #[serde(default = "default_true")]
+    pub auto_check_updates: bool,
+    #[serde(default)]
+    pub default_config: PackerConfig,
+    #[serde(default)]
+    pub language: Language,
+    #[serde(default = "default_ui_scale")]
+    pub ui_scale: f32,
+}
+
+fn default_true() -> bool {
+    true
+}
+
+fn default_ui_scale() -> f32 {
+    1.0
+}
+
+impl Default for Preferences {
+    fn default() -> Self {
+        Self {
+            dark_mode: true,
+            auto_check_updates: true,
+            default_config: PackerConfig::default(),
+            language: Language::En,
+            ui_scale: 1.0,
+        }
+    }
+}
+
+impl Preferences {
+    /// Load preferences from disk, returning defaults if the file is missing.
+    pub fn load() -> Self {
+        prefs_path()
+            .and_then(|p| std::fs::read_to_string(p).ok())
+            .and_then(|text| toml::from_str(&text).ok())
+            .unwrap_or_default()
+    }
+
+    /// Persist the current preferences to disk.
+    pub fn save(&self) {
+        let Some(path) = prefs_path() else { return };
+        if let Some(parent) = path.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+        if let Ok(text) = toml::to_string_pretty(self) {
+            let _ = std::fs::write(path, text.as_bytes());
+        }
+    }
+}
+
+fn prefs_path() -> Option<PathBuf> {
+    dirs::config_dir().map(|d| d.join("FastPack").join("prefs.toml"))
+}

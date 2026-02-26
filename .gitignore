@@ -7,3 +7,4 @@ examples/sprites/
 crates/fastpack/wix/AppIcon.ico
 .wix/
 .DS_Store
+node_modules/

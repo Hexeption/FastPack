@@ -1,0 +1,75 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 10px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--accent);
+  margin-right: 8px;
+}
+
+.dirty {
+  color: var(--warn);
+  font-size: 10px;
+}
+
+.menus {
+  display: flex;
+  gap: 2px;
+}
+
+.menu {
+  position: relative;
+}
+
+.menu:hover .dropdown {
+  display: flex;
+}
+
+.menuLabel {
+  padding: 4px 8px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.menuLabel:hover {
+  background: var(--bg3);
+}
+
+.dropdown {
+  display: none;
+  flex-direction: column;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  min-width: 160px;
+  z-index: 100;
+  padding: 4px;
+  gap: 1px;
+}
+
+.dropdown button {
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 5px 8px;
+  border-radius: var(--radius);
+  width: 100%;
+}
+
+.dropdown button:hover {
+  background: var(--accent);
+  color: #fff;
+}

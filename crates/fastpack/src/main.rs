@@ -29,9 +29,11 @@ fn main() -> Result<()> {
 
     let cli = cli::Cli::parse();
     match cli.command {
-        None | Some(cli::Commands::Gui(cli::GuiArgs { project: None })) => fastpack_gui::run(None),
+        None | Some(cli::Commands::Gui(cli::GuiArgs { project: None })) => {
+            fastpack_tauri::run(None)
+        }
 
-        Some(cli::Commands::Gui(cli::GuiArgs { project })) => fastpack_gui::run(project),
+        Some(cli::Commands::Gui(cli::GuiArgs { project })) => fastpack_tauri::run(project),
 
         Some(cli::Commands::Pack(args)) => {
             let (

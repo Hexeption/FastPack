@@ -1,0 +1,44 @@
+[package]
+name             = "fastpack-tauri"
+description      = "Tauri GUI for FastPack"
+version.workspace      = true
+edition.workspace      = true
+rust-version.workspace = true
+license.workspace      = true
+repository.workspace   = true
+homepage.workspace     = true
+keywords.workspace     = true
+categories.workspace   = true
+
+[[bin]]
+name = "fastpack-tauri"
+path = "src/main.rs"
+
+[lib]
+name       = "fastpack_tauri"
+crate-type = ["rlib"]
+path       = "src/lib.rs"
+
+[dependencies]
+fastpack-core.workspace     = true
+fastpack-formats.workspace  = true
+fastpack-compress           = { workspace = true, features = ["jpeg-turbo", "webp-encode"] }
+thiserror.workspace         = true
+anyhow.workspace            = true
+serde.workspace             = true
+serde_json.workspace        = true
+rayon.workspace             = true
+tracing.workspace           = true
+image.workspace             = true
+
+tauri                 = { version = "2", features = [] }
+walkdir               = "2"
+notify-debouncer-mini = "0.7"
+rfd                   = "0.15"
+dirs                  = "6"
+ureq                  = "3"
+toml                  = "0.8"
+base64                = "0.22"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
