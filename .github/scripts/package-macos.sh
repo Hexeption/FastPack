@@ -56,6 +56,38 @@ if [ -n "$ICO" ]; then
   iconutil -c icns icon.iconset -o FastPack.app/Contents/Resources/AppIcon.icns
 fi
 
+# Import Developer ID certificate into a temporary keychain
+if [ -n "${APPLE_CERT_P12:-}" ]; then
+  KEYCHAIN_PATH="$RUNNER_TEMP/signing.keychain-db"
+  KEYCHAIN_PASS=$(openssl rand -hex 16)
+
+  security create-keychain -p "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
+  security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+  security unlock-keychain -p "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
+
+  echo "$APPLE_CERT_P12" | base64 --decode -o "$RUNNER_TEMP/cert.p12"
+  security import "$RUNNER_TEMP/cert.p12" \
+    -k "$KEYCHAIN_PATH" \
+    -P "$APPLE_CERT_PASSWORD" \
+    -T /usr/bin/codesign
+  security set-key-partition-list \
+    -S apple-tool:,apple: \
+    -s -k "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
+  security list-keychains -d user -s "$KEYCHAIN_PATH" login.keychain
+
+  codesign --force --options runtime \
+    --sign "Developer ID Application: $APPLE_TEAM_ID" \
+    --entitlements /dev/stdin \
+    FastPack.app << 'ENTITLEMENTS'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>com.apple.security.cs.allow-unsigned-executable-memory</key><false/>
+</dict></plist>
+ENTITLEMENTS
+fi
+
 # Convert DMG background SVG to PNG
 BG=$(find assets -name 'dmg-background.svg' -print -quit)
 if [ -n "$BG" ]; then
@@ -85,4 +117,16 @@ CONFIG
 
 appdmg appdmg_config.json "$ARTIFACT"
 
-rm -rf FastPack.app dmg-bg appdmg_config.json 
+if [ -n "${APPLE_CERT_P12:-}" ]; then
+  codesign --force --sign "Developer ID Application: $APPLE_TEAM_ID" "$ARTIFACT"
+
+  xcrun notarytool submit "$ARTIFACT" \
+    --apple-id "$APPLE_ID" \
+    --password "$APPLE_APP_PASSWORD" \
+    --team-id "$APPLE_TEAM_ID" \
+    --wait
+
+  xcrun stapler staple "$ARTIFACT"
+fi
+
+rm -rf FastPack.app dmg-bg appdmg_config.json
