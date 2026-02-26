@@ -279,6 +279,7 @@ impl AppState {
         if index < self.project.sources.len() {
             let removed = self.project.sources.remove(index);
             self.dirty = true;
+            self.pending.pack = true;
             self.log_info(t!(
                 "state.removed_source",
                 path = removed.path.display().to_string()

@@ -22,6 +22,7 @@
 
   "sprite_list.sources": "源",
   "sprite_list.add": "添加…",
+  "sprite_list.refresh": "↻",
   "sprite_list.remove": "×",
   "sprite_list.no_sources": "无源 — 请添加文件夹。",
   "sprite_list.frames": "帧 (%{count})",

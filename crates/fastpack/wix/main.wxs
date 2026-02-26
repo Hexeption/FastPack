@@ -4,7 +4,7 @@
 
   <Package Name="FastPack"
            Manufacturer="FastPack"
-           Version="0.21.0"
+           Version="0.21.1"
            UpgradeCode="803B4E26-FC7C-47A0-9B18-E900670ED48A"
            Scope="perMachine">
 

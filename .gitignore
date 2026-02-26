@@ -6,3 +6,4 @@ examples/output/
 examples/sprites/
 crates/fastpack/wix/AppIcon.ico
 .wix/
+.DS_Store

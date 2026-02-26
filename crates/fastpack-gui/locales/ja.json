@@ -22,6 +22,7 @@
 
   "sprite_list.sources": "ソース",
   "sprite_list.add": "追加…",
+  "sprite_list.refresh": "↻",
   "sprite_list.remove": "×",
   "sprite_list.no_sources": "ソースなし — フォルダを追加してください。",
   "sprite_list.frames": "フレーム (%{count})",

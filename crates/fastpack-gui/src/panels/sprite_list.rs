@@ -220,6 +220,9 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, atlas_textures: &[egui::Tex
             if ui.small_button(t!("sprite_list.add")).clicked() {
                 state.pending.add_source = true;
             }
+            if ui.small_button(t!("sprite_list.refresh")).clicked() {
+                state.pending.pack = true;
+            }
         });
     });
     ui.separator();

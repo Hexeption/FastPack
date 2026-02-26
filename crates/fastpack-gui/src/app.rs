@@ -283,6 +283,11 @@ impl FastPackApp {
             return;
         }
         if self.state.project.sources.is_empty() {
+            self.state.frames.clear();
+            self.state.sheets.clear();
+            self.atlas_textures.clear();
+            self.state.selected_frames.clear();
+            self.state.anchor_frame = None;
             self.state.log_warn(t!("log.no_sources"));
             return;
         }

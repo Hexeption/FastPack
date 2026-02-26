@@ -22,6 +22,7 @@
 
   "sprite_list.sources": "Sources",
   "sprite_list.add": "Ajouter…",
+  "sprite_list.refresh": "↻",
   "sprite_list.remove": "×",
   "sprite_list.no_sources": "Aucune source — ajoutez un dossier.",
   "sprite_list.frames": "Frames (%{count})",
