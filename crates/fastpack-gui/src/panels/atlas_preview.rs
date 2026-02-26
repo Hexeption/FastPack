@@ -110,7 +110,7 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, atlases: &[egui::TextureHan
     }
 
     // Dark panel background
-    painter.rect_filled(rect, 0.0, egui::Color32::from_rgb(35, 35, 35));
+    painter.rect_filled(rect, 0.0, egui::Color32::from_rgb(24, 24, 24));
 
     let full_uv = egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0));
     let selected_ids: std::collections::HashSet<String> = state
@@ -173,7 +173,8 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, atlases: &[egui::TextureHan
                     painter.rect_stroke(
                         frame_rect,
                         0.0,
-                        egui::Stroke::new(2.0, egui::Color32::from_rgb(255, 200, 0)),
+                        egui::Stroke::new(2.0, egui::Color32::from_rgb(240, 190, 40)),
+                        egui::StrokeKind::Outside,
                     );
                 }
             }
@@ -238,8 +239,8 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, atlases: &[egui::TextureHan
 
 fn draw_checker(painter: &egui::Painter, rect: egui::Rect) {
     let tile = 8.0_f32;
-    let c1 = egui::Color32::from_rgb(50, 50, 50);
-    let c2 = egui::Color32::from_rgb(60, 60, 60);
+    let c1 = egui::Color32::from_rgb(32, 32, 32);
+    let c2 = egui::Color32::from_rgb(40, 40, 40);
     let mut x = (rect.min.x / tile).floor() * tile;
     while x < rect.max.x {
         let mut y = (rect.min.y / tile).floor() * tile;

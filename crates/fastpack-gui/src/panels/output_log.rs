@@ -1,4 +1,5 @@
 use eframe::egui;
+use egui_phosphor::regular as ph;
 use rust_i18n::t;
 
 use crate::state::{AppState, LogLevel};
@@ -7,7 +8,7 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
     ui.horizontal(|ui| {
         ui.strong(t!("output_log.title"));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if ui.small_button(t!("output_log.clear")).clicked() {
+            if ui.small_button(ph::TRASH).clicked() {
                 state.log.clear();
             }
         });
@@ -19,13 +20,20 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
         .auto_shrink([false, false])
         .show(ui, |ui| {
             for entry in &state.log {
-                let color = match entry.level {
-                    LogLevel::Info => egui::Color32::from_gray(220),
-                    LogLevel::Warn => egui::Color32::from_rgb(255, 200, 60),
-                    LogLevel::Error => egui::Color32::from_rgb(255, 90, 80),
+                let (icon, color) = match entry.level {
+                    LogLevel::Info => (ph::INFO, egui::Color32::from_gray(200)),
+                    LogLevel::Warn => (ph::WARNING, egui::Color32::from_rgb(255, 200, 60)),
+                    LogLevel::Error => (ph::X_CIRCLE, egui::Color32::from_rgb(255, 90, 80)),
                 };
-                let text = format!("[{}] {}", entry.time, entry.message);
-                ui.label(egui::RichText::new(text).color(color).small().monospace());
+                ui.horizontal(|ui| {
+                    ui.label(egui::RichText::new(icon).color(color).small());
+                    ui.label(
+                        egui::RichText::new(format!("[{}] {}", entry.time, entry.message))
+                            .color(color)
+                            .small()
+                            .monospace(),
+                    );
+                });
             }
         });
 }

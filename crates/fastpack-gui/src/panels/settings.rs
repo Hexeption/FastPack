@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use eframe::egui;
+use egui_phosphor::regular as ph;
 use fastpack_core::types::{
     config::{
         AlgorithmConfig, DataFormat, MaxRectsHeuristic, PackMode, ScaleMode, ScaleVariant,
@@ -17,18 +18,42 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
     egui::ScrollArea::vertical().show(ui, |ui| {
         ui.add_space(2.0);
 
-        section(ui, "texture", t!("settings.texture"), true, |ui| {
-            show_texture(ui, state);
-        });
-        section(ui, "layout", t!("settings.layout"), true, |ui| {
-            show_layout(ui, state);
-        });
-        section(ui, "sprites", t!("settings.sprites"), true, |ui| {
-            show_sprites(ui, state);
-        });
-        section(ui, "variants", t!("settings.variants"), false, |ui| {
-            show_variants(ui, state);
-        });
+        section(
+            ui,
+            "texture",
+            format!("{}  {}", ph::IMAGE, t!("settings.texture")),
+            true,
+            |ui| {
+                show_texture(ui, state);
+            },
+        );
+        section(
+            ui,
+            "layout",
+            format!("{}  {}", ph::GRID_FOUR, t!("settings.layout")),
+            true,
+            |ui| {
+                show_layout(ui, state);
+            },
+        );
+        section(
+            ui,
+            "sprites",
+            format!("{}  {}", ph::STACK, t!("settings.sprites")),
+            true,
+            |ui| {
+                show_sprites(ui, state);
+            },
+        );
+        section(
+            ui,
+            "variants",
+            format!("{}  {}", ph::COPY, t!("settings.variants")),
+            false,
+            |ui| {
+                show_variants(ui, state);
+            },
+        );
     });
 }
 
@@ -90,7 +115,7 @@ pub fn show_texture(ui: &mut egui::Ui, state: &mut AppState) {
             cfg.directory = PathBuf::from(&dir_str);
             *dirty = true;
         }
-        if ui.button(t!("settings.browse")).clicked() {
+        if ui.button(ph::FOLDER_OPEN).clicked() {
             if let Some(path) = rfd::FileDialog::new().pick_folder() {
                 cfg.directory = path;
                 *dirty = true;
@@ -664,7 +689,7 @@ pub fn show_variants(ui: &mut egui::Ui, state: &mut AppState) {
                     state.dirty = true;
                 }
             });
-            if ui.small_button(t!("settings.remove")).clicked() {
+            if ui.small_button(ph::TRASH).clicked() {
                 remove_idx = Some(i);
             }
         });
@@ -676,7 +701,10 @@ pub fn show_variants(ui: &mut egui::Ui, state: &mut AppState) {
         state.dirty = true;
     }
 
-    if ui.button(t!("settings.add_variant")).clicked() {
+    if ui
+        .button(format!("{}  {}", ph::PLUS, t!("settings.add_variant")))
+        .clicked()
+    {
         state.project.config.variants.push(ScaleVariant::default());
         state.dirty = true;
     }

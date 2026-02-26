@@ -1,4 +1,5 @@
 use eframe::egui;
+use egui_phosphor::regular as ph;
 use fastpack_core::types::config::SpriteOverride;
 use rust_i18n::t;
 
@@ -143,7 +144,10 @@ fn show_nodes(
 
                 let resp = ui.horizontal(|ui| {
                     draw_thumbnail(ui, frame, sheets, atlas_textures);
-                    ui.selectable_label(is_selected, egui::RichText::new(name).small())
+                    ui.selectable_label(
+                        is_selected,
+                        egui::RichText::new(format!("{}  {name}", ph::IMAGE)).small(),
+                    )
                 });
 
                 if resp.inner.clicked() {
@@ -192,21 +196,25 @@ fn show_nodes(
                 full_path,
                 children,
             } => {
-                egui::CollapsingHeader::new(egui::RichText::new(name).small().strong())
-                    .id_salt(full_path.as_str())
-                    .default_open(true)
-                    .show(ui, |ui| {
-                        show_nodes(
-                            ui,
-                            children,
-                            frames,
-                            sheets,
-                            atlas_textures,
-                            selected,
-                            anchor,
-                            visual_order,
-                        );
-                    });
+                egui::CollapsingHeader::new(
+                    egui::RichText::new(format!("{}  {name}", ph::FOLDER_OPEN))
+                        .small()
+                        .strong(),
+                )
+                .id_salt(full_path.as_str())
+                .default_open(true)
+                .show(ui, |ui| {
+                    show_nodes(
+                        ui,
+                        children,
+                        frames,
+                        sheets,
+                        atlas_textures,
+                        selected,
+                        anchor,
+                        visual_order,
+                    );
+                });
             }
         }
     }
@@ -217,10 +225,10 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, atlas_textures: &[egui::Tex
     ui.horizontal(|ui| {
         ui.strong(t!("sprite_list.sources"));
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if ui.small_button(t!("sprite_list.add")).clicked() {
+            if ui.small_button(ph::PLUS).clicked() {
                 state.pending.add_source = true;
             }
-            if ui.small_button(t!("sprite_list.refresh")).clicked() {
+            if ui.small_button(ph::ARROWS_CLOCKWISE).clicked() {
                 state.pending.pack = true;
             }
         });
@@ -230,7 +238,7 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, atlas_textures: &[egui::Tex
     let mut remove_idx: Option<usize> = None;
     for (i, source) in state.project.sources.iter().enumerate() {
         ui.horizontal(|ui| {
-            if ui.small_button(t!("sprite_list.remove")).clicked() {
+            if ui.small_button(ph::X).clicked() {
                 remove_idx = Some(i);
             }
             let full = source.path.to_string_lossy();
@@ -296,7 +304,7 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, atlas_textures: &[egui::Tex
 
     if state.selected_frames.len() >= 2 {
         ui.separator();
-        if ui.button("Preview Animation  [P]").clicked() {
+        if ui.button(format!("{}  Preview [P]", ph::PLAY)).clicked() {
             state.anim_preview.open = true;
             state.anim_preview.current_frame = 0;
             state.anim_preview.elapsed_secs = 0.0;

@@ -7,7 +7,7 @@ use crate::{
 };
 
 pub fn show(ui: &mut egui::Ui, state: &mut AppState, keybinds: &Keybinds) {
-    egui::menu::bar(ui, |ui| {
+    egui::MenuBar::new().ui(ui, |ui| {
         ui.menu_button(t!("menu.file"), |ui| {
             if ui
                 .add(
@@ -16,7 +16,7 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, keybinds: &Keybinds) {
                 .clicked()
             {
                 state.pending.new_project = true;
-                ui.close_menu();
+                ui.close();
             }
             if ui
                 .add(
@@ -26,7 +26,7 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, keybinds: &Keybinds) {
                 .clicked()
             {
                 state.pending.open_project = true;
-                ui.close_menu();
+                ui.close();
             }
             ui.separator();
             if ui
@@ -37,11 +37,11 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, keybinds: &Keybinds) {
                 .clicked()
             {
                 state.pending.save_project = true;
-                ui.close_menu();
+                ui.close();
             }
             if ui.button(t!("menu.save_as")).clicked() {
                 state.pending.save_project_as = true;
-                ui.close_menu();
+                ui.close();
             }
             ui.separator();
             if ui.button(t!("menu.quit")).clicked() {
@@ -52,7 +52,7 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, keybinds: &Keybinds) {
         ui.menu_button(t!("menu.edit"), |ui| {
             if ui.button(t!("menu.preferences")).clicked() {
                 state.pending.open_prefs = true;
-                ui.close_menu();
+                ui.close();
             }
         });
 
@@ -70,12 +70,12 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState, keybinds: &Keybinds) {
                 .clicked()
             {
                 state.pending.export = true;
-                ui.close_menu();
+                ui.close();
             }
             ui.separator();
             if ui.button(t!("menu.add_sprites")).clicked() {
                 state.pending.add_source = true;
-                ui.close_menu();
+                ui.close();
             }
         });
 

@@ -235,6 +235,7 @@ impl FastPackApp {
                             w = w,
                             h = h,
                             sheets = sheet_count,
+                            plural = if sheet_count == 1 { "" } else { "s" },
                             aliases = self.state.alias_count,
                             overflow = self.state.overflow_count,
                         ));
@@ -606,10 +607,10 @@ impl FastPackApp {
 
         // If both /a and /a/b are in the drop, keep only /a — the walker covers children anyway.
         let all: Vec<_> = new_sources.iter().cloned().collect();
-        for path in all.iter().filter(|p| {
-            !all.iter()
-                .any(|other| other != *p && p.starts_with(other))
-        }) {
+        for path in all
+            .iter()
+            .filter(|p| !all.iter().any(|other| other != *p && p.starts_with(other)))
+        {
             self.state.add_source_path(path.clone());
         }
     }

@@ -69,6 +69,7 @@ jobs:
       - name: package macOS DMG
         if: runner.os == 'macOS'
         run: |
+          brew install svg2png 
           bash .github/scripts/package-macos.sh \
             "target/${{ matrix.target }}/release/fastpack" \
             "${{ matrix.artifact }}"

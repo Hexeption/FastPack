@@ -2,6 +2,7 @@ use std::path::PathBuf;
 use std::sync::mpsc;
 
 use eframe::egui;
+use egui_phosphor::regular as ph;
 use rust_i18n::t;
 
 use crate::{
@@ -40,10 +41,26 @@ pub fn show(
             let mut tab: Tab = ctx.data(|d| d.get_temp(tab_id).unwrap_or_default());
 
             ui.horizontal(|ui| {
-                ui.selectable_value(&mut tab, Tab::General, t!("prefs.tab_general"));
-                ui.selectable_value(&mut tab, Tab::Defaults, t!("prefs.tab_defaults"));
-                ui.selectable_value(&mut tab, Tab::Updates, t!("prefs.tab_updates"));
-                ui.selectable_value(&mut tab, Tab::Keybinds, "Keybinds");
+                ui.selectable_value(
+                    &mut tab,
+                    Tab::General,
+                    format!("{}  {}", ph::GEAR, t!("prefs.tab_general")),
+                );
+                ui.selectable_value(
+                    &mut tab,
+                    Tab::Defaults,
+                    format!("{}  {}", ph::SLIDERS, t!("prefs.tab_defaults")),
+                );
+                ui.selectable_value(
+                    &mut tab,
+                    Tab::Updates,
+                    format!("{}  {}", ph::CLOUD_ARROW_DOWN, t!("prefs.tab_updates")),
+                );
+                ui.selectable_value(
+                    &mut tab,
+                    Tab::Keybinds,
+                    format!("{}  Keybinds", ph::KEYBOARD),
+                );
             });
             ui.separator();
 

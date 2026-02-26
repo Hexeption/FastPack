@@ -19,7 +19,7 @@ cat > FastPack.app/Contents/Info.plist << 'PLIST'
 <plist version="1.0">
 <dict>
   <key>CFBundleExecutable</key><string>fastpack</string>
-  <key>CFBundleIdentifier</key><string>com.hexeption.fastpack</string>
+  <key>CFBundleIdentifier</key><string>uk.co.hexeption.fastpack</string>
   <key>CFBundleName</key><string>FastPack</string>
   <key>CFBundleDisplayName</key><string>FastPack</string>
   <key>CFBundlePackageType</key><string>APPL</string>
@@ -30,22 +30,59 @@ cat > FastPack.app/Contents/Info.plist << 'PLIST'
 </plist>
 PLIST
 
-ICO=$(find target -name 'icon.ico' -print -quit)
+ICO=$(find assets -name 'icon.svg' -print -quit)
 if [ -n "$ICO" ]; then
   mkdir -p icon.iconset
-  for sz in 16 32 64 128 256 512; do
-    sips -z $sz $sz "$ICO" --out "icon.iconset/icon_${sz}x${sz}.png" 2>/dev/null || true
+
+  SIZES="
+16,16x16
+32,16x16@2x
+32,32x32
+64,32x32@2x
+128,128x128
+256,128x128@2x
+256,256x256
+512,256x256@2x
+512,512x512
+1024,512x512@2x
+"
+
+  for PARAMS in $SIZES; do
+    SIZE=$(echo "$PARAMS" | cut -d, -f1)
+    LABEL=$(echo "$PARAMS" | cut -d, -f2)
+    svg2png -w "$SIZE" -h "$SIZE" "$ICO" "icon.iconset/icon_${LABEL}.png"
   done
-  for sz in 16 32 64 128 256; do
-    sz2=$((sz * 2))
-    cp "icon.iconset/icon_${sz2}x${sz2}.png" \
-       "icon.iconset/icon_${sz}x${sz}@2x.png" 2>/dev/null || true
-  done
+
   iconutil -c icns icon.iconset -o FastPack.app/Contents/Resources/AppIcon.icns
 fi
 
-hdiutil create \
-  -volname "FastPack" \
-  -srcfolder FastPack.app \
-  -ov -format UDZO \
-  "$ARTIFACT"
+# Convert DMG background SVG to PNG
+BG=$(find assets -name 'dmg-background.svg' -print -quit)
+if [ -n "$BG" ]; then
+  mkdir -p dmg-bg
+  svg2png -w 540 -h 380 "$BG" dmg-bg/background.png
+fi
+
+npm install -g appdmg
+
+cat > appdmg_config.json << 'CONFIG'
+{
+  "title": "FastPack",
+  "icon": "FastPack.app/Contents/Resources/AppIcon.icns",
+  "background": "dmg-bg/background.png",
+  "background-color": "#000000",
+  "icon-size": 64,
+  "window": {
+    "position": { "x": 400, "y": 100 },
+    "size": { "width": 540, "height": 380 }
+  },
+  "contents": [
+    { "x": 160, "y": 195, "type": "file", "path": "FastPack.app" },
+    { "x": 380, "y": 195, "type": "link", "path": "/Applications" }
+  ]
+}
+CONFIG
+
+appdmg appdmg_config.json "$ARTIFACT"
+
+rm -rf FastPack.app dmg-bg appdmg_config.json 

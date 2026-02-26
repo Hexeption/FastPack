@@ -1,4 +1,5 @@
 use eframe::egui;
+use egui_phosphor::regular as ph;
 
 use crate::state::AppState;
 
@@ -45,9 +46,8 @@ pub fn show(ctx: &egui::Context, state: &mut AppState, atlas_textures: &[egui::T
         .default_size([320.0, 400.0])
         .min_size([240.0, 200.0])
         .show(ctx, |ui| {
-            // Controls toolbar
             ui.horizontal(|ui| {
-                if ui.button("◀").clicked() {
+                if ui.button(ph::CARET_LEFT).clicked() {
                     state.anim_preview.playing = false;
                     state.anim_preview.current_frame =
                         state.anim_preview.current_frame.saturating_sub(1);
@@ -55,16 +55,16 @@ pub fn show(ctx: &egui::Context, state: &mut AppState, atlas_textures: &[egui::T
                 }
 
                 let play_label = if state.anim_preview.playing {
-                    "⏸"
+                    ph::PAUSE
                 } else {
-                    "▶"
+                    ph::PLAY
                 };
                 if ui.button(play_label).clicked() {
                     state.anim_preview.playing = !state.anim_preview.playing;
                     state.anim_preview.elapsed_secs = 0.0;
                 }
 
-                if ui.button("▶|").clicked() {
+                if ui.button(ph::CARET_RIGHT).clicked() {
                     state.anim_preview.playing = false;
                     let next = state.anim_preview.current_frame + 1;
                     state.anim_preview.current_frame = if next >= n { 0 } else { next };
@@ -87,7 +87,6 @@ pub fn show(ctx: &egui::Context, state: &mut AppState, atlas_textures: &[egui::T
 
             ui.separator();
 
-            // Fixed canvas — all remaining space
             let available = ui.available_size();
             let (response, painter) = ui.allocate_painter(available, egui::Sense::click_and_drag());
 
@@ -112,7 +111,7 @@ pub fn show(ctx: &egui::Context, state: &mut AppState, atlas_textures: &[egui::T
             let zoom = state.anim_preview.zoom;
             let pan = egui::vec2(state.anim_preview.pan[0], state.anim_preview.pan[1]);
 
-            painter.rect_filled(canvas, 0.0, egui::Color32::from_rgb(35, 35, 35));
+            painter.rect_filled(canvas, 0.0, egui::Color32::from_rgb(24, 24, 24));
             draw_checker(&painter, canvas);
 
             let frame_idx = state.selected_frames[state.anim_preview.current_frame];
@@ -137,7 +136,6 @@ pub fn show(ctx: &egui::Context, state: &mut AppState, atlas_textures: &[egui::T
 
                     painter.image(atlas_textures[si].id(), img_rect, uv, egui::Color32::WHITE);
 
-                    // Frame ID label at bottom-left of canvas
                     painter.text(
                         canvas.left_bottom() + egui::vec2(6.0, -6.0),
                         egui::Align2::LEFT_BOTTOM,
@@ -154,8 +152,8 @@ pub fn show(ctx: &egui::Context, state: &mut AppState, atlas_textures: &[egui::T
 
 fn draw_checker(painter: &egui::Painter, rect: egui::Rect) {
     let tile = 8.0_f32;
-    let c1 = egui::Color32::from_rgb(50, 50, 50);
-    let c2 = egui::Color32::from_rgb(60, 60, 60);
+    let c1 = egui::Color32::from_rgb(32, 32, 32);
+    let c2 = egui::Color32::from_rgb(40, 40, 40);
     let mut x = (rect.min.x / tile).floor() * tile;
     while x < rect.max.x {
         let mut y = (rect.min.y / tile).floor() * tile;

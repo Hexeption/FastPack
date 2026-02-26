@@ -31,6 +31,7 @@ pub fn show(ui: &mut egui::Ui, pivot: &mut Option<Point>) -> bool {
         rect,
         0.0,
         egui::Stroke::new(1.0, egui::Color32::from_gray(100)),
+        egui::StrokeKind::Outside,
     );
 
     let cx = rect.min.x + pt.x * rect.width();
