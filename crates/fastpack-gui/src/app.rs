@@ -1,4 +1,5 @@
 use std::sync::mpsc;
+use std::time::Duration;
 
 use eframe::egui;
 use fastpack_compress::{
@@ -18,6 +19,8 @@ use fastpack_formats::{
         pixijs::PixiJsExporter,
     },
 };
+use notify_debouncer_mini::notify::RecursiveMode;
+use notify_debouncer_mini::{DebounceEventResult, new_debouncer};
 
 use crate::{
     menu,
@@ -42,6 +45,8 @@ pub struct FastPackApp {
     prefs_open: bool,
     update_status: UpdateStatus,
     update_rx: Option<mpsc::Receiver<UpdateMsg>>,
+    file_watcher: Option<Box<dyn Send>>,
+    watch_rx: Option<mpsc::Receiver<DebounceEventResult>>,
 }
 
 impl Default for FastPackApp {
@@ -60,6 +65,8 @@ impl Default for FastPackApp {
             prefs_open: false,
             update_status: UpdateStatus::Idle,
             update_rx: None,
+            file_watcher: None,
+            watch_rx: None,
         };
         if app.prefs.auto_check_updates {
             let (tx, rx) = mpsc::channel();
@@ -75,6 +82,7 @@ impl eframe::App for FastPackApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         crate::theme::apply(ctx, self.state.dark_mode);
         self.poll_worker(ctx);
+        self.poll_watcher(ctx);
         self.handle_pending(ctx);
         self.handle_dropped_files(ctx);
 
@@ -260,9 +268,12 @@ impl FastPackApp {
         if std::mem::take(&mut self.state.pending.new_project) {
             self.state.new_project(self.prefs.default_config.clone());
             self.atlas_textures.clear();
+            self.file_watcher = None;
+            self.watch_rx = None;
         }
         if std::mem::take(&mut self.state.pending.open_project) {
             self.do_open_project();
+            self.state.pending.rebuild_watcher = true;
         }
         if std::mem::take(&mut self.state.pending.save_project) {
             self.do_save_project(false);
@@ -275,6 +286,9 @@ impl FastPackApp {
         }
         if std::mem::take(&mut self.state.pending.open_prefs) {
             self.prefs_open = true;
+        }
+        if std::mem::take(&mut self.state.pending.rebuild_watcher) {
+            self.rebuild_watcher();
         }
     }
 
@@ -583,6 +597,64 @@ impl FastPackApp {
                     self.state.add_source_path(parent.to_path_buf());
                 }
             }
+        }
+    }
+
+    fn rebuild_watcher(&mut self) {
+        self.file_watcher = None;
+        self.watch_rx = None;
+
+        if self.state.project.sources.is_empty() {
+            return;
+        }
+
+        let (tx, rx) = mpsc::channel::<DebounceEventResult>();
+        match new_debouncer(Duration::from_millis(500), tx) {
+            Ok(mut debouncer) => {
+                let watch_paths: Vec<_> = self
+                    .state
+                    .project
+                    .sources
+                    .iter()
+                    .map(|s| {
+                        if s.path.is_file() {
+                            s.path.parent().unwrap_or(s.path.as_path()).to_path_buf()
+                        } else {
+                            s.path.clone()
+                        }
+                    })
+                    .collect();
+                let mut errors: Vec<String> = Vec::new();
+                for path in &watch_paths {
+                    if let Err(e) = debouncer.watcher().watch(path, RecursiveMode::Recursive) {
+                        errors.push(format!("Could not watch {}: {e}", path.display()));
+                    }
+                }
+                for err in errors {
+                    self.state.log_warn(err);
+                }
+                self.file_watcher = Some(Box::new(debouncer));
+                self.watch_rx = Some(rx);
+            }
+            Err(e) => self
+                .state
+                .log_warn(format!("Could not start file watcher: {e}")),
+        }
+    }
+
+    fn poll_watcher(&mut self, ctx: &egui::Context) {
+        let Some(rx) = &self.watch_rx else { return };
+        let mut changed = false;
+        loop {
+            match rx.try_recv() {
+                Ok(Ok(_)) => changed = true,
+                Ok(Err(_)) | Err(mpsc::TryRecvError::Empty) => break,
+                Err(mpsc::TryRecvError::Disconnected) => break,
+            }
+        }
+        if changed && !self.state.packing {
+            self.state.pending.pack = true;
+            ctx.request_repaint();
         }
     }
 }

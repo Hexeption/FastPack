@@ -118,6 +118,8 @@ pub struct PendingActions {
     pub add_source: bool,
     /// Open the preferences window.
     pub open_prefs: bool,
+    /// Rebuild the filesystem watcher to match current sources.
+    pub rebuild_watcher: bool,
 }
 
 /// Playback state for the animation preview window.
@@ -271,6 +273,7 @@ impl AppState {
         });
         self.dirty = true;
         self.pending.pack = true;
+        self.pending.rebuild_watcher = true;
         self.log_info(t!("state.added_source", path = display));
     }
 
@@ -280,6 +283,7 @@ impl AppState {
             let removed = self.project.sources.remove(index);
             self.dirty = true;
             self.pending.pack = true;
+            self.pending.rebuild_watcher = true;
             self.log_info(t!(
                 "state.removed_source",
                 path = removed.path.display().to_string()

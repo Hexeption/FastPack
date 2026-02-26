@@ -22,6 +22,7 @@ image.workspace             = true
 rayon.workspace             = true
 serde_json.workspace        = true
 walkdir                     = "2"
+notify-debouncer-mini       = "0.7"
 toml                        = "0.8"
 rfd                         = "0.15"
 ureq                        = "3"
