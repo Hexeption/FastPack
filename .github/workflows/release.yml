@@ -78,7 +78,7 @@ jobs:
       - name: rename artifact
         shell: bash
         run: |
-          FILE=$(find crates/fastpack-tauri/src-tauri/target/${{ matrix.target }}/release/bundle/${{ matrix.glob }} | head -1)
+          FILE=$(find target/${{ matrix.target }}/release/bundle/${{ matrix.glob }} | head -1)
           cp "$FILE" "${{ matrix.artifact }}"
 
       - uses: actions/upload-artifact@v4
@@ -132,7 +132,7 @@ jobs:
 
       - name: rename ARM artifact
         run: |
-          FILE=$(find crates/fastpack-tauri/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg | head -1)
+          FILE=$(find target/aarch64-apple-darwin/release/bundle/dmg/*.dmg | head -1)
           cp "$FILE" fastpack-macos-aarch64.dmg
 
       - name: build Intel
@@ -152,7 +152,7 @@ jobs:
 
       - name: rename Intel artifact
         run: |
-          FILE=$(find crates/fastpack-tauri/src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/*.dmg | head -1)
+          FILE=$(find target/x86_64-apple-darwin/release/bundle/dmg/*.dmg | head -1)
           cp "$FILE" fastpack-macos-x86_64.dmg
 
       - uses: actions/upload-artifact@v4
