@@ -8,8 +8,6 @@ pub mod worker;
 
 use std::path::PathBuf;
 
-use tauri::Manager;
-
 /// Launch the Tauri GUI window.
 ///
 /// `project_path` is the optional `.fpsheet` file to open on startup.
@@ -42,10 +40,11 @@ pub fn run(project_path: Option<PathBuf>) -> anyhow::Result<()> {
             commands::cli::install_cli,
             commands::cli::check_cli_installed,
         ])
-        .setup(|app| {
+        .setup(|_app| {
             #[cfg(debug_assertions)]
             {
-                let window = app.get_webview_window("main").unwrap();
+                use tauri::Manager;
+                let window = _app.get_webview_window("main").unwrap();
                 window.open_devtools();
             }
             Ok(())
