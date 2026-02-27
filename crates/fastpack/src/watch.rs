@@ -39,9 +39,9 @@ pub struct WatchArgs {
     pub pixel_format: PixelFormat,
     /// Premultiply RGB channels by alpha before compression.
     pub premultiply_alpha: bool,
+    /// Sprite IDs excluded from packing.
+    pub excludes: Vec<String>,
 }
-
-/// Watch input directories and repack on any change.
 ///
 /// Runs an initial pack immediately, then watches all input paths for
 /// filesystem events. Repacks after a 500 ms debounce each time a change
@@ -97,6 +97,7 @@ fn run_once(args: &WatchArgs) -> Result<()> {
         texture_format: args.texture_format,
         pixel_format: args.pixel_format,
         premultiply_alpha: args.premultiply_alpha,
+        excludes: args.excludes.clone(),
     })?;
 
     let alias_note = if result.alias_count > 0 {

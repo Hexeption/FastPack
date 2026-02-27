@@ -70,6 +70,8 @@ pub struct PackArgs {
     pub pixel_format: PixelFormat,
     /// Premultiply RGB channels by alpha before compression.
     pub premultiply_alpha: bool,
+    /// Sprite IDs excluded from packing.
+    pub excludes: Vec<String>,
 }
 
 /// Per-sheet output produced by a pack run.
@@ -103,7 +105,12 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
     let mp = MultiProgress::new();
 
     // 1. Collect
-    let paths = collect_images(&args.inputs);
+    let mut paths = collect_images(&args.inputs);
+    if !args.excludes.is_empty() {
+        let excludes: std::collections::HashSet<&str> =
+            args.excludes.iter().map(|s| s.as_str()).collect();
+        paths.retain(|(_, id)| !excludes.contains(id.as_str()));
+    }
     if paths.is_empty() {
         anyhow::bail!("no images found in the specified inputs");
     }

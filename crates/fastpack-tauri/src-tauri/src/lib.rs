@@ -26,17 +26,21 @@ pub fn run(project_path: Option<PathBuf>) -> anyhow::Result<()> {
             commands::project::update_project,
             commands::project::add_source,
             commands::project::remove_source,
+            commands::project::handle_drop,
             commands::pack::pack,
             commands::pack::start_watch,
             commands::pack::stop_watch,
             commands::dialogs::open_folder_dialog,
             commands::dialogs::open_file_dialog,
             commands::dialogs::save_file_dialog,
+            commands::dialogs::open_config_folder,
             commands::preferences::get_preferences,
             commands::preferences::save_preferences,
             commands::updater::check_for_update,
             commands::updater::download_update,
             commands::updater::apply_update,
+            commands::cli::install_cli,
+            commands::cli::check_cli_installed,
         ])
         .setup(|app| {
             #[cfg(debug_assertions)]

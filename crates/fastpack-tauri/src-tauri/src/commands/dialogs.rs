@@ -1,9 +1,42 @@
 use rfd::FileDialog;
 
+/// Open the FastPack config folder in the system file browser.
+#[tauri::command]
+pub fn open_config_folder() -> Result<(), String> {
+    let path = dirs::config_dir()
+        .map(|d| d.join("FastPack"))
+        .ok_or("could not determine config directory")?;
+    let _ = std::fs::create_dir_all(&path);
+
+    #[cfg(target_os = "macos")]
+    std::process::Command::new("open")
+        .arg(&path)
+        .spawn()
+        .map_err(|e| e.to_string())?;
+
+    #[cfg(target_os = "linux")]
+    std::process::Command::new("xdg-open")
+        .arg(&path)
+        .spawn()
+        .map_err(|e| e.to_string())?;
+
+    #[cfg(target_os = "windows")]
+    std::process::Command::new("explorer")
+        .arg(&path)
+        .spawn()
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
 /// Open a folder picker dialog. Returns the selected path or `None`.
 #[tauri::command]
-pub fn open_folder_dialog() -> Option<String> {
-    FileDialog::new()
+pub fn open_folder_dialog(starting_path: Option<String>) -> Option<String> {
+    let mut dialog = FileDialog::new();
+    if let Some(p) = starting_path {
+        dialog = dialog.set_directory(p);
+    }
+    dialog
         .pick_folder()
         .map(|p| p.to_string_lossy().into_owned())
 }

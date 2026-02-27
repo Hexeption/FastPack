@@ -431,6 +431,9 @@ pub struct PackerConfig {
     pub variants: Vec<ScaleVariant>,
     /// Per-sprite overrides applied after loading.
     pub sprite_overrides: Vec<SpriteOverride>,
+    /// Sprite IDs excluded from packing.
+    #[serde(default)]
+    pub excludes: Vec<String>,
 }
 
 impl Default for PackerConfig {
@@ -442,6 +445,7 @@ impl Default for PackerConfig {
             algorithm: AlgorithmConfig::default(),
             variants: vec![ScaleVariant::default()],
             sprite_overrides: Vec::new(),
+            excludes: Vec::new(),
         }
     }
 }
@@ -463,4 +467,9 @@ pub struct Project {
     pub config: PackerConfig,
     /// Input directories and glob filters.
     pub sources: Vec<SourceSpec>,
+    /// UI colour overrides for source roots and sub-folders, keyed by path.
+    /// Source roots use their full filesystem path; sub-folders use their
+    /// tree-relative path (e.g. `"fx/particles"`).
+    #[serde(default, skip_serializing_if = "std::collections::HashMap::is_empty")]
+    pub folder_colors: std::collections::HashMap<String, String>,
 }

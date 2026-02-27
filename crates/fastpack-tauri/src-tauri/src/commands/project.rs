@@ -1,3 +1,4 @@
+use std::collections::BTreeSet;
 use std::sync::Mutex;
 
 use fastpack_core::types::config::{Project, SourceSpec};
@@ -87,4 +88,84 @@ pub fn remove_source(state: State<'_, Mutex<TauriState>>, index: usize) -> Proje
         s.log_info(format!("Removed source: {}", removed.path.display()));
     }
     s.project.clone()
+}
+
+#[derive(serde::Serialize)]
+pub struct HandleDropResult {
+    pub project: Project,
+    pub project_path: Option<String>,
+    pub dirty: bool,
+}
+
+#[tauri::command]
+pub fn handle_drop(
+    state: State<'_, Mutex<TauriState>>,
+    paths: Vec<String>,
+) -> Result<HandleDropResult, String> {
+    let mut s = state.lock().unwrap();
+    let mut new_sources: BTreeSet<std::path::PathBuf> = BTreeSet::new();
+
+    for raw in &paths {
+        let pb = std::path::PathBuf::from(raw);
+
+        // .fpsheet → open the project
+        if pb.extension().and_then(|e| e.to_str()) == Some("fpsheet") {
+            let text = std::fs::read_to_string(&pb).map_err(|e| e.to_string())?;
+            let project: Project = toml::from_str(&text).map_err(|e| e.to_string())?;
+            let canon = std::fs::canonicalize(&pb).unwrap_or(pb);
+            s.project = project;
+            s.project_path = Some(canon.clone());
+            s.dirty = false;
+            s.sheets.clear();
+            s.log_info(format!("Opened: {}", canon.display()));
+            return Ok(HandleDropResult {
+                project: s.project.clone(),
+                project_path: Some(canon.display().to_string()),
+                dirty: false,
+            });
+        }
+
+        // directory → add directly; file → add parent
+        let candidate = if pb.is_dir() {
+            std::fs::canonicalize(&pb).unwrap_or_else(|_| pb.clone())
+        } else if let Some(parent) = pb.parent() {
+            std::fs::canonicalize(parent).unwrap_or_else(|_| parent.to_path_buf())
+        } else {
+            continue;
+        };
+
+        new_sources.insert(candidate);
+    }
+
+    // batch dedup: drop /a/b if /a is also in the set
+    let all: Vec<_> = new_sources.iter().cloned().collect();
+    let deduped: Vec<_> = all
+        .iter()
+        .filter(|p| !all.iter().any(|other| other != *p && p.starts_with(other)))
+        .cloned()
+        .collect();
+
+    for path in deduped {
+        let already = s.project.sources.iter().any(|src| {
+            let stored = std::fs::canonicalize(&src.path).unwrap_or_else(|_| src.path.clone());
+            path.starts_with(&stored)
+        });
+        if !already {
+            let display = path.display().to_string();
+            s.project.sources.push(SourceSpec {
+                path,
+                filter: "**/*.png".to_string(),
+            });
+            s.dirty = true;
+            s.log_info(format!("Added source: {display}"));
+        }
+    }
+
+    let project_path = s.project_path.as_ref().map(|p| p.display().to_string());
+
+    Ok(HandleDropResult {
+        project: s.project.clone(),
+        project_path,
+        dirty: s.dirty,
+    })
 }

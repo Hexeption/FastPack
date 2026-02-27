@@ -25,8 +25,6 @@ pub enum Commands {
     Init(InitArgs),
     /// Split a packed atlas back into individual sprite files.
     Split(SplitArgs),
-    /// Open the graphical user interface (default when no subcommand is given).
-    Gui(GuiArgs),
 }
 
 /// Arguments for the `gui` subcommand.

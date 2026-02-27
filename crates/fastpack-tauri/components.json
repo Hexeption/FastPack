@@ -1,0 +1,17 @@
+{
+	"style": "new-york",
+	"rsc": false,
+	"tsx": true,
+	"tailwind": {
+		"config": "",
+		"css": "src/index.css",
+		"baseColor": "zinc",
+		"cssVariables": true
+	},
+	"aliases": {
+		"components": "@/components",
+		"hooks": "@/lib/hooks",
+		"utils": "@/lib/utils",
+		"ui": "@/components/ui"
+	}
+}

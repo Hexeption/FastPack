@@ -3,6 +3,75 @@ use std::path::PathBuf;
 use fastpack_core::types::config::PackerConfig;
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Keybind {
+    pub key: String,
+    pub modifier: bool,
+    pub shift: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct KeybindsConfig {
+    #[serde(default = "default_kb_new_project")]
+    pub new_project: Keybind,
+    #[serde(default = "default_kb_open_project")]
+    pub open_project: Keybind,
+    #[serde(default = "default_kb_save_project")]
+    pub save_project: Keybind,
+    #[serde(default = "default_kb_save_project_as")]
+    pub save_project_as: Keybind,
+    #[serde(default = "default_kb_anim_preview")]
+    pub anim_preview: Keybind,
+}
+
+impl Default for KeybindsConfig {
+    fn default() -> Self {
+        Self {
+            new_project: default_kb_new_project(),
+            open_project: default_kb_open_project(),
+            save_project: default_kb_save_project(),
+            save_project_as: default_kb_save_project_as(),
+            anim_preview: default_kb_anim_preview(),
+        }
+    }
+}
+
+fn default_kb_new_project() -> Keybind {
+    Keybind {
+        key: "n".into(),
+        modifier: true,
+        shift: false,
+    }
+}
+fn default_kb_open_project() -> Keybind {
+    Keybind {
+        key: "o".into(),
+        modifier: true,
+        shift: false,
+    }
+}
+fn default_kb_save_project() -> Keybind {
+    Keybind {
+        key: "s".into(),
+        modifier: true,
+        shift: false,
+    }
+}
+fn default_kb_save_project_as() -> Keybind {
+    Keybind {
+        key: "s".into(),
+        modifier: true,
+        shift: true,
+    }
+}
+fn default_kb_anim_preview() -> Keybind {
+    Keybind {
+        key: "p".into(),
+        modifier: false,
+        shift: false,
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum Language {
     #[default]
@@ -72,6 +141,12 @@ pub struct Preferences {
     pub language: Language,
     #[serde(default = "default_ui_scale")]
     pub ui_scale: f32,
+    #[serde(default)]
+    pub keybinds: KeybindsConfig,
+    #[serde(default = "default_zoom_speed")]
+    pub atlas_zoom_speed: f32,
+    #[serde(default)]
+    pub atlas_invert_scroll: bool,
 }
 
 fn default_true() -> bool {
@@ -79,6 +154,10 @@ fn default_true() -> bool {
 }
 
 fn default_ui_scale() -> f32 {
+    1.0
+}
+
+fn default_zoom_speed() -> f32 {
     1.0
 }
 
@@ -90,6 +169,9 @@ impl Default for Preferences {
             default_config: PackerConfig::default(),
             language: Language::En,
             ui_scale: 1.0,
+            keybinds: KeybindsConfig::default(),
+            atlas_zoom_speed: 1.0,
+            atlas_invert_scroll: false,
         }
     }
 }

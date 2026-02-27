@@ -1,39 +1,51 @@
-import { useEffect } from "react";
 import { listen } from "@tauri-apps/api/event";
-import type { PackFinishedPayload, PackFailedPayload } from "../types";
+import { useEffect } from "react";
+import { pack } from "../lib/commands";
 import { useStore } from "../store";
+import type { PackFailedPayload, PackFinishedPayload } from "../types";
+import { useKeyboardShortcuts } from "./useKeyboardShortcuts";
 
 export function usePack() {
-  const setIsPacking = useStore((s) => s.setIsPacking);
-  const setSheets = useStore((s) => s.setSheets);
-  const appendLog = useStore((s) => s.appendLog);
+	const setIsPacking = useStore((s) => s.setIsPacking);
+	const setSheets = useStore((s) => s.setSheets);
+	const appendLog = useStore((s) => s.appendLog);
 
-  useEffect(() => {
-    const unlisteners = Promise.all([
-      listen("pack:started", () => {
-        setIsPacking(true);
-        appendLog({ level: "info", message: "Pack started…", time: now() });
-      }),
+	useKeyboardShortcuts([
+		{ key: "p", mod: true, action: () => pack().catch(console.error) },
+	]);
 
-      listen<PackFinishedPayload>("pack:finished", ({ payload }) => {
-        setIsPacking(false);
-        setSheets(payload.sheets, payload.log);
-      }),
+	useEffect(() => {
+		const unlisteners = Promise.all([
+			listen("pack:started", () => {
+				setIsPacking(true);
+				appendLog({ level: "info", message: "Packing…", time: now() });
+			}),
 
-      listen<PackFailedPayload>("pack:failed", ({ payload }) => {
-        setIsPacking(false);
-        appendLog({ level: "error", message: payload.error, time: now() });
-      }),
-    ]);
+			listen<PackFinishedPayload>("pack:finished", ({ payload }) => {
+				setIsPacking(false);
+				setSheets({
+					sheets: payload.sheets,
+					log: payload.log,
+					spriteCount: payload.sprite_count,
+					aliasCount: payload.alias_count,
+					overflowCount: payload.overflow_count,
+				});
+			}),
 
-    return () => {
-      unlisteners.then((fns) => fns.forEach((fn) => fn()));
-    };
-  }, [setIsPacking, setSheets, appendLog]);
+			listen<PackFailedPayload>("pack:failed", ({ payload }) => {
+				setIsPacking(false);
+				appendLog({ level: "error", message: payload.error, time: now() });
+			}),
+		]);
+
+		return () => {
+			unlisteners.then((fns) => fns.forEach((fn) => fn()));
+		};
+	}, [setIsPacking, setSheets, appendLog]);
 }
 
 function now(): string {
-  const d = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+	const d = new Date();
+	const pad = (n: number) => String(n).padStart(2, "0");
+	return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }

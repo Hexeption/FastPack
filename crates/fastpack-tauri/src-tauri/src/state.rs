@@ -77,6 +77,7 @@ pub struct SheetData {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FrameData {
     pub id: String,
+    pub src_path: String,
     pub x: u32,
     pub y: u32,
     pub w: u32,
@@ -110,7 +111,11 @@ impl TauriState {
     pub fn new(project_path: Option<PathBuf>) -> Self {
         let prefs = Preferences::load();
         let mut state = Self {
-            project: Project::default(),
+            project: Project {
+                config: prefs.default_config.clone(),
+                sources: Vec::new(),
+                folder_colors: Default::default(),
+            },
             project_path: None,
             dirty: false,
             log: Vec::new(),
@@ -173,6 +178,7 @@ impl TauriState {
             .iter()
             .map(|f| FrameData {
                 id: f.id.clone(),
+                src_path: f.src_path.clone(),
                 x: f.x,
                 y: f.y,
                 w: f.w,

@@ -22,6 +22,7 @@ use walkdir::WalkDir;
 /// A single packed frame returned to the caller.
 pub struct FrameInfo {
     pub id: String,
+    pub src_path: String,
     pub x: u32,
     pub y: u32,
     pub w: u32,
@@ -63,12 +64,17 @@ fn file_id(path: &Path, base: &Path) -> String {
 }
 
 fn collect_images(project: &Project) -> Vec<(PathBuf, String)> {
+    let excludes: std::collections::HashSet<&str> =
+        project.config.excludes.iter().map(|s| s.as_str()).collect();
     let mut paths = Vec::new();
     for source in &project.sources {
         if source.path.is_file() {
             if is_image(&source.path) {
                 let base = source.path.parent().unwrap_or(Path::new(""));
-                paths.push((source.path.clone(), file_id(&source.path, base)));
+                let id = file_id(&source.path, base);
+                if !excludes.contains(id.as_str()) {
+                    paths.push((source.path.clone(), id));
+                }
             }
         } else {
             for entry in WalkDir::new(&source.path)
@@ -78,7 +84,9 @@ fn collect_images(project: &Project) -> Vec<(PathBuf, String)> {
             {
                 if entry.file_type().is_file() && is_image(entry.path()) {
                     let id = file_id(entry.path(), &source.path);
-                    paths.push((entry.path().to_path_buf(), id));
+                    if !excludes.contains(id.as_str()) {
+                        paths.push((entry.path().to_path_buf(), id));
+                    }
                 }
             }
         }
@@ -149,6 +157,7 @@ fn build_sheet(
         .iter()
         .map(|ps| FrameInfo {
             id: ps.placement.sprite_id.clone(),
+            src_path: ps.sprite.source_path.to_string_lossy().into_owned(),
             x: ps.placement.dest.x,
             y: ps.placement.dest.y,
             w: ps.placement.dest.w,
@@ -310,6 +319,7 @@ fn run_pack_impl(project: &Project) -> Result<WorkerOutput> {
             for (alias, (x, y, w, h)) in base_aliases.iter().zip(alias_coords) {
                 sheet.frames.push(FrameInfo {
                     id: alias.id.clone(),
+                    src_path: alias.source_path.to_string_lossy().into_owned(),
                     x,
                     y,
                     w,

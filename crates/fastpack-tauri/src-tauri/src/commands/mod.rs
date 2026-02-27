@@ -1,3 +1,4 @@
+pub mod cli;
 pub mod dialogs;
 pub mod pack;
 pub mod preferences;

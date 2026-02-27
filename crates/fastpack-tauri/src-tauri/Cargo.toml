@@ -31,14 +31,18 @@ rayon.workspace             = true
 tracing.workspace           = true
 image.workspace             = true
 
-tauri                 = { version = "2", features = [] }
+tauri                 = { version = "2", features = ["protocol-asset"] }
 walkdir               = "2"
 notify-debouncer-mini = "0.7"
-rfd                   = "0.15"
+rfd                   = "0.17"
 dirs                  = "6"
 ureq                  = "3"
-toml                  = "0.8"
+toml                  = "0.9"
 base64                = "0.22"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
+
+[target.'cfg(windows)'.dependencies]
+winreg      = "0.55"
+windows-sys = { version = "0.59", features = ["Win32_UI_WindowsAndMessaging"] }

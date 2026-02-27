@@ -8,8 +8,8 @@ mod project;
 mod split;
 mod watch;
 
-use anyhow::{Result, bail};
-use clap::Parser;
+use anyhow::{Ok, Result, bail};
+use clap::{CommandFactory, Parser};
 use fastpack_core::types::{
     config::{DataFormat, LayoutConfig, Project, ScaleVariant, SpriteConfig},
     pixel_format::{PixelFormat, TextureFormat},
@@ -29,11 +29,11 @@ fn main() -> Result<()> {
 
     let cli = cli::Cli::parse();
     match cli.command {
-        None | Some(cli::Commands::Gui(cli::GuiArgs { project: None })) => {
-            fastpack_tauri::run(None)
+        None => {
+            // No subcommand: show help
+            cli::Cli::command().print_help()?;
+            Ok(())
         }
-
-        Some(cli::Commands::Gui(cli::GuiArgs { project })) => fastpack_tauri::run(project),
 
         Some(cli::Commands::Pack(args)) => {
             let (
@@ -43,6 +43,7 @@ fn main() -> Result<()> {
                 layout,
                 sprite_config,
                 sprite_overrides,
+                excludes,
                 variants,
                 data_format,
                 texture_format,
@@ -69,6 +70,7 @@ fn main() -> Result<()> {
                 texture_format,
                 pixel_format,
                 premultiply_alpha,
+                excludes,
             })?;
 
             let alias_note = if result.alias_count > 0 {
@@ -104,7 +106,6 @@ fn main() -> Result<()> {
 
             Ok(())
         }
-
         Some(cli::Commands::Watch(args)) => {
             let (
                 inputs,
@@ -113,6 +114,7 @@ fn main() -> Result<()> {
                 layout,
                 sprite_config,
                 sprite_overrides,
+                excludes,
                 variants,
                 data_format,
                 texture_format,
@@ -139,17 +141,16 @@ fn main() -> Result<()> {
                 texture_format,
                 pixel_format,
                 premultiply_alpha,
+                excludes,
             })?;
             Ok(())
         }
-
         Some(cli::Commands::Init(args)) => {
             let proj = Project::default();
             project::save(&proj, &args.output)?;
             println!("Wrote {}", args.output.display());
             Ok(())
         }
-
         Some(cli::Commands::Split(args)) => {
             let result = split::run_split(split::SplitArgs {
                 atlas_path: args.atlas,
@@ -173,6 +174,7 @@ type PackFields = (
     LayoutConfig,
     SpriteConfig,
     Vec<fastpack_core::types::config::SpriteOverride>,
+    Vec<String>,
     Vec<ScaleVariant>,
     DataFormat,
     TextureFormat,
@@ -200,6 +202,7 @@ fn resolve_pack_fields(args: &cli::PackArgs) -> Result<PackFields> {
             proj.config.layout.clone(),
             proj.config.sprites.clone(),
             proj.config.sprite_overrides.clone(),
+            proj.config.excludes.clone(),
             proj.config.variants.clone(),
             proj.config.output.data_format,
             args.texture_format.clone().into(),
@@ -243,6 +246,7 @@ fn resolve_pack_fields(args: &cli::PackArgs) -> Result<PackFields> {
             args.name.clone(),
             layout,
             sprite_config,
+            Vec::new(),
             Vec::new(),
             vec![variant],
             args.data_format.clone().into(),

@@ -4,37 +4,44 @@ on:
   push:
     branches: [master]
     tags: ["v*"]
-  schedule:
-    - cron: "0 0 * * *"
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-    name: build (${{ matrix.target }})
+  build-tauri:
+    name: build (${{ matrix.label }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
-            artifact: fastpack-linux-x86_64.tar.gz
-          - os: macos-15-intel
-            target: x86_64-apple-darwin
-            artifact: fastpack-macos-x86_64.dmg
-            arch: x86_64
-          - os: macos-latest
-            target: aarch64-apple-darwin
-            artifact: fastpack-macos-aarch64.dmg
-            arch: aarch64
+            label: Linux x86_64
+            artifact: fastpack-linux-x86_64.AppImage
+            bundle: appimage
+            glob: "appimage/*.AppImage"
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            artifact: fastpack-windows-x86_64.msi
+            label: Windows x86_64
+            artifact: fastpack-windows-x86_64-setup.exe
+            bundle: nsis
+            glob: "nsis/*.exe"
 
     steps:
       - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: pnpm
+          cache-dependency-path: crates/fastpack-tauri/pnpm-lock.yaml
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -50,60 +57,117 @@ jobs:
         run: |
           sudo apt-get update -q
           sudo apt-get install -y \
-            libgtk-3-dev \
-            libxcb-render0-dev \
-            libxcb-shape0-dev \
-            libxcb-xfixes0-dev \
-            libxkbcommon-dev \
-            libssl-dev
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf
 
-      - run: cargo build --release --package fastpack --target ${{ matrix.target }} --all-features
+      - name: install frontend deps
+        working-directory: crates/fastpack-tauri
+        run: pnpm install
 
-      - name: package Linux
-        if: runner.os == 'Linux'
-        run: |
-          strip target/${{ matrix.target }}/release/fastpack
-          tar -czf ${{ matrix.artifact }} \
-            -C target/${{ matrix.target }}/release fastpack
-
-      - name: package macOS DMG
-        if: runner.os == 'macOS'
+      - uses: tauri-apps/tauri-action@v0
+        id: tauri
         env:
-          APPLE_CERT_P12: ${{ secrets.APPLE_CERT_P12 }}
-          APPLE_CERT_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: |
-          brew install svg2png
-          bash .github/scripts/package-macos.sh \
-            "target/${{ matrix.target }}/release/fastpack" \
-            "${{ matrix.artifact }}"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: crates/fastpack-tauri
+          tauriScript: pnpm tauri
+          args: --target ${{ matrix.target }} --bundles ${{ matrix.bundle }}
 
-      - name: install WiX v4
-        if: runner.os == 'Windows'
+      - name: rename artifact
+        shell: bash
         run: |
-          dotnet tool install --global wix
-          wix extension add WixToolset.UI.wixext/6.0.2
-
-      - name: package Windows MSI
-        if: runner.os == 'Windows'
-        run: >-
-          wix build crates/fastpack/wix/main.wxs
-          -arch x64
-          -bindpath target/${{ matrix.target }}/release
-          -bindpath crates/fastpack/wix
-          -ext WixToolset.UI.wixext/6.0.2
-          -o ${{ matrix.artifact }}
+          FILE=$(find crates/fastpack-tauri/src-tauri/target/${{ matrix.target }}/release/bundle/${{ matrix.glob }} | head -1)
+          cp "$FILE" "${{ matrix.artifact }}"
 
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
           path: ${{ matrix.artifact }}
 
+  build-macos:
+    name: build (macOS)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: pnpm
+          cache-dependency-path: crates/fastpack-tauri/pnpm-lock.yaml
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: release-macos
+          cache-on-failure: "true"
+
+      - name: install frontend deps
+        working-directory: crates/fastpack-tauri
+        run: pnpm install
+
+      - name: build ARM
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERT_P12 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+        with:
+          projectPath: crates/fastpack-tauri
+          tauriScript: pnpm tauri
+          args: --target aarch64-apple-darwin --bundles dmg
+
+      - name: rename ARM artifact
+        run: |
+          FILE=$(find crates/fastpack-tauri/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg | head -1)
+          cp "$FILE" fastpack-macos-aarch64.dmg
+
+      - name: build Intel
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERT_P12 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+        with:
+          projectPath: crates/fastpack-tauri
+          tauriScript: pnpm tauri
+          args: --target x86_64-apple-darwin --bundles dmg
+
+      - name: rename Intel artifact
+        run: |
+          FILE=$(find crates/fastpack-tauri/src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/*.dmg | head -1)
+          cp "$FILE" fastpack-macos-x86_64.dmg
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fastpack-macos-aarch64.dmg
+          path: fastpack-macos-aarch64.dmg
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fastpack-macos-x86_64.dmg
+          path: fastpack-macos-x86_64.dmg
+
   release:
     name: release
-    needs: build
+    needs: [build-tauri, build-macos]
     runs-on: ubuntu-latest
     permissions:
       contents: write
