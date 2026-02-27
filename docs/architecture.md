@@ -32,9 +32,7 @@ FastPack processes sprites in nine sequential stages. Each stage operates on the
 
 `fastpack-gui` — primary interface. An `eframe` native desktop application. Depends on all three library crates.
 
-`fastpack-tui` — terminal interface using `ratatui`. Depends on all three library crates.
-
-`fastpack` — CLI binary. Orchestrates the nine-step pipeline. Also launches the GUI or TUI when requested.
+`fastpack` — CLI binary. Orchestrates the nine-step pipeline. Also launches the GUI when requested.
 
 ## Key Types
 

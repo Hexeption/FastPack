@@ -5,7 +5,6 @@ members = [
     "crates/fastpack-formats",
     "crates/fastpack-compress",
     "crates/fastpack-tauri/src-tauri",
-    "crates/fastpack-tui",
     "crates/fastpack",
 ]
 
@@ -25,7 +24,6 @@ fastpack-core     = { path = "crates/fastpack-core",                 version = "
 fastpack-formats  = { path = "crates/fastpack-formats",              version = "0.25.0" }
 fastpack-compress = { path = "crates/fastpack-compress",             version = "0.25.0" }
 fastpack-tauri    = { path = "crates/fastpack-tauri/src-tauri",      version = "0.25.0" }
-fastpack-tui      = { path = "crates/fastpack-tui",                  version = "0.25.0" }
 
 # Error handling
 thiserror = "2"

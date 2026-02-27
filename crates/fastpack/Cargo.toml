@@ -21,7 +21,6 @@ fastpack-formats.workspace  = true
 fastpack-compress = { workspace = true, features = ["jpeg-turbo", "webp-encode"] }
 image.workspace             = true
 fastpack-tauri.workspace     = true
-fastpack-tui.workspace      = true
 thiserror.workspace         = true
 anyhow.workspace            = true
 serde.workspace             = true
