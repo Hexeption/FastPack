@@ -2,7 +2,10 @@
 	"toolbar": {
 		"pack": "\u6253\u5305",
 		"packing": "\u6253\u5305\u4e2d\u2026",
-		"packTooltip": "\u6253\u5305\u7cbe\u7075",
+		"packTooltip": "\u6253\u5305\u7cbe\u7075\uff08\u4ec5\u9884\u89c8\uff09",
+		"publish": "\u53d1\u5e03",
+		"publishing": "\u53d1\u5e03\u4e2d\u2026",
+		"publishTooltip": "\u6253\u5305\u5e76\u5c06\u8f93\u51fa\u6587\u4ef6\u5199\u5165\u78c1\u76d8",
 		"watch": "\u76d1\u89c6",
 		"watching": "\u76d1\u89c6\u4e2d",
 		"watchTooltip": "\u76d1\u89c6\u6587\u4ef6\u53d8\u5316\u5e76\u81ea\u52a8\u6253\u5305",

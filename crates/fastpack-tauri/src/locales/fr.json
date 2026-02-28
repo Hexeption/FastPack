@@ -2,7 +2,10 @@
 	"toolbar": {
 		"pack": "Compiler",
 		"packing": "Compilation\u2026",
-		"packTooltip": "Compiler les sprites",
+		"packTooltip": "Compiler les sprites (aper\u00e7u uniquement)",
+		"publish": "Publier",
+		"publishing": "Publication\u2026",
+		"publishTooltip": "Compiler et \u00e9crire les fichiers de sortie sur le disque",
 		"watch": "Surveiller",
 		"watching": "Surveillance",
 		"watchTooltip": "Surveiller les fichiers et compiler automatiquement",

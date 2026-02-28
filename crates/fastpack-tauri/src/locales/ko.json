@@ -2,7 +2,10 @@
 	"toolbar": {
 		"pack": "\ud328\ud0b9",
 		"packing": "\ud328\ud0b9 \uc911\u2026",
-		"packTooltip": "\uc2a4\ud504\ub77c\uc774\ud2b8 \ud328\ud0b9",
+		"packTooltip": "\uc2a4\ud504\ub77c\uc774\ud2b8 \ud328\ud0b9 (\ubbf8\ub9ac\ubcf4\uae30\ub9cc)",
+		"publish": "\ubc1c\ud589",
+		"publishing": "\ubc1c\ud589 \uc911\u2026",
+		"publishTooltip": "\ud328\ud0b9\ud558\uace0 \ucd9c\ub825 \ud30c\uc77c\uc744 \ub514\uc2a4\ud06c\uc5d0 \uc4f0\uae30",
 		"watch": "\uac10\uc2dc",
 		"watching": "\uac10\uc2dc \uc911",
 		"watchTooltip": "\ud30c\uc77c \ubcc0\uacbd \uac10\uc2dc \ubc0f \uc790\ub3d9 \ud328\ud0b9",

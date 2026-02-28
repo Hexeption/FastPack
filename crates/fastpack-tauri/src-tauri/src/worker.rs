@@ -1,6 +1,15 @@
 use std::path::{Path, PathBuf};
 
-use anyhow::Result;
+use anyhow::{Context, Result};
+use fastpack_compress::{
+    backends::{
+        dxt::{Dxt1Compressor, Dxt5Compressor},
+        jpeg::JpegCompressor,
+        png::PngCompressor,
+        webp::WebpCompressor,
+    },
+    compressor::{CompressInput, Compressor},
+};
 use fastpack_core::{
     algorithms::{
         basic::Basic,
@@ -8,12 +17,20 @@ use fastpack_core::{
         maxrects::MaxRects,
         packer::{PackInput, Packer},
     },
-    imaging::{alias::detect_aliases, extrude, loader, trim},
+    imaging::{alias::detect_aliases, dither, extrude, loader, premultiply, trim},
     types::{
-        atlas::AtlasFrame,
-        config::{AlgorithmConfig, Project},
-        rect::{Rect, SourceRect},
+        atlas::{AtlasFrame, PackedAtlas},
+        config::{AlgorithmConfig, DataFormat, Project},
+        pixel_format::TextureFormat,
+        rect::{Rect, Size, SourceRect},
         sprite::Sprite,
+    },
+};
+use fastpack_formats::{
+    exporter::{ExportInput, Exporter},
+    formats::{
+        json_array::JsonArrayExporter, json_hash::JsonHashExporter, phaser3::Phaser3Exporter,
+        pixijs::PixiJsExporter,
     },
 };
 use rayon::prelude::*;
@@ -47,10 +64,12 @@ pub struct WorkerOutput {
     pub overflow_count: usize,
 }
 
+/// Supported image file extensions for sprite loading.
 static IMAGE_EXTENSIONS: &[&str] = &[
     "png", "jpg", "jpeg", "bmp", "tga", "webp", "tiff", "tif", "gif",
 ];
 
+/// Check whether a file path has a recognised image extension.
 fn is_image(path: &Path) -> bool {
     path.extension()
         .and_then(|e| e.to_str())
@@ -58,11 +77,14 @@ fn is_image(path: &Path) -> bool {
         .unwrap_or(false)
 }
 
+/// Derive a forward-slash sprite ID from a file path relative to its base directory.
 fn file_id(path: &Path, base: &Path) -> String {
     let rel = path.strip_prefix(base).unwrap_or(path);
     rel.with_extension("").to_string_lossy().replace('\\', "/")
 }
 
+/// Walk all project source directories and collect `(path, id)` pairs for images,
+/// respecting the exclude list.
 fn collect_images(project: &Project) -> Vec<(PathBuf, String)> {
     let excludes: std::collections::HashSet<&str> =
         project.config.excludes.iter().map(|s| s.as_str()).collect();
@@ -94,6 +116,8 @@ fn collect_images(project: &Project) -> Vec<(PathBuf, String)> {
     paths
 }
 
+/// Pack a list of sprites into a single atlas sheet, returning the composited
+/// RGBA buffer and any overflow sprites that did not fit.
 fn build_sheet(
     packer: &dyn Packer,
     sprites: Vec<Sprite>,
@@ -227,6 +251,7 @@ pub fn run_pack(project: &Project) -> Result<WorkerOutput> {
         .install(|| run_pack_impl(project))
 }
 
+/// Internal pack implementation run inside a dedicated rayon thread pool.
 fn run_pack_impl(project: &Project) -> Result<WorkerOutput> {
     let paths = collect_images(project);
     if paths.is_empty() {
@@ -363,4 +388,132 @@ fn run_pack_impl(project: &Project) -> Result<WorkerOutput> {
         alias_count,
         overflow_count,
     })
+}
+
+/// Write packed sheets to disk using the project's output configuration.
+///
+/// Returns `(file_count, resolved_output_dir)` on success.
+/// `project_path` is the path of the saved `.fpsheet` file; relative output
+/// directories are resolved against its parent.
+pub fn write_output(
+    output: &WorkerOutput,
+    project: &Project,
+    project_path: Option<&Path>,
+) -> Result<(usize, PathBuf)> {
+    let out_cfg = &project.config.output;
+
+    let out_dir = if out_cfg.directory.as_os_str().is_empty() {
+        anyhow::bail!("output directory is not configured");
+    } else if out_cfg.directory.is_absolute() {
+        out_cfg.directory.clone()
+    } else if let Some(pp) = project_path {
+        pp.parent()
+            .unwrap_or(Path::new("."))
+            .join(&out_cfg.directory)
+    } else {
+        out_cfg.directory.clone()
+    };
+
+    std::fs::create_dir_all(&out_dir).context("failed to create output directory")?;
+
+    let compressor: Box<dyn Compressor> = match out_cfg.texture_format {
+        TextureFormat::Png => Box::new(PngCompressor),
+        TextureFormat::Jpeg => Box::new(JpegCompressor),
+        TextureFormat::WebP => Box::new(WebpCompressor),
+        TextureFormat::Dxt1 => Box::new(Dxt1Compressor),
+        TextureFormat::Dxt5 => Box::new(Dxt5Compressor),
+        _ => Box::new(PngCompressor),
+    };
+
+    let exporter: Box<dyn Exporter> = match out_cfg.data_format {
+        DataFormat::JsonArray => Box::new(JsonArrayExporter),
+        DataFormat::Phaser3 => Box::new(Phaser3Exporter),
+        DataFormat::Pixijs => Box::new(PixiJsExporter),
+        DataFormat::JsonHash => Box::new(JsonHashExporter),
+    };
+
+    let tex_ext = out_cfg.texture_format.extension();
+    let base_name = &out_cfg.name;
+    let pack_mode = project.config.layout.pack_mode;
+
+    let mut atlases: Vec<PackedAtlas> = Vec::new();
+    let mut tex_filenames: Vec<String> = Vec::new();
+    let mut file_count = 0usize;
+
+    for (i, sheet) in output.sheets.iter().enumerate() {
+        use image::{DynamicImage, ImageBuffer, Rgba};
+
+        let img: ImageBuffer<Rgba<u8>, _> =
+            ImageBuffer::from_raw(sheet.width, sheet.height, sheet.rgba.clone())
+                .context("invalid rgba buffer")?;
+        let img = DynamicImage::ImageRgba8(img);
+
+        let img = if out_cfg.premultiply_alpha {
+            premultiply::premultiply(&img)
+        } else {
+            img
+        };
+
+        let img = dither::dither(&img, out_cfg.pixel_format);
+
+        let compressed = compressor
+            .compress(&CompressInput {
+                image: &img,
+                pack_mode,
+                quality: out_cfg.quality,
+            })
+            .context("compression failed")?;
+
+        let tex_filename = format!("{base_name}-{i}.{tex_ext}");
+        let tex_path = out_dir.join(&tex_filename);
+        std::fs::write(&tex_path, &compressed.data).context("failed to write texture")?;
+        file_count += 1;
+
+        atlases.push(PackedAtlas {
+            frames: sheet.atlas_frames.clone(),
+            size: Size {
+                w: sheet.width,
+                h: sheet.height,
+            },
+            image: None,
+            name: base_name.clone(),
+            scale: 1.0,
+        });
+        tex_filenames.push(tex_filename);
+    }
+
+    let export_inputs: Vec<ExportInput<'_>> = atlases
+        .iter()
+        .zip(&tex_filenames)
+        .map(|(atlas, fname)| ExportInput {
+            atlas,
+            texture_filename: fname.clone(),
+            pixel_format: out_cfg.pixel_format.to_string(),
+        })
+        .collect();
+
+    match exporter.combine(&export_inputs) {
+        Some(result) => {
+            let content = result.context("combined export failed")?;
+            let data_path = out_dir.join(format!("{base_name}.json"));
+            std::fs::write(&data_path, content.as_bytes()).context("failed to write data file")?;
+            file_count += 1;
+        }
+        None => {
+            for (i, input) in export_inputs.iter().enumerate() {
+                let content = exporter.export(input).context("export failed")?;
+                let stem = if output.sheets.len() == 1 {
+                    base_name.clone()
+                } else {
+                    format!("{base_name}-{i}")
+                };
+                let data_path = out_dir.join(format!("{stem}.json"));
+                std::fs::write(&data_path, content.as_bytes())
+                    .context("failed to write data file")?;
+                file_count += 1;
+            }
+        }
+    }
+
+    Ok((file_count, out_dir))
 }

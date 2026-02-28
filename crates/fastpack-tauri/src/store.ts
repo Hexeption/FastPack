@@ -16,6 +16,7 @@ interface AppStore {
 	sheets: SheetData[];
 	log: LogEntry[];
 	isPacking: boolean;
+	isPublishing: boolean;
 	isWatching: boolean;
 	dirty: boolean;
 	prefs: Preferences;
@@ -38,6 +39,7 @@ interface AppStore {
 	appendLog: (entry: LogEntry) => void;
 	setLog: (entries: LogEntry[]) => void;
 	setIsPacking: (v: boolean) => void;
+	setIsPublishing: (v: boolean) => void;
 	setIsWatching: (v: boolean) => void;
 	setDirty: (v: boolean) => void;
 	setPrefs: (p: Preferences) => void;
@@ -58,6 +60,7 @@ export const useStore = create<AppStore>((set) => ({
 	sheets: [],
 	log: [],
 	isPacking: false,
+	isPublishing: false,
 	isWatching: false,
 	dirty: false,
 	prefs: DEFAULT_PREFS,
@@ -88,6 +91,7 @@ export const useStore = create<AppStore>((set) => ({
 	appendLog: (entry) => set((s) => ({ log: [...s.log, entry] })),
 	setLog: (log) => set({ log }),
 	setIsPacking: (isPacking) => set({ isPacking }),
+	setIsPublishing: (isPublishing) => set({ isPublishing }),
 	setIsWatching: (isWatching) => set({ isWatching }),
 	setDirty: (dirty) => set({ dirty }),
 	setPrefs: (prefs) => set({ prefs }),

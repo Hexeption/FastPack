@@ -28,6 +28,7 @@ pub fn run(project_path: Option<PathBuf>) -> anyhow::Result<()> {
             commands::project::remove_source,
             commands::project::handle_drop,
             commands::pack::pack,
+            commands::pack::publish,
             commands::pack::start_watch,
             commands::pack::stop_watch,
             commands::dialogs::open_folder_dialog,

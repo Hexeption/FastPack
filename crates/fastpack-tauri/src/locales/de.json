@@ -2,7 +2,10 @@
 	"toolbar": {
 		"pack": "Packen",
 		"packing": "Packen\u2026",
-		"packTooltip": "Sprites packen",
+		"packTooltip": "Sprites packen (nur Vorschau)",
+		"publish": "Ver\u00f6ffentlichen",
+		"publishing": "Ver\u00f6ffentlichen\u2026",
+		"publishTooltip": "Sprites packen und Ausgabedateien auf die Festplatte schreiben",
 		"watch": "Beobachten",
 		"watching": "Beobachtet",
 		"watchTooltip": "Datei\u00e4nderungen beobachten und automatisch packen",

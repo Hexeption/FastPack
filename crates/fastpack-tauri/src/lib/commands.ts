@@ -47,6 +47,10 @@ export function pack() {
 	return invoke<void>("pack");
 }
 
+export function publish() {
+	return invoke<void>("publish");
+}
+
 export function startWatch() {
 	return invoke<void>("start_watch");
 }

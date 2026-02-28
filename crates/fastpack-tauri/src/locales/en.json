@@ -2,7 +2,10 @@
 	"toolbar": {
 		"pack": "Pack",
 		"packing": "Packing\u2026",
-		"packTooltip": "Pack sprites",
+		"packTooltip": "Pack sprites (preview only)",
+		"publish": "Publish",
+		"publishing": "Publishing\u2026",
+		"publishTooltip": "Pack and write output files to disk",
 		"watch": "Watch",
 		"watching": "Watching",
 		"watchTooltip": "Watch for file changes and auto-pack",

@@ -2,7 +2,10 @@
 	"toolbar": {
 		"pack": "Empaquetar",
 		"packing": "Empaquetando\u2026",
-		"packTooltip": "Empaquetar sprites",
+		"packTooltip": "Empaquetar sprites (solo vista previa)",
+		"publish": "Publicar",
+		"publishing": "Publicando\u2026",
+		"publishTooltip": "Empaquetar y escribir archivos de salida en disco",
 		"watch": "Observar",
 		"watching": "Observando",
 		"watchTooltip": "Observar cambios y empaquetar autom\u00e1ticamente",

@@ -2,7 +2,10 @@
 	"toolbar": {
 		"pack": "Comprimi",
 		"packing": "Compressione\u2026",
-		"packTooltip": "Comprimi sprites",
+		"packTooltip": "Comprimi sprites (solo anteprima)",
+		"publish": "Pubblica",
+		"publishing": "Pubblicazione\u2026",
+		"publishTooltip": "Comprimi e scrivi i file di output su disco",
 		"watch": "Monitora",
 		"watching": "Monitoraggio",
 		"watchTooltip": "Monitora i file e comprimi automaticamente",

@@ -5,6 +5,7 @@ import {
 	PanelLeft,
 	PanelRight,
 	Sun,
+	Upload,
 	Zap,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -16,13 +17,20 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { pack, savePreferences, startWatch, stopWatch } from "../lib/commands";
+import {
+	pack,
+	publish,
+	savePreferences,
+	startWatch,
+	stopWatch,
+} from "../lib/commands";
 import { useStore } from "../store";
 import IconButton from "./IconButton";
 
 export default function Toolbar() {
 	const { t } = useTranslation();
 	const isPacking = useStore((s) => s.isPacking);
+	const isPublishing = useStore((s) => s.isPublishing);
 	const isWatching = useStore((s) => s.isWatching);
 	const project = useStore((s) => s.project);
 	const setIsWatching = useStore((s) => s.setIsWatching);
@@ -36,9 +44,14 @@ export default function Toolbar() {
 	const setPrefs = useStore((s) => s.setPrefs);
 
 	const hasSources = (project?.sources.length ?? 0) > 0;
+	const busy = isPacking || isPublishing;
 
 	const handlePack = () => {
 		pack().catch(console.error);
+	};
+
+	const handlePublish = () => {
+		publish().catch(console.error);
 	};
 
 	const handleWatch = async () => {
@@ -55,16 +68,27 @@ export default function Toolbar() {
 		<div className="flex items-center h-9 bg-card border-b border-border px-3 gap-2 shrink-0">
 			<Tooltip>
 				<TooltipTrigger asChild>
-					<Button
-						onClick={handlePack}
-						disabled={isPacking || !hasSources}
-						size="xs"
-					>
+					<Button onClick={handlePack} disabled={busy || !hasSources} size="xs">
 						<Zap className="size-3" />
 						{isPacking ? t("toolbar.packing") : t("toolbar.pack")}
 					</Button>
 				</TooltipTrigger>
 				<TooltipContent>{t("toolbar.packTooltip")}</TooltipContent>
+			</Tooltip>
+
+			<Tooltip>
+				<TooltipTrigger asChild>
+					<Button
+						variant="outline"
+						onClick={handlePublish}
+						disabled={busy || !hasSources}
+						size="xs"
+					>
+						<Upload className="size-3" />
+						{isPublishing ? t("toolbar.publishing") : t("toolbar.publish")}
+					</Button>
+				</TooltipTrigger>
+				<TooltipContent>{t("toolbar.publishTooltip")}</TooltipContent>
 			</Tooltip>
 
 			<Separator orientation="vertical" className="h-4" />
