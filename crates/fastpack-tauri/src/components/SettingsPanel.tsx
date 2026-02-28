@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { pack, updateProject } from "../lib/commands";
 import { useStore } from "../store";
@@ -15,6 +15,12 @@ export default function SettingsPanel() {
 	const setProject = useStore((s) => s.setProject);
 	const setDirty = useStore((s) => s.setDirty);
 	const packTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	useEffect(() => {
+		return () => {
+			if (packTimer.current) clearTimeout(packTimer.current);
+		};
+	}, []);
 
 	if (!project)
 		return (
