@@ -74,15 +74,16 @@ export default function SpriteList() {
 		return map;
 	}, [sheets, thumbSize]);
 
-	const allFrames = sheets.flatMap((s) => s.frames);
+	const allFrames = useMemo(() => sheets.flatMap((s) => s.frames), [sheets]);
 
-	const srcPathMapRef = useRef(new Map<string, string>());
-	useEffect(() => {
+	const srcPathMap = useMemo(() => {
+		const map = new Map<string, string>();
 		for (const sheet of sheets) {
 			for (const frame of sheet.frames) {
-				srcPathMapRef.current.set(frame.id, frame.src_path);
+				map.set(frame.id, frame.src_path);
 			}
 		}
+		return map;
 	}, [sheets]);
 
 	const excludedThumbMap = useMemo(() => {
@@ -90,7 +91,7 @@ export default function SpriteList() {
 		if (excludes.length === 0) return new Map<string, ThumbInfo>();
 		const map = new Map<string, ThumbInfo>();
 		for (const id of excludes) {
-			const srcPath = srcPathMapRef.current.get(id);
+			const srcPath = srcPathMap.get(id);
 			if (!srcPath) continue;
 			map.set(id, {
 				style: {
@@ -104,7 +105,7 @@ export default function SpriteList() {
 			});
 		}
 		return map;
-	}, [project?.excludes, thumbSize]);
+	}, [project?.excludes, thumbSize, srcPathMap]);
 
 	useEffect(() => {
 		if (!project || allFrames.length === 0) return;
