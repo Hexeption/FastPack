@@ -16,6 +16,7 @@ import { useAppInit } from "./hooks/useAppInit";
 import { useDrop } from "./hooks/useDrop";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { useLayoutPersistence } from "./hooks/useLayoutPersistence";
+import { useMenuEvents } from "./hooks/useMenuEvents";
 import { usePack } from "./hooks/usePack";
 import { pack, updateProject } from "./lib/commands";
 import { useStore } from "./store";
@@ -53,6 +54,7 @@ export default function App() {
 	useAppInit();
 	usePack();
 	useDrop();
+	useMenuEvents();
 
 	useKeyboardShortcuts([
 		{

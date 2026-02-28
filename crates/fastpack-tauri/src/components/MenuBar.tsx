@@ -21,6 +21,8 @@ import {
 import { formatKeybind } from "../lib/keybinds";
 import { useStore } from "../store";
 
+const isMac = navigator.userAgent.includes("Mac");
+
 export default function MenuBar() {
 	const { t } = useTranslation();
 	const [openMenu, setOpenMenu] = useState<"file" | "view" | null>(null);
@@ -100,32 +102,50 @@ export default function MenuBar() {
 		savePreferences(next);
 	};
 
-	useKeyboardShortcuts([
-		{
-			key: keybinds.new_project.key,
-			mod: keybinds.new_project.modifier,
-			shift: keybinds.new_project.shift,
-			action: handleNew,
-		},
-		{
-			key: keybinds.open_project.key,
-			mod: keybinds.open_project.modifier,
-			shift: keybinds.open_project.shift,
-			action: handleOpen,
-		},
-		{
-			key: keybinds.save_project_as.key,
-			mod: keybinds.save_project_as.modifier,
-			shift: keybinds.save_project_as.shift,
-			action: handleSaveAs,
-		},
-		{
-			key: keybinds.save_project.key,
-			mod: keybinds.save_project.modifier,
-			shift: keybinds.save_project.shift,
-			action: handleSave,
-		},
-	]);
+	useKeyboardShortcuts(
+		isMac
+			? []
+			: [
+					{
+						key: keybinds.new_project.key,
+						mod: keybinds.new_project.modifier,
+						shift: keybinds.new_project.shift,
+						action: handleNew,
+					},
+					{
+						key: keybinds.open_project.key,
+						mod: keybinds.open_project.modifier,
+						shift: keybinds.open_project.shift,
+						action: handleOpen,
+					},
+					{
+						key: keybinds.save_project_as.key,
+						mod: keybinds.save_project_as.modifier,
+						shift: keybinds.save_project_as.shift,
+						action: handleSaveAs,
+					},
+					{
+						key: keybinds.save_project.key,
+						mod: keybinds.save_project.modifier,
+						shift: keybinds.save_project.shift,
+						action: handleSave,
+					},
+				],
+	);
+
+	if (isMac) {
+		return (
+			<div className="flex items-center h-7 bg-card border-b border-border px-2 gap-1 shrink-0">
+				<span className="text-xs font-semibold text-foreground px-1.5">
+					FastPack
+				</span>
+				<span className="text-[11px] text-muted-foreground truncate max-w-40">
+					{projectPath ? projectPath.split(/[\\/]/).pop() : "Untitled"}
+				</span>
+				{dirty && <span className="text-yellow-500 text-[10px]">*</span>}
+			</div>
+		);
+	}
 
 	return (
 		<div className="flex items-center h-7 bg-card border-b border-border px-2 gap-1 shrink-0">

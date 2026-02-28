@@ -1,6 +1,8 @@
 //! Tauri GUI backend for FastPack.
 
 pub mod commands;
+#[cfg(target_os = "macos")]
+pub mod menu;
 pub mod preferences;
 pub mod state;
 pub mod updater;
@@ -40,7 +42,29 @@ pub fn run(project_path: Option<PathBuf>) -> anyhow::Result<()> {
             commands::cli::install_cli,
             commands::cli::check_cli_installed,
         ])
+        .on_menu_event(|app, event| {
+            use tauri::Emitter;
+            let id = event.id().as_ref();
+            let name = match id {
+                "new_project" => Some("menu:new-project"),
+                "open_project" => Some("menu:open-project"),
+                "save_project" => Some("menu:save"),
+                "save_project_as" => Some("menu:save-as"),
+                "toggle_theme" => Some("menu:toggle-theme"),
+                "preferences" => Some("menu:preferences"),
+                _ => None,
+            };
+            if let Some(n) = name {
+                let _ = app.emit(n, ());
+            }
+        })
         .setup(|_app| {
+            #[cfg(target_os = "macos")]
+            {
+                let m = menu::build(_app)?;
+                _app.set_menu(m)?;
+            }
+
             #[cfg(debug_assertions)]
             {
                 use tauri::Manager;
