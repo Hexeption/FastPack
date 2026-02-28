@@ -38,14 +38,13 @@ export default function AtlasPreview() {
 	const onCanvasClick = useCallback(
 		(hit: string | null, ctrlKey: boolean) => {
 			if (hit) {
+				const current = useStore.getState().selectedFrames;
 				const related = expandWithAliases([hit], sheets);
 				if (ctrlKey) {
-					const allSelected = related.every((id) =>
-						selectedFrames.includes(id),
-					);
+					const allSelected = related.every((id) => current.includes(id));
 					const next = allSelected
-						? selectedFrames.filter((id) => !related.includes(id))
-						: [...new Set([...selectedFrames, ...related])];
+						? current.filter((id) => !related.includes(id))
+						: [...new Set([...current, ...related])];
 					setSelectedFrames(next);
 					if (!allSelected) setAnchorFrame(hit);
 				} else {
@@ -57,7 +56,7 @@ export default function AtlasPreview() {
 				setAnchorFrame(null);
 			}
 		},
-		[sheets, selectedFrames, setSelectedFrames, setAnchorFrame],
+		[sheets, setSelectedFrames, setAnchorFrame],
 	);
 
 	const marqueeBaselineRef = useRef<string[] | null>(null);
@@ -66,7 +65,7 @@ export default function AtlasPreview() {
 		(frameIds: string[], ctrlKey: boolean) => {
 			const expanded = expandWithAliases(frameIds, sheets);
 			if (marqueeBaselineRef.current === null) {
-				marqueeBaselineRef.current = selectedFrames;
+				marqueeBaselineRef.current = useStore.getState().selectedFrames;
 			}
 			const baseline = marqueeBaselineRef.current;
 			if (ctrlKey) {
@@ -81,7 +80,7 @@ export default function AtlasPreview() {
 			}
 			if (expanded.length > 0) setAnchorFrame(expanded[0]);
 		},
-		[sheets, selectedFrames, setSelectedFrames, setAnchorFrame],
+		[sheets, setSelectedFrames, setAnchorFrame],
 	);
 
 	const {
