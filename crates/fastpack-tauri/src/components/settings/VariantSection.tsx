@@ -40,25 +40,36 @@ export default function VariantSection({ project, update }: SectionProps) {
 
 	return (
 		<Section title={t("variants.sectionTitle")} defaultOpen={false}>
-			<div className="space-y-2">
+			<div className="space-y-1">
+				{project.variants.length > 0 && (
+					<div className="grid grid-cols-[44px_52px_1fr_20px] gap-1 mb-0.5">
+						<span className="text-[10px] text-muted-foreground/50">
+							{t("variants.scale")}
+						</span>
+						<span className="text-[10px] text-muted-foreground/50">
+							{t("variants.suffix")}
+						</span>
+						<span className="text-[10px] text-muted-foreground/50">
+							{t("variants.scaleMode")}
+						</span>
+						<span />
+					</div>
+				)}
 				{project.variants.map((v, i) => (
-					<div
-						key={i}
-						className="flex items-center gap-1 p-1.5 rounded-md border border-border bg-background"
-					>
+					<div key={i} className="grid grid-cols-[44px_52px_1fr_20px] gap-1">
 						<Input
 							type="number"
 							value={v.scale}
 							min={0.1}
 							step={0.5}
-							className="h-6 w-[50px] text-xs"
+							className="h-6 text-xs"
 							title={t("variants.scale")}
 							onChange={(e) => setVariant(i, { scale: Number(e.target.value) })}
 						/>
 						<Input
 							type="text"
 							value={v.suffix}
-							className="h-6 w-[55px] text-xs"
+							className="h-6 text-xs"
 							title={t("variants.suffix")}
 							placeholder="@1x"
 							onChange={(e) => setVariant(i, { suffix: e.target.value })}
@@ -71,7 +82,7 @@ export default function VariantSection({ project, update }: SectionProps) {
 								})
 							}
 						>
-							<SelectTrigger className="h-6 text-xs">
+							<SelectTrigger className="h-6 text-xs w-full">
 								<SelectValue />
 							</SelectTrigger>
 							<SelectContent>
@@ -86,7 +97,7 @@ export default function VariantSection({ project, update }: SectionProps) {
 						<Button
 							variant="ghost"
 							size="icon-xs"
-							className="shrink-0 ml-auto"
+							className="h-6 w-5 shrink-0"
 							onClick={() => removeVariant(i)}
 						>
 							<X className="size-3" />
@@ -96,7 +107,7 @@ export default function VariantSection({ project, update }: SectionProps) {
 				<Button
 					variant="outline"
 					size="xs"
-					className="w-full"
+					className="w-full mt-1"
 					onClick={addVariant}
 				>
 					<Plus className="size-3" /> {t("variants.addVariant")}

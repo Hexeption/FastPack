@@ -1,6 +1,11 @@
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import {
+	InputGroup,
+	InputGroupAddon,
+	InputGroupInput,
+} from "@/components/ui/input-group";
+import {
 	Select,
 	SelectContent,
 	SelectItem,
@@ -34,7 +39,7 @@ export default function SpriteSection({ project, update }: SectionProps) {
 						setSprites({ trim_mode: v as typeof sprites.trim_mode })
 					}
 				>
-					<SelectTrigger className="h-6 text-xs">
+					<SelectTrigger className="h-6 text-xs w-full">
 						<SelectValue />
 					</SelectTrigger>
 					<SelectContent>
@@ -48,24 +53,25 @@ export default function SpriteSection({ project, update }: SectionProps) {
 					</SelectContent>
 				</Select>
 			</Row>
-			<Row
-				label={t("sprites.trimThreshold", { value: sprites.trim_threshold })}
-			>
+			<Row label={t("sprites.trimThreshold")}>
 				<Slider
 					value={[sprites.trim_threshold]}
 					min={0}
 					max={255}
 					step={1}
-					className="w-[120px]"
+					className="flex-1"
 					onValueChange={([v]) => setSprites({ trim_threshold: v })}
 				/>
+				<span className="text-xs tabular-nums text-muted-foreground w-7 text-right shrink-0">
+					{sprites.trim_threshold}
+				</span>
 			</Row>
 			<Row label={t("sprites.trimMargin")}>
 				<Input
 					type="number"
 					value={sprites.trim_margin}
 					min={0}
-					className="h-6 text-xs"
+					className="h-6 text-xs w-full"
 					onChange={(e) => setSprites({ trim_margin: Number(e.target.value) })}
 				/>
 			</Row>
@@ -74,42 +80,52 @@ export default function SpriteSection({ project, update }: SectionProps) {
 					type="number"
 					value={sprites.extrude}
 					min={0}
-					className="h-6 text-xs"
+					className="h-6 text-xs w-full"
 					onChange={(e) => setSprites({ extrude: Number(e.target.value) })}
 				/>
 			</Row>
 			<Row label={t("sprites.divisorXY")}>
-				<div className="flex items-center gap-1">
-					<Input
+				<InputGroup className="h-6 flex-1">
+					<InputGroupAddon className="px-1.5 py-0 text-[10px]">
+						X
+					</InputGroupAddon>
+					<InputGroupInput
 						type="number"
 						value={sprites.common_divisor_x}
 						min={1}
-						className="h-6 w-[55px] text-xs"
+						className="text-xs h-full py-0"
 						onChange={(e) =>
 							setSprites({ common_divisor_x: Number(e.target.value) })
 						}
 					/>
-					<span className="text-xs text-muted-foreground">/</span>
-					<Input
+				</InputGroup>
+				<InputGroup className="h-6 flex-1">
+					<InputGroupAddon className="px-1.5 py-0 text-[10px]">
+						Y
+					</InputGroupAddon>
+					<InputGroupInput
 						type="number"
 						value={sprites.common_divisor_y}
 						min={1}
-						className="h-6 w-[55px] text-xs"
+						className="text-xs h-full py-0"
 						onChange={(e) =>
 							setSprites({ common_divisor_y: Number(e.target.value) })
 						}
 					/>
-				</div>
+				</InputGroup>
 			</Row>
 			<Row label={t("sprites.pivotXY")}>
-				<div className="flex items-center gap-1">
-					<Input
+				<InputGroup className="h-6 flex-1">
+					<InputGroupAddon className="px-1.5 py-0 text-[10px]">
+						X
+					</InputGroupAddon>
+					<InputGroupInput
 						type="number"
 						value={sprites.default_pivot.x}
 						min={0}
 						max={1}
 						step={0.1}
-						className="h-6 w-[55px] text-xs"
+						className="text-xs h-full py-0"
 						onChange={(e) =>
 							setSprites({
 								default_pivot: {
@@ -119,14 +135,18 @@ export default function SpriteSection({ project, update }: SectionProps) {
 							})
 						}
 					/>
-					<span className="text-xs text-muted-foreground">/</span>
-					<Input
+				</InputGroup>
+				<InputGroup className="h-6 flex-1">
+					<InputGroupAddon className="px-1.5 py-0 text-[10px]">
+						Y
+					</InputGroupAddon>
+					<InputGroupInput
 						type="number"
 						value={sprites.default_pivot.y}
 						min={0}
 						max={1}
 						step={0.1}
-						className="h-6 w-[55px] text-xs"
+						className="text-xs h-full py-0"
 						onChange={(e) =>
 							setSprites({
 								default_pivot: {
@@ -136,7 +156,7 @@ export default function SpriteSection({ project, update }: SectionProps) {
 							})
 						}
 					/>
-				</div>
+				</InputGroup>
 			</Row>
 			<Row label={t("sprites.detectAliases")}>
 				<Switch

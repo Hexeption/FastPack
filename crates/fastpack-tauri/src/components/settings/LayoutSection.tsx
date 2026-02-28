@@ -1,6 +1,11 @@
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import {
+	InputGroup,
+	InputGroupAddon,
+	InputGroupInput,
+} from "@/components/ui/input-group";
+import {
 	Select,
 	SelectContent,
 	SelectItem,
@@ -32,11 +37,11 @@ export default function LayoutSection({ project, update }: SectionProps) {
 		return "polygon";
 	})();
 
-	const setAlgType = (t: string) => {
+	const setAlgType = (v: string) => {
 		let newAlg: AlgorithmConfig;
-		if (t === "grid") newAlg = { type: "grid", cell_width: 0, cell_height: 0 };
-		else if (t === "basic") newAlg = { type: "basic" };
-		else if (t === "polygon") newAlg = { type: "polygon" };
+		if (v === "grid") newAlg = { type: "grid", cell_width: 0, cell_height: 0 };
+		else if (v === "basic") newAlg = { type: "basic" };
+		else if (v === "polygon") newAlg = { type: "polygon" };
 		else newAlg = { type: "max_rects", heuristic: "best_short_side_fit" };
 		update({ ...project, algorithm: newAlg });
 	};
@@ -44,23 +49,30 @@ export default function LayoutSection({ project, update }: SectionProps) {
 	return (
 		<Section title={t("layout.sectionTitle")}>
 			<Row label={t("layout.maxSize")}>
-				<div className="flex items-center gap-1">
-					<Input
+				<InputGroup className="h-6 flex-1">
+					<InputGroupAddon className="px-1.5 py-0 text-[10px]">
+						W
+					</InputGroupAddon>
+					<InputGroupInput
 						type="number"
 						value={layout.max_width}
 						min={1}
-						className="h-6 text-xs"
+						className="text-xs h-full py-0"
 						onChange={(e) => setLayout({ max_width: Number(e.target.value) })}
 					/>
-					<span className="text-xs text-muted-foreground">&times;</span>
-					<Input
+				</InputGroup>
+				<InputGroup className="h-6 flex-1">
+					<InputGroupAddon className="px-1.5 py-0 text-[10px]">
+						H
+					</InputGroupAddon>
+					<InputGroupInput
 						type="number"
 						value={layout.max_height}
 						min={1}
-						className="h-6 text-xs"
+						className="text-xs h-full py-0"
 						onChange={(e) => setLayout({ max_height: Number(e.target.value) })}
 					/>
-				</div>
+				</InputGroup>
 			</Row>
 			<Row label={t("layout.fixedWidth")}>
 				<Switch
@@ -69,15 +81,14 @@ export default function LayoutSection({ project, update }: SectionProps) {
 						setLayout({ fixed_width: c ? layout.max_width : null })
 					}
 				/>
-				{layout.fixed_width !== null && (
-					<Input
-						type="number"
-						value={layout.fixed_width}
-						min={1}
-						className="h-6 text-xs"
-						onChange={(e) => setLayout({ fixed_width: Number(e.target.value) })}
-					/>
-				)}
+				<Input
+					type="number"
+					value={layout.fixed_width ?? layout.max_width}
+					min={1}
+					disabled={layout.fixed_width === null}
+					className="h-6 text-xs w-[60px] disabled:opacity-40"
+					onChange={(e) => setLayout({ fixed_width: Number(e.target.value) })}
+				/>
 			</Row>
 			<Row label={t("layout.fixedHeight")}>
 				<Switch
@@ -86,21 +97,18 @@ export default function LayoutSection({ project, update }: SectionProps) {
 						setLayout({ fixed_height: c ? layout.max_height : null })
 					}
 				/>
-				{layout.fixed_height !== null && (
-					<Input
-						type="number"
-						value={layout.fixed_height}
-						min={1}
-						className="h-6 text-xs"
-						onChange={(e) =>
-							setLayout({ fixed_height: Number(e.target.value) })
-						}
-					/>
-				)}
+				<Input
+					type="number"
+					value={layout.fixed_height ?? layout.max_height}
+					min={1}
+					disabled={layout.fixed_height === null}
+					className="h-6 text-xs w-[60px] disabled:opacity-40"
+					onChange={(e) => setLayout({ fixed_height: Number(e.target.value) })}
+				/>
 			</Row>
 			<Row label={t("layout.algorithm")}>
 				<Select value={algType} onValueChange={(v) => setAlgType(v)}>
-					<SelectTrigger className="h-6 text-xs">
+					<SelectTrigger className="h-6 text-xs w-full">
 						<SelectValue />
 					</SelectTrigger>
 					<SelectContent>
@@ -125,7 +133,7 @@ export default function LayoutSection({ project, update }: SectionProps) {
 							})
 						}
 					>
-						<SelectTrigger className="h-6 text-xs">
+						<SelectTrigger className="h-6 text-xs w-full">
 							<SelectValue />
 						</SelectTrigger>
 						<SelectContent>
@@ -149,13 +157,16 @@ export default function LayoutSection({ project, update }: SectionProps) {
 				</Row>
 			)}
 			{alg.type === "grid" && (
-				<>
-					<Row label={t("layout.cellWidth")}>
-						<Input
+				<Row label={t("layout.cellSize")}>
+					<InputGroup className="h-6 flex-1">
+						<InputGroupAddon className="px-1.5 py-0 text-[10px]">
+							W
+						</InputGroupAddon>
+						<InputGroupInput
 							type="number"
 							value={alg.cell_width}
 							min={1}
-							className="h-6 text-xs"
+							className="text-xs h-full py-0"
 							onChange={(e) =>
 								update({
 									...project,
@@ -167,13 +178,16 @@ export default function LayoutSection({ project, update }: SectionProps) {
 								})
 							}
 						/>
-					</Row>
-					<Row label={t("layout.cellHeight")}>
-						<Input
+					</InputGroup>
+					<InputGroup className="h-6 flex-1">
+						<InputGroupAddon className="px-1.5 py-0 text-[10px]">
+							H
+						</InputGroupAddon>
+						<InputGroupInput
 							type="number"
 							value={alg.cell_height}
 							min={1}
-							className="h-6 text-xs"
+							className="text-xs h-full py-0"
 							onChange={(e) =>
 								update({
 									...project,
@@ -185,8 +199,8 @@ export default function LayoutSection({ project, update }: SectionProps) {
 								})
 							}
 						/>
-					</Row>
-				</>
+					</InputGroup>
+				</Row>
 			)}
 			<Row label={t("layout.packMode")}>
 				<Select
@@ -195,7 +209,7 @@ export default function LayoutSection({ project, update }: SectionProps) {
 						setLayout({ pack_mode: v as typeof layout.pack_mode })
 					}
 				>
-					<SelectTrigger className="h-6 text-xs">
+					<SelectTrigger className="h-6 text-xs w-full">
 						<SelectValue />
 					</SelectTrigger>
 					<SelectContent>
@@ -214,7 +228,7 @@ export default function LayoutSection({ project, update }: SectionProps) {
 						})
 					}
 				>
-					<SelectTrigger className="h-6 text-xs">
+					<SelectTrigger className="h-6 text-xs w-full">
 						<SelectValue />
 					</SelectTrigger>
 					<SelectContent>
@@ -234,7 +248,7 @@ export default function LayoutSection({ project, update }: SectionProps) {
 					type="number"
 					value={layout.border_padding}
 					min={0}
-					className="h-7 text-xs"
+					className="h-6 text-xs w-full"
 					onChange={(e) =>
 						setLayout({ border_padding: Number(e.target.value) })
 					}
@@ -245,7 +259,7 @@ export default function LayoutSection({ project, update }: SectionProps) {
 					type="number"
 					value={layout.shape_padding}
 					min={0}
-					className="h-7 text-xs"
+					className="h-6 text-xs w-full"
 					onChange={(e) => setLayout({ shape_padding: Number(e.target.value) })}
 				/>
 			</Row>

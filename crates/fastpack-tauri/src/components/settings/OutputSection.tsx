@@ -40,31 +40,29 @@ export default function OutputSection({ project, update, save }: SectionProps) {
 				<Input
 					type="text"
 					value={out.name}
-					className="h-6 text-xs"
+					className="h-6 text-xs w-full"
 					onChange={(e) => saveOut({ name: e.target.value })}
 				/>
 			</Row>
 			<Row label={t("output.directory")}>
-				<div className="flex items-center gap-1 w-full">
-					<Input
-						type="text"
-						value={
-							typeof out.directory === "string"
-								? out.directory
-								: String(out.directory)
-						}
-						className="h-6 text-xs flex-1 min-w-0"
-						onChange={(e) => saveOut({ directory: e.target.value })}
-					/>
-					<Button
-						variant="outline"
-						size="icon-xs"
-						onClick={handlePickDir}
-						title={t("output.browse")}
-					>
-						…
-					</Button>
-				</div>
+				<Input
+					type="text"
+					value={
+						typeof out.directory === "string"
+							? out.directory
+							: String(out.directory)
+					}
+					className="h-6 text-xs flex-1 min-w-0"
+					onChange={(e) => saveOut({ directory: e.target.value })}
+				/>
+				<Button
+					variant="outline"
+					size="icon-xs"
+					onClick={handlePickDir}
+					title={t("output.browse")}
+				>
+					…
+				</Button>
 			</Row>
 			<Row label={t("output.format")}>
 				<Select
@@ -73,7 +71,7 @@ export default function OutputSection({ project, update, save }: SectionProps) {
 						saveOut({ texture_format: v as typeof out.texture_format })
 					}
 				>
-					<SelectTrigger className="h-6 text-xs">
+					<SelectTrigger className="h-6 text-xs w-full">
 						<SelectValue />
 					</SelectTrigger>
 					<SelectContent>
@@ -90,7 +88,7 @@ export default function OutputSection({ project, update, save }: SectionProps) {
 						saveOut({ pixel_format: v as typeof out.pixel_format })
 					}
 				>
-					<SelectTrigger className="h-6 text-xs">
+					<SelectTrigger className="h-6 text-xs w-full">
 						<SelectValue />
 					</SelectTrigger>
 					<SelectContent>
@@ -110,7 +108,7 @@ export default function OutputSection({ project, update, save }: SectionProps) {
 						saveOut({ data_format: v as typeof out.data_format })
 					}
 				>
-					<SelectTrigger className="h-6 text-xs">
+					<SelectTrigger className="h-6 text-xs w-full">
 						<SelectValue />
 					</SelectTrigger>
 					<SelectContent>
@@ -121,21 +119,24 @@ export default function OutputSection({ project, update, save }: SectionProps) {
 					</SelectContent>
 				</Select>
 			</Row>
-			<Row label={t("output.quality", { value: out.quality })}>
+			<Row label={t("output.quality")}>
 				<Slider
 					value={[out.quality]}
 					min={1}
 					max={100}
 					step={1}
-					className="w-[120px]"
+					className="flex-1"
 					onValueChange={([v]) => saveOut({ quality: v })}
 				/>
+				<span className="text-xs tabular-nums text-muted-foreground w-7 text-right shrink-0">
+					{out.quality}
+				</span>
 			</Row>
 			<Row label={t("output.pathPrefix")}>
 				<Input
 					type="text"
 					value={out.texture_path_prefix}
-					className="h-6 text-xs"
+					className="h-6 text-xs w-full"
 					placeholder={t("output.pathPrefixPlaceholder")}
 					onChange={(e) => saveOut({ texture_path_prefix: e.target.value })}
 				/>
