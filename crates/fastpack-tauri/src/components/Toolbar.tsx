@@ -40,7 +40,7 @@ export default function Toolbar() {
 	const setShowSprites = useStore((s) => s.setShowSprites);
 	const setShowSettings = useStore((s) => s.setShowSettings);
 	const setShowOutput = useStore((s) => s.setShowOutput);
-	const prefs = useStore((s) => s.prefs);
+	const isDark = useStore((s) => s.prefs.dark_mode);
 	const setPrefs = useStore((s) => s.setPrefs);
 
 	const hasSources = (project?.sources.length ?? 0) > 0;
@@ -149,16 +149,16 @@ export default function Toolbar() {
 				<Separator orientation="vertical" className="h-3.5 mx-1" />
 				<IconButton
 					icon={
-						prefs.dark_mode ? (
+						isDark ? (
 							<Sun className="size-3.5" />
 						) : (
 							<Moon className="size-3.5" />
 						)
 					}
-					tooltip={prefs.dark_mode ? t("menu.lightTheme") : t("menu.darkTheme")}
+					tooltip={isDark ? t("menu.lightTheme") : t("menu.darkTheme")}
 					size="icon-xs"
 					onClick={() => {
-						const next = { ...prefs, dark_mode: !prefs.dark_mode };
+						const next = { ...useStore.getState().prefs, dark_mode: !isDark };
 						setPrefs(next);
 						savePreferences(next).catch(console.error);
 					}}

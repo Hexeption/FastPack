@@ -7,7 +7,9 @@ import { useStore } from "../store";
 export function useAppInit() {
 	const setPrefs = useStore((s) => s.setPrefs);
 	const setProject = useStore((s) => s.setProject);
-	const prefs = useStore((s) => s.prefs);
+	const darkMode = useStore((s) => s.prefs.dark_mode);
+	const uiScale = useStore((s) => s.prefs.ui_scale);
+	const language = useStore((s) => s.prefs.language);
 
 	useEffect(() => {
 		Promise.all([getPreferences(), getProject()]).then(([p, proj]) => {
@@ -17,15 +19,15 @@ export function useAppInit() {
 	}, [setPrefs, setProject]);
 
 	useEffect(() => {
-		document.documentElement.classList.toggle("dark", prefs.dark_mode);
-		document.body.classList.toggle("dark", prefs.dark_mode);
-	}, [prefs.dark_mode]);
+		document.documentElement.classList.toggle("dark", darkMode);
+		document.body.classList.toggle("dark", darkMode);
+	}, [darkMode]);
 
 	useEffect(() => {
-		getCurrentWebviewWindow().setZoom(prefs.ui_scale ?? 1);
-	}, [prefs.ui_scale]);
+		getCurrentWebviewWindow().setZoom(uiScale ?? 1);
+	}, [uiScale]);
 
 	useEffect(() => {
-		i18n.changeLanguage(prefs.language.toLowerCase());
-	}, [prefs.language]);
+		i18n.changeLanguage(language.toLowerCase());
+	}, [language]);
 }
