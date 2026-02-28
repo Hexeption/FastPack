@@ -3,14 +3,16 @@ import { useEffect, useRef, useState } from "react";
 interface UseAnimPlaybackOptions {
 	frameCount: number;
 	isOpen: boolean;
+	initialFps?: number;
 }
 
 export function useAnimPlayback({
 	frameCount,
 	isOpen,
+	initialFps = 24,
 }: UseAnimPlaybackOptions) {
 	const [playing, setPlaying] = useState(false);
-	const [fps, setFps] = useState(24);
+	const [fps, setFps] = useState(initialFps);
 	const [looping, setLooping] = useState(true);
 	const [pingPong, setPingPong] = useState(false);
 	const [currentIdx, setCurrentIdx] = useState(0);

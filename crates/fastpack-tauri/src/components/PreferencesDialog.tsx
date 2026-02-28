@@ -7,6 +7,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
 	Select,
@@ -26,7 +27,7 @@ import {
 } from "../lib/commands";
 import { formatKeybind } from "../lib/keybinds";
 import { useStore } from "../store";
-import type { KeybindsConfig, Preferences } from "../types";
+import type { AnimBg, KeybindsConfig, Preferences } from "../types";
 import DefaultsTab from "./DefaultsTab";
 import UpdatesTab from "./UpdatesTab";
 
@@ -191,6 +192,46 @@ export default function PreferencesDialog() {
 								checked={prefs.atlas_invert_scroll ?? false}
 								onCheckedChange={(c) => update({ atlas_invert_scroll: c })}
 							/>
+						</div>
+						<div className="flex items-center justify-between gap-4">
+							<Label className="text-sm shrink-0">
+								{t("prefs.animPreviewFps")}
+							</Label>
+							<Input
+								type="number"
+								min={1}
+								max={120}
+								className="h-8 text-sm w-[140px]"
+								value={prefs.anim_preview_fps ?? 24}
+								onChange={(e) => {
+									const v = Number(e.target.value);
+									if (v >= 1 && v <= 120) update({ anim_preview_fps: v });
+								}}
+							/>
+						</div>
+						<div className="flex items-center justify-between gap-4">
+							<Label className="text-sm shrink-0">
+								{t("prefs.animPreviewBg")}
+							</Label>
+							<Select
+								value={prefs.anim_preview_bg ?? "checker"}
+								onValueChange={(v) => update({ anim_preview_bg: v as AnimBg })}
+							>
+								<SelectTrigger className="h-8 text-sm w-[140px]">
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="checker">
+										{t("prefs.animBgChecker")}
+									</SelectItem>
+									<SelectItem value="black">
+										{t("prefs.animBgBlack")}
+									</SelectItem>
+									<SelectItem value="white">
+										{t("prefs.animBgWhite")}
+									</SelectItem>
+								</SelectContent>
+							</Select>
 						</div>
 						<div className="pt-1 border-t border-border">
 							<Button

@@ -7,10 +7,9 @@ import { useAnimPlayback } from "../hooks/useAnimPlayback";
 import { useDraggable } from "../hooks/useDraggable";
 import { useResizable, useScrollZoom } from "../hooks/useResizable";
 import { useStore } from "../store";
+import type { AnimBg } from "../types";
 import AnimControls from "./anim-preview/AnimControls";
 import PanelHeader from "./PanelHeader";
-
-type BgMode = "checker" | "black" | "white";
 
 export default function AnimPreview() {
 	const { t } = useTranslation();
@@ -18,8 +17,10 @@ export default function AnimPreview() {
 	const selectedFrames = useStore((s) => s.selectedFrames);
 	const animPreviewOpen = useStore((s) => s.animPreviewOpen);
 	const setAnimPreviewOpen = useStore((s) => s.setAnimPreviewOpen);
+	const defaultFps = useStore((s) => s.prefs.anim_preview_fps);
+	const defaultBg = useStore((s) => s.prefs.anim_preview_bg);
 
-	const [bgMode, setBgMode] = useState<BgMode>("checker");
+	const [bgMode, setBgMode] = useState<AnimBg>(defaultBg);
 	const [zoom, setZoom] = useState(1);
 	const viewportRef = useRef<HTMLDivElement>(null);
 	const { pos, onDragStart } = useDraggable({ x: 40, y: 80 });
@@ -34,6 +35,7 @@ export default function AnimPreview() {
 	const playback = useAnimPlayback({
 		frameCount: frames.length,
 		isOpen: animPreviewOpen,
+		initialFps: defaultFps,
 	});
 	const { size, onResizeStart } = useResizable({
 		initialW: 320,

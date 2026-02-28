@@ -10,9 +10,9 @@ import {
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import type { AnimBg } from "../../types";
 import IconButton from "../IconButton";
 
-type BgMode = "checker" | "black" | "white";
 const ZOOM_PRESETS = [1, 2, 4, 8, 16] as const;
 
 interface AnimControlsProps {
@@ -30,8 +30,8 @@ interface AnimControlsProps {
 	frameCount: number;
 	stepBack: () => void;
 	stepForward: () => void;
-	bgMode: BgMode;
-	setBgMode: (m: BgMode) => void;
+	bgMode: AnimBg;
+	setBgMode: (m: AnimBg) => void;
 	zoom: number;
 	setZoom: (z: number) => void;
 	directionRef: React.MutableRefObject<1 | -1>;

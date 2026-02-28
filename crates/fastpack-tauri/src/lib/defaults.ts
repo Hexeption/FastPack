@@ -15,6 +15,8 @@ export const DEFAULT_PREFS: Preferences = {
 	ui_scale: 1.0,
 	atlas_zoom_speed: 1.0,
 	atlas_invert_scroll: false,
+	anim_preview_fps: 24,
+	anim_preview_bg: "checker",
 	keybinds: DEFAULT_KEYBINDS,
 	default_config: {
 		layout: {

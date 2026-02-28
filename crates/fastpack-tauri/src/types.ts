@@ -155,6 +155,8 @@ export interface LogEntry {
 	time: string;
 }
 
+export type AnimBg = "checker" | "black" | "white";
+
 export interface Preferences {
 	dark_mode: boolean;
 	auto_check_updates: boolean;
@@ -164,6 +166,8 @@ export interface Preferences {
 	default_config: PackerConfig;
 	atlas_zoom_speed: number;
 	atlas_invert_scroll: boolean;
+	anim_preview_fps: number;
+	anim_preview_bg: AnimBg;
 }
 
 export interface Keybind {
