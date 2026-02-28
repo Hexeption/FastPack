@@ -35,4 +35,4 @@ jobs:
             librsvg2-dev \
             patchelf
 
-      - run: cargo publish --workspace
+      - run: cargo publish --workspace --no-verify
