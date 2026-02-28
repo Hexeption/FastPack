@@ -18,11 +18,12 @@ export default function OutputLog() {
 		pinnedRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 32;
 	};
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: log triggers scroll on new entries
 	useEffect(() => {
 		if (!pinnedRef.current) return;
 		const el = scrollRef.current;
 		if (el) el.scrollTop = el.scrollHeight;
-	}, []);
+	}, [log]);
 
 	return (
 		<div className="flex flex-col h-full bg-card border-t border-border">
