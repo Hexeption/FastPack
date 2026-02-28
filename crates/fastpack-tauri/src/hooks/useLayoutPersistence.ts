@@ -64,17 +64,18 @@ export function useLayoutPersistence() {
 	// Sync panel collapse/expand with toggle state
 	useEffect(() => {
 		showSprites ? spritesRef.current?.expand() : spritesRef.current?.collapse();
-	}, [showSprites, spritesRef]);
-
-	useEffect(() => {
 		showSettings
 			? settingsRef.current?.expand()
 			: settingsRef.current?.collapse();
-	}, [showSettings, settingsRef]);
-
-	useEffect(() => {
 		showOutput ? outputRef.current?.expand() : outputRef.current?.collapse();
-	}, [showOutput, outputRef]);
+	}, [
+		showSprites,
+		showSettings,
+		showOutput,
+		spritesRef,
+		settingsRef,
+		outputRef,
+	]);
 
 	return {
 		spritesRef,

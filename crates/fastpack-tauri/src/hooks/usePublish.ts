@@ -1,5 +1,6 @@
 import { listen } from "@tauri-apps/api/event";
 import { useEffect } from "react";
+import { now } from "../lib/time";
 import { useStore } from "../store";
 
 interface PublishFinishedPayload {
@@ -12,12 +13,6 @@ interface PublishFailedPayload {
 	error: string;
 }
 
-function now(): string {
-	const d = new Date();
-	const pad = (n: number) => String(n).padStart(2, "0");
-	return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-}
-
 export function usePublish() {
 	const setIsPublishing = useStore((s) => s.setIsPublishing);
 	const appendLog = useStore((s) => s.appendLog);
@@ -27,7 +22,7 @@ export function usePublish() {
 		const unlisteners = Promise.all([
 			listen("publish:started", () => {
 				setIsPublishing(true);
-				appendLog({ level: "info", message: "Publishing…", time: now() });
+				appendLog({ level: "info", message: "Publishing...", time: now() });
 			}),
 
 			listen<PublishFinishedPayload>("publish:finished", ({ payload }) => {

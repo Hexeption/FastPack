@@ -1,6 +1,7 @@
 import { listen } from "@tauri-apps/api/event";
 import { useEffect } from "react";
 import { pack } from "../lib/commands";
+import { now } from "../lib/time";
 import { useStore } from "../store";
 import type { PackFailedPayload, PackFinishedPayload } from "../types";
 import { useKeyboardShortcuts } from "./useKeyboardShortcuts";
@@ -18,7 +19,7 @@ export function usePack() {
 		const unlisteners = Promise.all([
 			listen("pack:started", () => {
 				setIsPacking(true);
-				appendLog({ level: "info", message: "Packing…", time: now() });
+				appendLog({ level: "info", message: "Packing...", time: now() });
 			}),
 
 			listen<PackFinishedPayload>("pack:finished", ({ payload }) => {
@@ -42,10 +43,4 @@ export function usePack() {
 			unlisteners.then((fns) => fns.forEach((fn) => fn()));
 		};
 	}, [setIsPacking, setSheets, appendLog]);
-}
-
-function now(): string {
-	const d = new Date();
-	const pad = (n: number) => String(n).padStart(2, "0");
-	return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
