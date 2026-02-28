@@ -1,15 +1,25 @@
+//! Self-update logic. Checks GitHub releases, downloads platform-specific
+//! installers, and applies them.
+
 use std::path::PathBuf;
 
+/// Crate version compiled into the binary.
 pub const CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");
+/// GitHub repository used for release checks.
 const REPO: &str = "Hexeption/FastPack";
 
+/// Describes a newer release found on GitHub.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ReleaseInfo {
+    /// Tag name from the GitHub release (e.g. `"v0.28.0"`).
     pub version: String,
+    /// Release notes body (Markdown).
     pub notes: String,
+    /// Direct download URL for the platform-specific asset.
     pub asset_url: String,
 }
 
+/// Fetch the latest release from GitHub. Returns `None` if no matching asset exists.
 fn check_latest() -> Result<Option<ReleaseInfo>, String> {
     let url = format!("https://api.github.com/repos/{REPO}/releases/latest");
     let resp = ureq::get(&url)
@@ -50,6 +60,8 @@ fn check_latest() -> Result<Option<ReleaseInfo>, String> {
     }))
 }
 
+/// Check if a newer version is available. Returns `Some(release)` when the
+/// latest tag is strictly newer than `CURRENT_VERSION`.
 pub fn do_check() -> Result<Option<ReleaseInfo>, String> {
     let info = check_latest()?;
     match info {
@@ -66,6 +78,7 @@ pub fn do_check() -> Result<Option<ReleaseInfo>, String> {
     }
 }
 
+/// Download the release asset to a temp file. Returns the path on disk.
 pub fn do_download(url: &str) -> Result<PathBuf, String> {
     let resp = ureq::get(url)
         .header("User-Agent", &format!("fastpack/{CURRENT_VERSION}"))
@@ -79,6 +92,7 @@ pub fn do_download(url: &str) -> Result<PathBuf, String> {
     Ok(dest)
 }
 
+/// Parse a semver-like string into `(major, minor, patch)`.
 fn parse_version(v: &str) -> (u32, u32, u32) {
     let v = v.trim_start_matches('v');
     let mut parts = v.split('.').filter_map(|p| p.parse::<u32>().ok());
@@ -89,6 +103,7 @@ fn parse_version(v: &str) -> (u32, u32, u32) {
     )
 }
 
+/// Return the expected asset filename suffix for this OS and architecture.
 #[cfg(target_os = "windows")]
 fn platform_asset_suffix() -> &'static str {
     "windows-x86_64.msi"
@@ -124,6 +139,7 @@ fn download_filename() -> &'static str {
     "fastpack_update.tar.gz"
 }
 
+/// Apply a downloaded update. Opens the installer or replaces the binary in place.
 pub fn do_apply(downloaded: &std::path::Path) -> Result<(), String> {
     apply_impl(downloaded)
 }

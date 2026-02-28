@@ -6,6 +6,7 @@ import { useStore } from "../store";
 import type { PackFailedPayload, PackFinishedPayload } from "../types";
 import { useKeyboardShortcuts } from "./useKeyboardShortcuts";
 
+/** Listens for pack:started, pack:finished, and pack:failed events from the backend. Updates sheets and log accordingly. Binds Cmd+P to trigger a pack. */
 export function usePack() {
 	const setIsPacking = useStore((s) => s.setIsPacking);
 	const setSheets = useStore((s) => s.setSheets);

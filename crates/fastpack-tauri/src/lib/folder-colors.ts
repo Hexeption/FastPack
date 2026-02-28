@@ -1,8 +1,10 @@
+/** A color swatch with its hex value and display label. */
 export interface ColorSwatch {
 	value: string;
 	label: string;
 }
 
+/** Available color swatches for folder tinting in the sprite list. */
 export const FOLDER_SWATCHES: ColorSwatch[] = [
 	{ value: "#f59e0b", label: "Amber" },
 	{ value: "#ef4444", label: "Red" },
@@ -16,4 +18,5 @@ export const FOLDER_SWATCHES: ColorSwatch[] = [
 	{ value: "#ec4899", label: "Pink" },
 ];
 
+/** Default color for source directories that have no user-assigned color. */
 export const SOURCE_DEFAULT_COLOR = "#f59e0b";

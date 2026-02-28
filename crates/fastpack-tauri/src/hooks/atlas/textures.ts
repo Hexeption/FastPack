@@ -1,5 +1,6 @@
 import * as PIXI from "pixi.js";
 
+/** Creates a 16x16 checkerboard PixiJS texture. Colors adapt to dark or light mode. */
 export function makeCheckerTexture(isDark: boolean): PIXI.Texture {
 	const colorA = isDark ? "#202020" : "#cccccc";
 	const colorB = isDark ? "#303030" : "#d9d9d9";

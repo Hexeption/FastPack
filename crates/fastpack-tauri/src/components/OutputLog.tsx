@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useStore } from "../store";
 import PanelHeader from "./PanelHeader";
 
+/** Scrollable log panel that auto-scrolls to new entries when pinned to the bottom. */
 export default function OutputLog() {
 	const { t } = useTranslation();
 	const log = useStore((s) => s.log);

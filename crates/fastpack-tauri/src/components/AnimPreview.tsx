@@ -11,6 +11,7 @@ import type { AnimBg } from "../types";
 import AnimControls from "./anim-preview/AnimControls";
 import PanelHeader from "./PanelHeader";
 
+/** Floating, draggable animation preview dialog. Plays selected frames with onion skinning, background modes, and zoom. */
 export default function AnimPreview() {
 	const { t } = useTranslation();
 	const sheets = useStore((s) => s.sheets);

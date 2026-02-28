@@ -3,6 +3,7 @@ use thiserror::Error;
 /// Errors produced by core image loading and packing operations.
 #[derive(Debug, Error)]
 pub enum CoreError {
+    /// An image file could not be decoded.
     #[error("failed to load image '{path}': {source}")]
     ImageLoad {
         path: std::path::PathBuf,

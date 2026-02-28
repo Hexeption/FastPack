@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
+/** Props for {@link IconButton}. */
 interface IconButtonProps {
 	icon: React.ReactNode;
 	tooltip: React.ReactNode;
@@ -17,6 +18,7 @@ interface IconButtonProps {
 	className?: string;
 }
 
+/** Icon-only button wrapped in a tooltip. */
 export default function IconButton({
 	icon,
 	tooltip,

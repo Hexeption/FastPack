@@ -11,6 +11,7 @@ import {
 import { clampPan } from "./interaction";
 import { getLayout } from "./layout";
 
+/** Shared refs passed between zoom and navigation hooks. */
 export interface ZoomRefs {
 	sheetsRef: React.RefObject<SheetData[]>;
 	zoomRef: React.MutableRefObject<number>;
@@ -20,6 +21,7 @@ export interface ZoomRefs {
 	scheduleDraw: () => void;
 }
 
+/** Attaches a wheel listener to the container that zooms toward the cursor position. Respects user zoom speed and scroll inversion prefs. */
 export function useWheelZoom(refs: ZoomRefs) {
 	const { sheetsRef, zoomRef, panRef, sizeRef, containerRef, scheduleDraw } =
 		refs;
@@ -71,6 +73,7 @@ export function useWheelZoom(refs: ZoomRefs) {
 	}, [containerRef, sheetsRef, zoomRef, panRef, sizeRef, scheduleDraw]);
 }
 
+/** Returns fitView (zoom to fit all sheets) and zoomToFrame (zoom to center a specific frame). */
 export function useViewNavigation(refs: ZoomRefs) {
 	const { sheetsRef, zoomRef, panRef, sizeRef, scheduleDraw } = refs;
 

@@ -22,6 +22,7 @@ import { usePublish } from "./hooks/usePublish";
 import { pack, updateProject } from "./lib/commands";
 import { useStore } from "./store";
 
+/** Marks the currently selected frames as excluded, then repacks. */
 function excludeSelected() {
 	const state = useStore.getState();
 	const { selectedFrames, project } = state;
@@ -38,6 +39,7 @@ function excludeSelected() {
 		.catch(console.error);
 }
 
+/** Top-level app layout. Three-pane resizable grid with toolbar, menu, and status bar. */
 export default function App() {
 	const prefs = useStore((s) => s.prefs);
 	const setAnimPreviewOpen = useStore((s) => s.setAnimPreviewOpen);

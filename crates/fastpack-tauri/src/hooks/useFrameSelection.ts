@@ -1,6 +1,7 @@
 import { useCallback, useRef } from "react";
 import { useStore } from "../store";
 
+/** Manages frame selection with Ctrl-click (toggle), Shift-click (range), and plain click (single). Also exposes a zoom-to-frame action. */
 export function useFrameSelection(visualOrder: string[]) {
 	const setSelectedFrames = useStore((s) => s.setSelectedFrames);
 	const setAnchorFrame = useStore((s) => s.setAnchorFrame);

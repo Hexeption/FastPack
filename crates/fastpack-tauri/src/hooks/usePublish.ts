@@ -13,6 +13,7 @@ interface PublishFailedPayload {
 	error: string;
 }
 
+/** Listens for publish:started, publish:finished, and publish:failed events from the backend. Updates the publishing state and log. */
 export function usePublish() {
 	const setIsPublishing = useStore((s) => s.setIsPublishing);
 	const appendLog = useStore((s) => s.appendLog);

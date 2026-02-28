@@ -1,6 +1,6 @@
 # PixiJS Export Format
 
-The PixiJS format writes atlas metadata in JSON Hash layout, which is what PixiJS expects. There is no structural difference from the standard `json_hash` output — this format is provided as a named alias so project files can be explicit about which engine they target.
+The PixiJS format writes atlas metadata in JSON Hash layout, which is what PixiJS expects. There is no structural difference from the standard `json_hash` output. It exists as a named alias so project files can be explicit about which engine they target.
 
 ## Usage
 

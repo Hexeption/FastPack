@@ -1,6 +1,7 @@
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useState } from "react";
 
+/** Collapsible settings section with a toggle header. */
 export function Section({
 	title,
 	children,
@@ -29,6 +30,7 @@ export function Section({
 	);
 }
 
+/** Label + control row inside a settings section. */
 export function Row({
 	label,
 	children,

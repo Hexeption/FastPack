@@ -12,6 +12,7 @@ import { FOLDER_SWATCHES } from "../../lib/folder-colors";
 import type { FolderNode } from "../../lib/tree";
 import FileRow, { iconSize, type ThumbInfo } from "./FileRow";
 
+/** Nested folder row with expand/collapse and an optional context menu for color assignment. Recurses into child folders and files. */
 export default function FolderRow({
 	node,
 	indent,

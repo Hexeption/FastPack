@@ -27,6 +27,7 @@ import {
 import { useStore } from "../store";
 import IconButton from "./IconButton";
 
+/** Toolbar with pack, publish, and watch buttons plus panel visibility and theme toggles. */
 export default function Toolbar() {
 	const { t } = useTranslation();
 	const isPacking = useStore((s) => s.isPacking);

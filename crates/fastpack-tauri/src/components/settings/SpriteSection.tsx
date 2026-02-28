@@ -17,12 +17,14 @@ import { Switch } from "@/components/ui/switch";
 import type { Project, SpriteConfig } from "../../types";
 import { Row, Section } from "../Section";
 
+/** Shared props for all settings section components. */
 interface SectionProps {
 	project: Project;
 	update: (p: Project) => void;
 	save: (p: Project) => void;
 }
 
+/** Sprite settings: trim mode/threshold/margin, extrude, common divisors, pivot, and alias detection. */
 export default function SpriteSection({ project, update }: SectionProps) {
 	const { t } = useTranslation();
 	const sprites = project.sprites;

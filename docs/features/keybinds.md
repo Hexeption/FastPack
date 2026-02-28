@@ -4,13 +4,13 @@ All keyboard shortcuts can be changed in Preferences → Keybinds.
 
 ## Default bindings
 
-| Action | Default |
-|---|---|
-| New Project | Ctrl+N |
-| Open Project | Ctrl+O |
-| Save Project | Ctrl+S |
-| Export | Ctrl+P |
-| Animation Preview | P |
+```
+New Project        Ctrl+N
+Open Project       Ctrl+O
+Save Project       Ctrl+S
+Export             Ctrl+P
+Animation Preview  P
+```
 
 ## Changing a binding
 

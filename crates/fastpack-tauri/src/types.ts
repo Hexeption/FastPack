@@ -1,4 +1,4 @@
-// TypeScript mirrors of Rust types serialized by the Tauri backend.
+/** TypeScript mirrors of Rust types serialized by the Tauri backend. */
 
 export type TrimMode = "none" | "trim" | "crop" | "crop_keep_pos" | "polygon";
 export type SizeConstraint =

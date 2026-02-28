@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { handleDrop, pack, startWatch, stopWatch } from "../lib/commands";
 import { useStore } from "../store";
 
+/** Handles file/folder drops onto the window. Updates the project and triggers a repack when sources change. */
 export function useDrop() {
 	useEffect(() => {
 		const unlisten = getCurrentWindow().onDragDropEvent(async (event) => {

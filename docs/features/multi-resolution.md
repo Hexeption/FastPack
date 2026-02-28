@@ -1,6 +1,6 @@
 # Multi-Resolution Variants
 
-Scale variants let you generate atlas files at multiple resolutions in a single pass. A common setup produces `@1x` and `@2x` atlases from the same source sprites: the high-resolution atlas serves retina or high-DPI displays; the low-resolution one serves standard displays.
+Scale variants generate atlas files at multiple resolutions in a single pass. A common setup produces `@1x` and `@2x` atlases from the same source sprites: the high-resolution atlas serves retina or high-DPI displays; the low-resolution one serves standard displays.
 
 Each variant specifies a scale factor, an optional filename suffix, and a resampling mode. All variants are produced from the same loaded source sprites — images are only read from disk once.
 

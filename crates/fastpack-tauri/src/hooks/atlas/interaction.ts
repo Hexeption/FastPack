@@ -3,6 +3,7 @@ import type { SheetData } from "../../types";
 import { hitTest as hitTestImpl, marqueeHitTest } from "./hitTest";
 import { getLayout } from "./layout";
 
+/** Clamps pan offset so the content stays partially visible within the viewport. */
 function clampPan(
 	pan: { x: number; y: number },
 	zoom: number,
@@ -25,6 +26,7 @@ export { clampPan };
 
 type Mode = "idle" | "pan" | "click-pending" | "marquee";
 
+/** Refs and callbacks shared with the interaction hook. */
 export interface InteractionRefs {
 	sheetsRef: React.RefObject<SheetData[]>;
 	zoomRef: React.RefObject<number>;
@@ -40,6 +42,7 @@ export interface InteractionRefs {
 	scheduleDraw: () => void;
 }
 
+/** Handles canvas mouse interaction: middle-click pan, left-click selection, and marquee rectangle drawing. Returns cursor state and mouse event handlers. */
 export function useInteraction(refs: InteractionRefs) {
 	const {
 		sheetsRef,

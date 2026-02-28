@@ -23,6 +23,7 @@ function saveLayout(key: string, layout: Record<string, number>) {
 	}
 }
 
+/** Persists resizable panel sizes to localStorage. Restores saved layouts on mount and syncs panel collapse/expand with store toggles. */
 export function useLayoutPersistence() {
 	const showSprites = useStore((s) => s.showSprites);
 	const showSettings = useStore((s) => s.showSettings);

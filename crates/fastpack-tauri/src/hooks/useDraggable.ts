@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 
+/** Tracks drag position for a floating element. Returns the current {x, y} and a mousedown handler to start dragging. */
 export function useDraggable(initial = { x: 40, y: 80 }) {
 	const [pos, setPos] = useState(initial);
 	const dragRef = useRef<{

@@ -4,6 +4,7 @@ import i18n from "../i18n";
 import { getPreferences, getProject } from "../lib/commands";
 import { useStore } from "../store";
 
+/** Loads preferences and project on mount. Syncs dark mode, UI scale, and language when they change. */
 export function useAppInit() {
 	const setPrefs = useStore((s) => s.setPrefs);
 	const setProject = useStore((s) => s.setProject);

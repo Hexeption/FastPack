@@ -7,6 +7,7 @@ import { useStore } from "../store";
 import type { SheetData } from "../types";
 import PanelHeader from "./PanelHeader";
 
+/** Expands a set of frame IDs to include all alias siblings. */
 function expandWithAliases(ids: string[], sheets: SheetData[]): string[] {
 	const allFrames = sheets.flatMap((s) => s.frames);
 	const result = new Set<string>();
@@ -21,6 +22,7 @@ function expandWithAliases(ids: string[], sheets: SheetData[]): string[] {
 	return [...result];
 }
 
+/** Renders the main atlas canvas with pan, zoom, frame click-selection, and marquee drag-select. */
 export default function AtlasPreview() {
 	const { t } = useTranslation();
 	const sheets = useStore((s) => s.sheets);

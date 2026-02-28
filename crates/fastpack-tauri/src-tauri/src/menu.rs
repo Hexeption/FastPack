@@ -1,6 +1,11 @@
+//! macOS native menu bar. Builds the standard App, File, Edit, View, Window,
+//! and Help menus with keyboard shortcuts.
+
 use tauri::menu::{AboutMetadata, Menu, MenuBuilder, MenuItem, SubmenuBuilder};
 use tauri::{App, Wry};
 
+/// Build the native macOS menu bar for the given app. Menu item IDs are mapped
+/// to frontend events in `lib.rs`.
 pub fn build(app: &App) -> tauri::Result<Menu<Wry>> {
     let app_menu = SubmenuBuilder::new(app, "FastPack")
         .about(Some(AboutMetadata {

@@ -15,6 +15,7 @@ import IconButton from "../IconButton";
 
 const ZOOM_PRESETS = [1, 2, 4, 8, 16] as const;
 
+/** Props for {@link AnimControls}. */
 interface AnimControlsProps {
 	playing: boolean;
 	setPlaying: (v: boolean) => void;
@@ -37,6 +38,7 @@ interface AnimControlsProps {
 	directionRef: React.MutableRefObject<1 | -1>;
 }
 
+/** Playback controls for the animation preview: play/pause, step, loop, ping-pong, onion skin, FPS slider, background mode, and zoom presets. */
 export default function AnimControls({
 	playing,
 	setPlaying,

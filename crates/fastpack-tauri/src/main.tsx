@@ -1,3 +1,5 @@
+/** React entry point. Mounts the app into the DOM with i18n and tooltip context. */
+
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "./i18n";

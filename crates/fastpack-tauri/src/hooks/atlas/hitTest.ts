@@ -2,6 +2,7 @@ import type { SheetData } from "../../types";
 import { SHEET_GAP } from "./constants";
 import { getLayout } from "./layout";
 
+/** Tests a screen-space point against all frame boundaries across all sheets. Returns the frame id under the cursor or null. */
 export function hitTest(
 	clientX: number,
 	clientY: number,
@@ -40,6 +41,7 @@ export function hitTest(
 	return null;
 }
 
+/** Returns all frame ids whose screen-space bounds overlap the given marquee rectangle. */
 export function marqueeHitTest(
 	selRect: { x: number; y: number; w: number; h: number },
 	sheets: SheetData[],

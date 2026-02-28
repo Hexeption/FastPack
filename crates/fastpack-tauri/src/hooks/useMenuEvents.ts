@@ -25,6 +25,7 @@ function resetSelection() {
 	s.setAnimPreviewOpen(false);
 }
 
+/** Listens for native menu events (new, open, save, save-as, theme toggle, preferences) and dispatches the matching store/command actions. */
 export function useMenuEvents() {
 	useEffect(() => {
 		const unlisteners = Promise.all([

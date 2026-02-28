@@ -1,3 +1,5 @@
+/** File/folder tree building from a flat frame list. */
+
 import type { FrameData } from "../types";
 
 export type FileNode = { kind: "file"; name: string; frame: FrameData };
@@ -52,6 +54,7 @@ function sortTree(nodes: TreeNode[]) {
 	}
 }
 
+/** Builds a sorted tree of folders and files from a flat list of frames. Strips the given prefix from each frame id before splitting into path segments. */
 export function buildTree(
 	frames: FrameData[],
 	stripPrefix: string,
@@ -69,6 +72,7 @@ export function buildTree(
 	return nodes;
 }
 
+/** Collects all frame ids from a tree in depth-first order. */
 export function flattenTree(nodes: TreeNode[], out: string[]) {
 	for (const node of nodes) {
 		if (node.kind === "file") out.push(node.frame.id);
@@ -76,10 +80,12 @@ export function flattenTree(nodes: TreeNode[], out: string[]) {
 	}
 }
 
+/** Returns true if the key represents a source or folder node (not a file). */
 export function isFolderKey(s: string) {
 	return s.startsWith("__src__") || s.startsWith("__folder__:");
 }
 
+/** Flattens a tree into a navigation-order list. Includes folder keys and only descends into open folders. */
 export function flattenTreeForNav(
 	nodes: TreeNode[],
 	openFolders: Set<string>,

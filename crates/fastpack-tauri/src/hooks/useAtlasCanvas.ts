@@ -8,6 +8,7 @@ import { rebuildScene } from "./atlas/scene";
 import { makeCheckerTexture } from "./atlas/textures";
 import { useViewNavigation, useWheelZoom } from "./atlas/zoom";
 
+/** Sets up a PixiJS canvas for atlas preview. Manages texture caching, scene rebuilds, zoom/pan, resize observation, and mouse interaction. Returns refs and event handlers for the container. */
 export function useAtlasCanvas(opts: {
 	sheets: SheetData[];
 	selectedFrames: string[];

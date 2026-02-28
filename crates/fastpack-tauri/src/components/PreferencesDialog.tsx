@@ -31,6 +31,7 @@ import type { AnimBg, KeybindsConfig, Preferences } from "../types";
 import DefaultsTab from "./DefaultsTab";
 import UpdatesTab from "./UpdatesTab";
 
+/** Modal preferences dialog with tabs for general settings, keybinds, project defaults, and updates. */
 export default function PreferencesDialog() {
 	const { t } = useTranslation();
 	const prefs = useStore((s) => s.prefs);

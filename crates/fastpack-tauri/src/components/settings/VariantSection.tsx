@@ -12,12 +12,14 @@ import {
 import type { Project, ScaleVariant } from "../../types";
 import { Section } from "../Section";
 
+/** Shared props for all settings section components. */
 interface SectionProps {
 	project: Project;
 	update: (p: Project) => void;
 	save: (p: Project) => void;
 }
 
+/** Scale variant list editor. Each variant has a scale factor, filename suffix, and scaling algorithm. */
 export default function VariantSection({ project, update }: SectionProps) {
 	const { t } = useTranslation();
 

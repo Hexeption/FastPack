@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { useStore } from "../store";
 
+/** Bottom status bar showing atlas dimensions, sprite/alias/overflow counts, selection, and packing/watch state. */
 export default function StatusBar() {
 	const { t } = useTranslation();
 	const sheets = useStore((s) => s.sheets);

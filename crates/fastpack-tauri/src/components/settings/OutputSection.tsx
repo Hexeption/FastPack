@@ -14,12 +14,14 @@ import { openFolderDialog } from "../../lib/commands";
 import type { OutputConfig, Project } from "../../types";
 import { Row, Section } from "../Section";
 
+/** Shared props for all settings section components. */
 interface SectionProps {
 	project: Project;
 	update: (p: Project) => void;
 	save: (p: Project) => void;
 }
 
+/** Output settings: atlas name, directory, texture/data format, pixel format, quality, and multipack toggle. */
 export default function OutputSection({ project, update, save }: SectionProps) {
 	const { t } = useTranslation();
 	const out = project.output;

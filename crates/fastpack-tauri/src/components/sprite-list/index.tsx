@@ -40,6 +40,7 @@ import PanelHeader from "../PanelHeader";
 import { iconSize, THUMB_DEFAULT, type ThumbInfo } from "./FileRow";
 import SourceRow from "./SourceRow";
 
+/** Tree explorer for sprite sources. Shows source folders, nested subfolders, individual files with thumbnails, and an excluded section. */
 export default function SpriteList() {
 	const { t } = useTranslation();
 	const project = useStore((s) => s.project);

@@ -1,6 +1,6 @@
 # Animation Preview
 
-The animation preview window plays a sequence of selected sprites as a flipbook animation. It is useful for checking frame timing, verifying that animation frames are correctly packed, and spot-checking sprite alignment before export.
+The animation preview window plays a sequence of selected sprites as a flipbook animation. Use it to check frame timing, verify that frames are correctly packed, and spot-check sprite alignment before export.
 
 ## Usage
 

@@ -6,6 +6,7 @@ interface UseAnimPlaybackOptions {
 	initialFps?: number;
 }
 
+/** Drives animation frame playback with configurable FPS, looping, and ping-pong. Returns play state, step controls, and onion skin toggle. */
 export function useAnimPlayback({
 	frameCount,
 	isOpen,

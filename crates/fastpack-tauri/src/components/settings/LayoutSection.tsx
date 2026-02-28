@@ -16,12 +16,14 @@ import { Switch } from "@/components/ui/switch";
 import type { AlgorithmConfig, LayoutConfig, Project } from "../../types";
 import { Row, Section } from "../Section";
 
+/** Shared props for all settings section components. */
 interface SectionProps {
 	project: Project;
 	update: (p: Project) => void;
 	save: (p: Project) => void;
 }
 
+/** Layout settings: max dimensions, algorithm, heuristic, padding, rotation, and size constraints. */
 export default function LayoutSection({ project, update }: SectionProps) {
 	const { t } = useTranslation();
 	const layout = project.layout;

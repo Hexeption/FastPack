@@ -1,5 +1,8 @@
+/** Default keybinds and preferences used before the user's saved config is loaded. */
+
 import type { KeybindsConfig, Preferences } from "../types";
 
+/** Platform default keyboard shortcuts. */
 export const DEFAULT_KEYBINDS: KeybindsConfig = {
 	new_project: { key: "n", modifier: true, shift: false },
 	open_project: { key: "o", modifier: true, shift: false },
@@ -8,6 +11,7 @@ export const DEFAULT_KEYBINDS: KeybindsConfig = {
 	anim_preview: { key: "p", modifier: false, shift: false },
 };
 
+/** Default preferences with sensible packer config. */
 export const DEFAULT_PREFS: Preferences = {
 	dark_mode: true,
 	auto_check_updates: true,

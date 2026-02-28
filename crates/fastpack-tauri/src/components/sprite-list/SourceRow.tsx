@@ -16,6 +16,7 @@ import type { TreeNode } from "../../lib/tree";
 import FileRow, { iconSize, type ThumbInfo } from "./FileRow";
 import FolderRow from "./FolderRow";
 
+/** Props for {@link SourceRow}. */
 interface SourceRowProps {
 	srcName: string;
 	srcPath: string;
@@ -38,6 +39,7 @@ interface SourceRowProps {
 	allFramesEmpty: boolean;
 }
 
+/** Top-level source folder row. Renders a color-coded header with expand/collapse, context menu for color and removal, and nested folder/file children. */
 export default function SourceRow({
 	srcName,
 	srcPath,

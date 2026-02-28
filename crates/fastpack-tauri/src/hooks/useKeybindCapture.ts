@@ -12,6 +12,7 @@ const SHORTCUT_ORDER: (keyof KeybindsConfig)[] = [
 	"anim_preview",
 ];
 
+/** Captures the next keypress to rebind a shortcut. Returns the current capture target, a setter, and a duplicate checker. Resets when the preferences dialog reopens. */
 export function useKeybindCapture() {
 	const prefs = useStore((s) => s.prefs);
 	const setPrefs = useStore((s) => s.setPrefs);

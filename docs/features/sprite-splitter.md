@@ -1,6 +1,6 @@
 # Sprite Sheet Splitter
 
-The `split` subcommand is the inverse of packing: it reads an atlas image and its data file, then writes each sprite back out as a separate PNG file. Useful for extracting sprites from a legacy atlas, inspecting packed output, or feeding sprites into an editing tool.
+The `split` subcommand is the inverse of packing. It reads an atlas image and its data file, then writes each sprite back out as a separate PNG file. Use it to extract sprites from a legacy atlas, inspect packed output, or feed sprites into an editing tool.
 
 ## Usage
 

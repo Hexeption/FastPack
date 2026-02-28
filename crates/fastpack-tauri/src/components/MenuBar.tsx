@@ -23,6 +23,7 @@ import { useStore } from "../store";
 
 const isMac = navigator.userAgent.includes("Mac");
 
+/** Top menu bar. Shows File/View dropdowns on Windows/Linux. Mac gets a title-only bar since menus live in the native menu. */
 export default function MenuBar() {
 	const { t } = useTranslation();
 	const [openMenu, setOpenMenu] = useState<"file" | "view" | null>(null);

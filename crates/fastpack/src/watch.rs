@@ -42,10 +42,9 @@ pub struct WatchArgs {
     /// Sprite IDs excluded from packing.
     pub excludes: Vec<String>,
 }
-///
-/// Runs an initial pack immediately, then watches all input paths for
-/// filesystem events. Repacks after a 500 ms debounce each time a change
-/// is detected.
+
+/// Run the watch loop. Packs immediately on start, then watches all input
+/// paths for filesystem events. Repacks after a 500 ms debounce on each change.
 pub fn run_watch(args: WatchArgs) -> Result<()> {
     println!(
         "Watching {} path(s). Press Ctrl-C to stop.",

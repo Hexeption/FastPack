@@ -1,6 +1,6 @@
 # Preferences
 
-The Preferences window lets you set app-wide options that persist across projects.
+The Preferences window stores app-wide options that persist across projects.
 Open it from Edit → Preferences…
 
 ## General tab
@@ -13,9 +13,7 @@ Sets the UI language. FastPack ships with translations for English, French, Span
 
 Every setting from the right-side panel is available here: Texture, Layout, Sprites, and Variants.
 
-Changes are applied immediately and saved to the preferences file. When you create a new project (File → New), FastPack starts with these defaults instead of the built-in ones.
-
-This is useful if you always target a specific data format, atlas size, or trim mode. Set those once in Preferences and every new project begins configured the way you need.
+Changes are applied immediately and saved to the preferences file. When you create a new project (File → New), FastPack starts with these defaults instead of the built-in ones. If you always target a specific data format, atlas size, or trim mode, set those once here.
 
 The preferences file is stored at:
 

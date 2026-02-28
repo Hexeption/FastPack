@@ -1,15 +1,25 @@
+//! User preferences persisted to `~/.config/FastPack/prefs.toml`.
+//!
+//! Stores UI settings, keybinds, default packer config, and language choice.
+//! Loaded once at startup and re-saved whenever the user changes them.
+
 use std::path::PathBuf;
 
 use fastpack_core::types::config::PackerConfig;
 use serde::{Deserialize, Serialize};
 
+/// A single keyboard shortcut binding.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Keybind {
+    /// The key character (e.g. `"s"`, `"n"`).
     pub key: String,
+    /// True if the platform modifier (Cmd on macOS, Ctrl elsewhere) is required.
     pub modifier: bool,
+    /// True if Shift is required.
     pub shift: bool,
 }
 
+/// Keyboard shortcut assignments for common actions.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KeybindsConfig {
     #[serde(default = "default_kb_new_project")]
@@ -72,6 +82,7 @@ fn default_kb_anim_preview() -> Keybind {
     }
 }
 
+/// Supported UI languages.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum Language {
     #[default]
@@ -87,6 +98,7 @@ pub enum Language {
 }
 
 impl Language {
+    /// Return the IETF language tag (e.g. `"en"`, `"ja"`).
     pub fn code(self) -> &'static str {
         match self {
             Self::En => "en",
@@ -101,6 +113,7 @@ impl Language {
         }
     }
 
+    /// Return the native display name of the language.
     pub fn display(self) -> &'static str {
         match self {
             Self::En => "English",
@@ -115,6 +128,7 @@ impl Language {
         }
     }
 
+    /// All supported language variants.
     pub const ALL: &'static [Language] = &[
         Self::En,
         Self::Fr,
@@ -131,20 +145,28 @@ impl Language {
 /// Persistent user preferences saved to `~/.config/FastPack/prefs.toml`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Preferences {
+    /// Use dark theme when true.
     #[serde(default = "default_true")]
     pub dark_mode: bool,
+    /// Check GitHub for new releases on startup.
     #[serde(default = "default_true")]
     pub auto_check_updates: bool,
+    /// Default packer config applied to new projects.
     #[serde(default)]
     pub default_config: PackerConfig,
+    /// UI language.
     #[serde(default)]
     pub language: Language,
+    /// Global UI scale factor (1.0 = 100%).
     #[serde(default = "default_ui_scale")]
     pub ui_scale: f32,
+    /// Keyboard shortcut assignments.
     #[serde(default)]
     pub keybinds: KeybindsConfig,
+    /// Scroll speed multiplier for atlas zoom.
     #[serde(default = "default_zoom_speed")]
     pub atlas_zoom_speed: f32,
+    /// Invert scroll direction when zooming the atlas.
     #[serde(default)]
     pub atlas_invert_scroll: bool,
 }
@@ -197,6 +219,7 @@ impl Preferences {
     }
 }
 
+/// Resolve the preferences file path. Returns `None` if the config dir is unknown.
 fn prefs_path() -> Option<PathBuf> {
     dirs::config_dir().map(|d| d.join("FastPack").join("prefs.toml"))
 }

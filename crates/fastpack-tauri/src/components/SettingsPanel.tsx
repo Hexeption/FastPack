@@ -9,6 +9,7 @@ import OutputSection from "./settings/OutputSection";
 import SpriteSection from "./settings/SpriteSection";
 import VariantSection from "./settings/VariantSection";
 
+/** Renders the settings sidebar. Debounces changes and auto-repacks after 300ms. */
 export default function SettingsPanel() {
 	const { t } = useTranslation();
 	const project = useStore((s) => s.project);
@@ -27,6 +28,7 @@ export default function SettingsPanel() {
 			<div className="flex flex-col w-full h-full border-l border-border bg-card" />
 		);
 
+	/** Persist and trigger a debounced repack. */
 	const update = (p: Project) => {
 		setProject(p);
 		setDirty(true);

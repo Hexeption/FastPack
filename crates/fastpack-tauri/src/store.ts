@@ -1,7 +1,10 @@
+/** Global Zustand store for all app state: project, sheets, prefs, selection, and UI toggles. */
+
 import { create } from "zustand";
 import { DEFAULT_PREFS } from "./lib/defaults";
 import type { LogEntry, Preferences, Project, SheetData } from "./types";
 
+/** Batch payload when a pack finishes and sheets need updating. */
 interface SheetsPayload {
 	sheets: SheetData[];
 	log: LogEntry[];

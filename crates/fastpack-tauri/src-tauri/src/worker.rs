@@ -1,3 +1,9 @@
+//! Background pack worker.
+//!
+//! Runs sprite loading, trimming, packing, and atlas compositing off the main
+//! thread. Produces raw RGBA sheet data that the UI converts to base64 PNG for
+//! preview, or writes compressed textures + data files to disk on publish.
+
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
@@ -38,29 +44,45 @@ use walkdir::WalkDir;
 
 /// A single packed frame returned to the caller.
 pub struct FrameInfo {
+    /// Sprite identifier (forward-slash relative path, no extension).
     pub id: String,
+    /// Absolute path to the source image.
     pub src_path: String,
+    /// X position in the atlas.
     pub x: u32,
+    /// Y position in the atlas.
     pub y: u32,
+    /// Frame width in pixels.
     pub w: u32,
+    /// Frame height in pixels.
     pub h: u32,
+    /// Set when this frame is a duplicate of another sprite.
     pub alias_of: Option<String>,
 }
 
 /// One packed sheet (atlas texture + frame metadata).
 pub struct SheetOutput {
+    /// Raw RGBA pixel data for the atlas image.
     pub rgba: Vec<u8>,
+    /// Atlas width in pixels.
     pub width: u32,
+    /// Atlas height in pixels.
     pub height: u32,
+    /// Per-frame placement info for the UI overlay.
     pub frames: Vec<FrameInfo>,
+    /// Per-frame metadata used by data format exporters.
     pub atlas_frames: Vec<AtlasFrame>,
 }
 
 /// Data returned after a successful pack.
 pub struct WorkerOutput {
+    /// All packed atlas sheets. Multiple sheets when multipack is on.
     pub sheets: Vec<SheetOutput>,
+    /// Total number of sprites that were loaded.
     pub sprite_count: usize,
+    /// Number of sprites detected as pixel-identical aliases.
     pub alias_count: usize,
+    /// Number of sprites that did not fit in any sheet.
     pub overflow_count: usize,
 }
 

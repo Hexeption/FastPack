@@ -13,6 +13,7 @@ interface UseTreeNavArgs {
 	handleSelect: (id: string, ctrlKey: boolean, shiftKey: boolean) => void;
 }
 
+/** Keyboard navigation for the sprite tree. Handles arrow keys, Home/End, Shift-range selection, folder expand/collapse, and auto-scroll into view. */
 export function useTreeNav({
 	scrollRef,
 	project,

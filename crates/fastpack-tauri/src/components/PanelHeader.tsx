@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 
+/** Props for {@link PanelHeader}. */
 interface PanelHeaderProps {
 	title: string;
 	children?: React.ReactNode;
@@ -7,6 +8,7 @@ interface PanelHeaderProps {
 	onMouseDown?: React.MouseEventHandler;
 }
 
+/** Compact panel header with an uppercase title and optional trailing content. */
 export default function PanelHeader({
 	title,
 	children,

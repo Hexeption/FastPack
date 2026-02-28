@@ -7,6 +7,7 @@ interface Shortcut {
 	action: () => void;
 }
 
+/** Registers global keydown listeners for a list of shortcuts. Matches key, modifier (Cmd/Ctrl), and shift. Skips non-modifier shortcuts when focused inside an input field. */
 export function useKeyboardShortcuts(shortcuts: Shortcut[]) {
 	const ref = useRef(shortcuts);
 	ref.current = shortcuts;

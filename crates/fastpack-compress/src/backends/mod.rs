@@ -1,3 +1,5 @@
+//! Concrete compressor implementations, one per texture container format.
+
 pub mod astc;
 pub mod basis;
 pub mod dxt;

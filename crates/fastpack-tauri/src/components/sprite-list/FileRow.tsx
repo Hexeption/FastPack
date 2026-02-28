@@ -10,13 +10,18 @@ import {
 } from "@/components/ui/context-menu";
 import type { FileNode } from "../../lib/tree";
 
+/** Default thumbnail pixel size. */
 export const THUMB_DEFAULT = 40;
+
+/** Thumbnail CSS for a single frame entry. */
 export type ThumbInfo = { style: CSSProperties };
 
+/** Scales icon size proportionally to the thumbnail slider value. */
 export function iconSize(thumbSize: number): number {
 	return Math.max(10, Math.round(thumbSize * 0.4));
 }
 
+/** Inline sprite thumbnail with checkerboard background. */
 function FrameThumb({ thumb }: { thumb: ThumbInfo }) {
 	return (
 		<div
@@ -26,6 +31,7 @@ function FrameThumb({ thumb }: { thumb: ThumbInfo }) {
 	);
 }
 
+/** Single sprite file row. Shows thumbnail, name, alias badge, dimensions, and a context menu for zoom/exclude. */
 const FileRow = memo(function FileRow({
 	node,
 	indent,

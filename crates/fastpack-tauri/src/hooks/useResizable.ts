@@ -7,6 +7,7 @@ interface UseResizableOptions {
 	minH?: number;
 }
 
+/** Tracks resize dimensions via mouse drag with min width/height constraints. */
 export function useResizable({
 	initialW,
 	initialH,
@@ -39,6 +40,7 @@ export function useResizable({
 	return { size, onResizeStart };
 }
 
+/** Zooms an element on scroll wheel. Clamps between 0.25x and 32x. */
 export function useScrollZoom(
 	ref: React.RefObject<HTMLDivElement | null>,
 	enabled: boolean,

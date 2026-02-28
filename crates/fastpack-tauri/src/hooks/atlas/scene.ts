@@ -3,6 +3,7 @@ import type { SheetData } from "../../types";
 import { SHEET_GAP } from "./constants";
 import { getLayout } from "./layout";
 
+/** Dependencies injected into the scene rebuild for texture lookup and HUD access. */
 export interface SceneDeps {
 	getPixiTex: (b64: string) => PIXI.Texture | null;
 	ensureCheckerTex: (dark: boolean) => PIXI.Texture;
@@ -33,6 +34,7 @@ function getLinkIconTex(size = 11): PIXI.Texture {
 	return _linkIconTex;
 }
 
+/** Tears down the existing scene and rebuilds all sheet sprites, checkerboard backgrounds, selection overlays, alias badges, and HUD labels from scratch. */
 export function rebuildScene(
 	worldContainer: PIXI.Container,
 	currentSheets: SheetData[],
