@@ -344,55 +344,8 @@ fn run_pack_impl(project: &Project) -> Result<WorkerOutput> {
     let mut sheets: Vec<SheetOutput> = Vec::new();
 
     loop {
-        let (mut sheet, overflow) = build_sheet(packer.as_ref(), remaining, project)?;
+        let (sheet, overflow) = build_sheet(packer.as_ref(), remaining, project)?;
         remaining = overflow;
-
-        if sheets.is_empty() {
-            let alias_coords: Vec<(u32, u32, u32, u32)> = {
-                let frame_id_to_rect: std::collections::HashMap<&str, (u32, u32, u32, u32)> = sheet
-                    .frames
-                    .iter()
-                    .map(|f| (f.id.as_str(), (f.x, f.y, f.w, f.h)))
-                    .collect();
-                base_aliases
-                    .iter()
-                    .map(|alias| {
-                        let canon = alias.alias_of.as_deref().unwrap_or("");
-                        frame_id_to_rect.get(canon).copied().unwrap_or_default()
-                    })
-                    .collect()
-            };
-
-            for (alias, (x, y, w, h)) in base_aliases.iter().zip(alias_coords) {
-                sheet.frames.push(FrameInfo {
-                    id: alias.id.clone(),
-                    src_path: alias.source_path.to_string_lossy().into_owned(),
-                    x,
-                    y,
-                    w,
-                    h,
-                    alias_of: alias.alias_of.clone(),
-                });
-                sheet.atlas_frames.push(AtlasFrame {
-                    id: alias.id.clone(),
-                    frame: Rect::new(x, y, w, h),
-                    rotated: false,
-                    trimmed: false,
-                    sprite_source_size: SourceRect {
-                        x: 0,
-                        y: 0,
-                        w: alias.original_size.w,
-                        h: alias.original_size.h,
-                    },
-                    source_size: alias.original_size,
-                    polygon: None,
-                    nine_patch: alias.nine_patch,
-                    pivot: alias.pivot,
-                    alias_of: alias.alias_of.clone(),
-                });
-            }
-        }
-
         sheets.push(sheet);
 
         if remaining.is_empty() {
@@ -402,6 +355,76 @@ fn run_pack_impl(project: &Project) -> Result<WorkerOutput> {
             overflow_count = remaining.len();
             break;
         }
+    }
+
+    // Build a map from canonical sprite ID to its sheet index and atlas placement.
+    // Done after all sheets are packed so multipack aliases find their canonical
+    // regardless of which sheet it landed on.
+    let canon_map: std::collections::HashMap<String, (usize, u32, u32, u32, u32, bool)> = {
+        let mut m = std::collections::HashMap::new();
+        for (sheet_idx, sheet) in sheets.iter().enumerate() {
+            for af in &sheet.atlas_frames {
+                m.insert(
+                    af.id.clone(),
+                    (
+                        sheet_idx, af.frame.x, af.frame.y, af.frame.w, af.frame.h, af.rotated,
+                    ),
+                );
+            }
+        }
+        m
+    };
+
+    // Collect alias frames grouped by their target sheet index.
+    let mut pending: Vec<(usize, FrameInfo, AtlasFrame)> = Vec::new();
+    for alias in &base_aliases {
+        let canon_id = alias.alias_of.as_deref().unwrap_or("");
+        let Some(&(sheet_idx, x, y, w, h, rotated)) = canon_map.get(canon_id) else {
+            continue;
+        };
+        let trimmed = alias.trim_rect.is_some();
+        let sprite_source_size = match &alias.trim_rect {
+            Some(tr) => SourceRect {
+                x: tr.x,
+                y: tr.y,
+                w: tr.w,
+                h: tr.h,
+            },
+            None => SourceRect {
+                x: 0,
+                y: 0,
+                w: alias.original_size.w,
+                h: alias.original_size.h,
+            },
+        };
+        pending.push((
+            sheet_idx,
+            FrameInfo {
+                id: alias.id.clone(),
+                src_path: alias.source_path.to_string_lossy().into_owned(),
+                x,
+                y,
+                w,
+                h,
+                alias_of: alias.alias_of.clone(),
+            },
+            AtlasFrame {
+                id: alias.id.clone(),
+                frame: Rect::new(x, y, w, h),
+                rotated,
+                trimmed,
+                sprite_source_size,
+                source_size: alias.original_size,
+                polygon: alias.polygon.clone(),
+                nine_patch: alias.nine_patch,
+                pivot: alias.pivot,
+                alias_of: alias.alias_of.clone(),
+            },
+        ));
+    }
+    for (sheet_idx, frame_info, atlas_frame) in pending {
+        sheets[sheet_idx].frames.push(frame_info);
+        sheets[sheet_idx].atlas_frames.push(atlas_frame);
     }
 
     Ok(WorkerOutput {
