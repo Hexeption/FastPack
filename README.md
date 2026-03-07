@@ -6,7 +6,8 @@
 
 Texture atlas packer written in Rust. Ships as a Tauri desktop app and a headless CLI. Designed as an open-source replacement for TexturePacker.
 
-<img width="800" height="889" alt="wDwJf1hcLi" src="https://github.com/user-attachments/assets/215867c4-0fd8-44a4-8255-a943a4ec42c1" />
+<img width="800" height="1396" alt="Screenshot 2026-03-07 at 12 47 08 pm" src="https://github.com/user-attachments/assets/fe9df165-6800-465f-801d-b1655536edbf" />
+
 
 ## Features
 
@@ -21,7 +22,7 @@ Texture atlas packer written in Rust. Ships as a Tauri desktop app and a headles
 **Export**
 - Data formats: JSON Hash, JSON Array, Phaser 3, PixiJS
 - Texture formats: PNG (oxipng lossless), JPEG (mozjpeg), WebP, DXT1 (BC1), DXT5 (BC3)
-- Pixel formats: RGBA8888, RGB888, RGB565, RGBA4444, RGBA5551, Alpha8 — Floyd-Steinberg dithering for sub-8-bit formats
+- Pixel formats: RGBA8888, RGB888, RGB565, RGBA4444, RGBA5551, Alpha8
 
 **Desktop app**
 - Real-time atlas preview
