@@ -4,7 +4,7 @@
 [![CI](https://github.com/Hexeption/FastPack/actions/workflows/ci.yml/badge.svg)](https://github.com/Hexeption/FastPack/actions/workflows/ci.yml)
 [![rustc 1.85+](https://img.shields.io/badge/rustc-1.85%2B-orange.svg)](https://www.rust-lang.org)
 
-Texture atlas packer written in Rust. Native GUI as the primary interface, plus a full CLI and TUI. Designed as an open-source replacement for TexturePacker.
+Texture atlas packer written in Rust. Ships as a Tauri desktop app and a headless CLI. Designed as an open-source replacement for TexturePacker.
 
 <img width="800" height="889" alt="wDwJf1hcLi" src="https://github.com/user-attachments/assets/215867c4-0fd8-44a4-8255-a943a4ec42c1" />
 
@@ -19,37 +19,37 @@ Texture atlas packer written in Rust. Native GUI as the primary interface, plus 
 - Multi-resolution scale variants with per-variant suffix
 
 **Export**
-- JSON Hash, JSON Array, Phaser 3, PixiJS
-- PNG (oxipng lossless), JPEG (mozjpeg), WebP, lossy PNG (imagequant)
+- Data formats: JSON Hash, JSON Array, Phaser 3, PixiJS
+- Texture formats: PNG (oxipng lossless), JPEG (mozjpeg), WebP, DXT1 (BC1), DXT5 (BC3)
+- Pixel formats: RGBA8888, RGB888, RGB565, RGBA4444, RGBA5551, Alpha8 — Floyd-Steinberg dithering for sub-8-bit formats
 
-**GUI**
+**Desktop app**
 - Real-time atlas preview
 - Collapsible sprite tree with thumbnail previews
 - Watch mode — repacks on file change
 - `.fpsheet` project files (TOML)
+- Nine-patch and pivot editors per sprite
+- Drag-and-drop folders and project files
 - Multi-language UI
 
 ## Install
 
-Download the installer for your platform from the [releases page](https://github.com/Hexeption/FastPack/releases):
+Download the desktop app for your platform from the [releases page](https://github.com/Hexeption/FastPack/releases):
 
-- **Windows** — `fastpack-windows-x86_64.msi`
+- **Windows** — `fastpack-windows-x86_64-setup.exe`
 - **macOS (Apple Silicon)** — `fastpack-macos-aarch64.dmg`
 - **macOS (Intel)** — `fastpack-macos-x86_64.dmg`
-- **Linux** — `fastpack-linux-x86_64.tar.gz`
+- **Linux** — `fastpack-linux-x86_64.AppImage`
 
-Or install from crates.io:
+Or install the CLI from crates.io:
 
 ```sh
 cargo install fastpack
 ```
 
-## Usage
+## CLI Usage
 
 ```sh
-# Open the GUI (default when no subcommand is given)
-fastpack
-
 # Pack a directory of sprites
 fastpack pack sprites/ --output output/
 
@@ -58,7 +58,8 @@ fastpack pack sprites/ --output output/ \
   --max-width 2048 --max-height 2048 \
   --trim-mode trim \
   --data-format phaser3 \
-  --allow-rotation
+  --allow-rotation \
+  --multipack
 
 # Load settings from a project file
 fastpack pack --project atlas.fpsheet
@@ -72,6 +73,8 @@ fastpack split atlas.png atlas.json --output-dir sprites/
 # Generate a default project file
 fastpack init --output atlas.fpsheet
 ```
+
+Run `fastpack <subcommand> --help` for the full flag list.
 
 ## Project File
 
@@ -132,6 +135,8 @@ filter = "**/*.png"
 
 Requires Rust 1.85+.
 
+**CLI only:**
+
 ```sh
 git clone https://github.com/Hexeption/FastPack
 cd FastPack
@@ -139,6 +144,17 @@ cargo build --release -p fastpack
 ```
 
 The binary is at `target/release/fastpack`.
+
+**Desktop app:**
+
+The Tauri app also requires Node.js and pnpm. From the `crates/fastpack-tauri` directory:
+
+```sh
+pnpm install
+pnpm tauri build
+```
+
+The installer is placed under `src-tauri/target/release/bundle/`.
 
 ## License
 
