@@ -485,6 +485,22 @@ pub fn write_output(
     let mut tex_filenames: Vec<String> = Vec::new();
     let mut file_count = 0usize;
 
+    // Remove stale output files from previous runs.
+    if let Ok(entries) = std::fs::read_dir(&out_dir) {
+        for entry in entries.flatten() {
+            let fname = entry.file_name();
+            let fname = fname.to_string_lossy();
+            let is_stale_tex = fname.starts_with(&format!("{base_name}-"))
+                && fname.ends_with(&format!(".{tex_ext}"));
+            let is_stale_json = (fname.starts_with(&format!("{base_name}-"))
+                && fname.ends_with(".json"))
+                || fname == format!("{base_name}.json");
+            if is_stale_tex || is_stale_json {
+                let _ = std::fs::remove_file(entry.path());
+            }
+        }
+    }
+
     for (i, sheet) in output.sheets.iter().enumerate() {
         use image::{DynamicImage, ImageBuffer, Rgba};
 
