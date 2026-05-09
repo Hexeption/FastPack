@@ -9,3 +9,4 @@ crates/fastpack/wix/AppIcon.ico
 .DS_Store
 node_modules/
 dist/
+crates/fastpack-tauri/src-tauri/gen/

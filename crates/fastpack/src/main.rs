@@ -220,7 +220,7 @@ fn resolve_pack_fields(args: &cli::PackArgs) -> Result<PackFields> {
             fixed_height: None,
             size_constraint: args.size_constraint.clone().into(),
             force_square: args.force_square,
-            allow_rotation: args.allow_rotation,
+            allow_rotation: !args.no_allow_rotation,
             pack_mode: args.pack_mode.clone().into(),
             border_padding: args.border_padding,
             shape_padding: args.shape_padding,
@@ -232,7 +232,7 @@ fn resolve_pack_fields(args: &cli::PackArgs) -> Result<PackFields> {
             extrude: args.extrude,
             common_divisor_x: 0,
             common_divisor_y: 0,
-            detect_aliases: args.detect_aliases,
+            detect_aliases: !args.no_detect_aliases,
             default_pivot: Point::default(),
         };
         let variant = ScaleVariant {

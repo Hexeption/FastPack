@@ -74,9 +74,9 @@ pub struct PackArgs {
     #[arg(long)]
     pub force_square: bool,
 
-    /// Allow 90° sprite rotation to improve packing density.
-    #[arg(long, default_value_t = true)]
-    pub allow_rotation: bool,
+    /// Disallow 90° sprite rotation to improve packing density.
+    #[arg(long, default_value_t = false)]
+    pub no_allow_rotation: bool,
 
     /// Transparent pixels added around the atlas edge.
     #[arg(long, default_value_t = 2)]
@@ -102,9 +102,9 @@ pub struct PackArgs {
     #[arg(long, default_value_t = 0)]
     pub extrude: u32,
 
-    /// Deduplicate pixel-identical sprites as aliases.
-    #[arg(long, default_value_t = true)]
-    pub detect_aliases: bool,
+    /// Do not deduplicate pixel-identical sprites as aliases.
+    #[arg(long, default_value_t = false)]
+    pub no_detect_aliases: bool,
 
     /// Emit additional sheets when sprites overflow the first atlas.
     #[arg(long)]
