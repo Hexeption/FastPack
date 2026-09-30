@@ -25,7 +25,7 @@ rayon.workspace         = true
 tracing.workspace       = true
 
 [dependencies.oxipng]
-version  = "9"
+version  = "10"
 optional = true
 
 [dependencies.imagequant]
@@ -33,7 +33,7 @@ version  = "4"
 optional = true
 
 [dependencies.png]
-version  = "0.17"
+version  = "0.18"
 optional = true
 
 [dependencies.mozjpeg]

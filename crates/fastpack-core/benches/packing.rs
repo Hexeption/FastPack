@@ -1,4 +1,4 @@
-use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
+use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use fastpack_core::{
     algorithms::{
         basic::Basic,
@@ -13,6 +13,7 @@ use fastpack_core::{
     },
 };
 use image::{DynamicImage, Rgba, RgbaImage};
+use std::hint::black_box;
 use std::path::PathBuf;
 
 fn make_sprite(id: &str, w: u32, h: u32) -> Sprite {
