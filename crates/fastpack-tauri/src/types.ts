@@ -99,6 +99,7 @@ export interface OutputConfig {
 	quality: number;
 	texture_path_prefix: string;
 	multipack: boolean;
+	hide_name: boolean;
 }
 
 export interface ScaleVariant {

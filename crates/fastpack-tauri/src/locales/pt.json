@@ -127,7 +127,8 @@
 		"pathPrefix": "Prefixo de caminho",
 		"pathPrefixPlaceholder": "textures/",
 		"premultiplyAlpha": "Pr\u00e9-multiplicar alpha",
-		"multipack": "Multipack"
+		"multipack": "Multipack",
+		"hideName": "Metadados do TexturePacker"
 	},
 	"layout": {
 		"sectionTitle": "Layout",

@@ -127,7 +127,8 @@
 		"pathPrefix": "Pfadpr\u00e4fix",
 		"pathPrefixPlaceholder": "textures/",
 		"premultiplyAlpha": "Alpha vormultiplizieren",
-		"multipack": "Multipack"
+		"multipack": "Multipack",
+		"hideName": "TexturePacker-Metadaten"
 	},
 	"layout": {
 		"sectionTitle": "Layout",

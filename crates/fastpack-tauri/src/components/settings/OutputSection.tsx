@@ -21,7 +21,7 @@ interface SectionProps {
 	save: (p: Project) => void;
 }
 
-/** Output settings: atlas name, directory, texture/data format, pixel format, quality, and multipack toggle. */
+/** Output settings: atlas name, directory, texture/data format, pixel format, quality, multipack, and TexturePacker meta toggles. */
 export default function OutputSection({ project, update, save }: SectionProps) {
 	const { t } = useTranslation();
 	const out = project.output;
@@ -155,6 +155,12 @@ export default function OutputSection({ project, update, save }: SectionProps) {
 				<Switch
 					checked={out.multipack}
 					onCheckedChange={(c) => setOut({ multipack: c })}
+				/>
+			</Row>
+			<Row label={t("output.hideName")}>
+				<Switch
+					checked={out.hide_name}
+					onCheckedChange={(c) => saveOut({ hide_name: c })}
 				/>
 			</Row>
 		</Section>

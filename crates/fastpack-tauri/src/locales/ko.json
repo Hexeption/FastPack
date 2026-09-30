@@ -127,7 +127,8 @@
 		"pathPrefix": "\uacbd\ub85c \uc811\ub450\uc0ac",
 		"pathPrefixPlaceholder": "textures/",
 		"premultiplyAlpha": "\uc54c\ud30c \ubbf8\ub9ac \uacf1\ud558\uae30",
-		"multipack": "\uba40\ud2f0\ud328\ud06c"
+		"multipack": "\uba40\ud2f0\ud328\ud06c",
+		"hideName": "TexturePacker \uba54\ud0c0\ub370\uc774\ud130"
 	},
 	"layout": {
 		"sectionTitle": "\ub808\uc774\uc544\uc6c3",

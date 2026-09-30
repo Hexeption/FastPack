@@ -127,7 +127,8 @@
 		"pathPrefix": "\u8def\u5f84\u524d\u7f00",
 		"pathPrefixPlaceholder": "textures/",
 		"premultiplyAlpha": "\u9884\u4e58Alpha",
-		"multipack": "\u591a\u5305"
+		"multipack": "\u591a\u5305",
+		"hideName": "TexturePacker \u5143\u6570\u636e"
 	},
 	"layout": {
 		"sectionTitle": "\u5e03\u5c40",

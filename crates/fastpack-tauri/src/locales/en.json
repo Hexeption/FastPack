@@ -127,7 +127,8 @@
 		"pathPrefix": "Path prefix",
 		"pathPrefixPlaceholder": "textures/",
 		"premultiplyAlpha": "Premultiply alpha",
-		"multipack": "Multipack"
+		"multipack": "Multipack",
+		"hideName": "TexturePacker meta"
 	},
 	"layout": {
 		"sectionTitle": "Layout",

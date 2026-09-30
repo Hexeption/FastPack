@@ -127,7 +127,8 @@
 		"pathPrefix": "Pr\u00e9fixe de chemin",
 		"pathPrefixPlaceholder": "textures/",
 		"premultiplyAlpha": "Pr\u00e9multiplier l\u2019alpha",
-		"multipack": "Multipack"
+		"multipack": "Multipack",
+		"hideName": "M\u00e9tadonn\u00e9es TexturePacker"
 	},
 	"layout": {
 		"sectionTitle": "Disposition",

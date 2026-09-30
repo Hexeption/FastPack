@@ -55,6 +55,7 @@ export const DEFAULT_PREFS: Preferences = {
 			quality: 95,
 			texture_path_prefix: "",
 			multipack: false,
+			hide_name: false,
 		},
 		algorithm: { type: "max_rects", heuristic: "best_short_side_fit" },
 		variants: [{ scale: 1.0, suffix: "", scale_mode: "smooth" }],
