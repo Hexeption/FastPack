@@ -27,7 +27,7 @@ use fastpack_core::{
     },
 };
 use fastpack_formats::{
-    exporter::{ExportInput, Exporter},
+    exporter::{ExportInput, Exporter, SpriteRotation},
     formats::{
         json_array::JsonArrayExporter, json_hash::JsonHashExporter, phaser3::Phaser3Exporter,
         pixijs::PixiJsExporter,
@@ -191,7 +191,12 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
     };
     let alias_count = base_aliases.len();
 
-    let layout = args.layout;
+    let exporter = select_exporter(args.data_format);
+    let rotation = exporter.rotation();
+    let mut layout = args.layout;
+    if rotation == SpriteRotation::Unsupported {
+        layout.allow_rotation = false;
+    }
 
     std::fs::create_dir_all(&args.output_dir).context("failed to create output directory")?;
 
@@ -250,7 +255,7 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
             pack_pb.finish_and_clear();
 
             // 6. Compose
-            let atlas_image = compose(&pack_output.placed, &pack_output.atlas_size);
+            let atlas_image = compose(&pack_output.placed, &pack_output.atlas_size, rotation);
 
             // 6.25. Premultiply alpha if requested.
             let atlas_image = if args.premultiply_alpha {
@@ -320,7 +325,6 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
         }
 
         // 10. Export data files for this variant.
-        let exporter = select_exporter(args.data_format);
         let export_inputs: Vec<ExportInput<'_>> = variant_atlases
             .iter()
             .zip(&variant_tex_filenames)
@@ -332,12 +336,13 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
             })
             .collect();
 
+        let data_ext = exporter.file_extension();
         let n = variant_atlases.len();
         match exporter.combine(&export_inputs) {
             Some(result) => {
                 let content = result.context("combined data export failed")?;
                 let base = format!("{}{}", args.name, variant.suffix);
-                let data_path = args.output_dir.join(format!("{base}.json"));
+                let data_path = args.output_dir.join(format!("{base}.{data_ext}"));
                 std::fs::write(&data_path, content.as_bytes())
                     .context("failed to write data file")?;
                 for i in 0..n {
@@ -354,7 +359,7 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
                         i,
                         args.texture_format.extension(),
                     );
-                    let data_path = args.output_dir.join(format!("{base_name}.json"));
+                    let data_path = args.output_dir.join(format!("{base_name}.{data_ext}"));
                     std::fs::write(&data_path, content.as_bytes())
                         .context("failed to write data file")?;
                     all_sheets[variant_sheet_start + i].data_path = data_path;
@@ -452,14 +457,21 @@ fn is_image(path: &Path) -> bool {
         .unwrap_or(false)
 }
 
-fn compose(placed: &[PlacedSprite], atlas_size: &Size) -> image::DynamicImage {
+fn compose(
+    placed: &[PlacedSprite],
+    atlas_size: &Size,
+    rotation: SpriteRotation,
+) -> image::DynamicImage {
     let mut canvas = image::DynamicImage::new_rgba8(atlas_size.w, atlas_size.h);
     let canvas_rgba = canvas.as_mut_rgba8().expect("canvas is rgba8");
 
     for ps in placed {
         let rgba = ps.sprite.image.as_rgba8().expect("sprite is rgba8");
         if ps.placement.rotated {
-            let rotated = image::imageops::rotate90(rgba);
+            let rotated = match rotation {
+                SpriteRotation::CounterClockwise => image::imageops::rotate270(rgba),
+                _ => image::imageops::rotate90(rgba),
+            };
             image::imageops::replace(
                 canvas_rgba,
                 &rotated,

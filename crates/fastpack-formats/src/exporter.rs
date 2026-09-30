@@ -17,6 +17,17 @@ pub struct ExportInput<'a> {
     pub hide_name: bool,
 }
 
+/// How a data format expects 90° rotated sprites to be stored in the texture.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SpriteRotation {
+    /// Rotated sprites are stored turned 90° clockwise (TexturePacker's default).
+    Clockwise,
+    /// Rotated sprites are stored turned 90° counter-clockwise (libGDX, Spine).
+    CounterClockwise,
+    /// The format cannot describe rotated sprites, so packing must not rotate.
+    Unsupported,
+}
+
 /// Common interface for all export format writers.
 pub trait Exporter: Send + Sync {
     /// Serialize atlas metadata and return the full data file content as a string.
@@ -27,6 +38,13 @@ pub trait Exporter: Send + Sync {
 
     /// File extension for the output data file, without leading dot (e.g. `"json"`).
     fn file_extension(&self) -> &'static str;
+
+    /// Direction rotated sprites must be composited in for this format.
+    ///
+    /// The pipeline disables rotation entirely for [`SpriteRotation::Unsupported`].
+    fn rotation(&self) -> SpriteRotation {
+        SpriteRotation::Clockwise
+    }
 
     /// Combine multiple sheets into one data file where the format supports it.
     ///

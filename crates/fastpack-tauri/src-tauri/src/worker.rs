@@ -36,7 +36,7 @@ use fastpack_core::{
     },
 };
 use fastpack_formats::{
-    exporter::{ExportInput, Exporter},
+    exporter::{ExportInput, Exporter, SpriteRotation},
     formats::{
         json_array::JsonArrayExporter, json_hash::JsonHashExporter, phaser3::Phaser3Exporter,
         pixijs::PixiJsExporter,
@@ -151,6 +151,16 @@ fn collect_images(project: &Project) -> (Vec<(PathBuf, String)>, HashMap<PathBuf
     (paths, names)
 }
 
+/// Return the exporter for the configured data format.
+fn select_exporter(data_format: DataFormat) -> Box<dyn Exporter> {
+    match data_format {
+        DataFormat::JsonArray => Box::new(JsonArrayExporter),
+        DataFormat::Phaser3 => Box::new(Phaser3Exporter),
+        DataFormat::Pixijs => Box::new(PixiJsExporter),
+        DataFormat::JsonHash => Box::new(JsonHashExporter),
+    }
+}
+
 /// Pack a list of sprites into a single atlas sheet, returning the composited
 /// RGBA buffer and any overflow sprites that did not fit.
 fn build_sheet(
@@ -160,10 +170,15 @@ fn build_sheet(
     names: &HashMap<PathBuf, String>,
 ) -> Result<(SheetOutput, Vec<Sprite>)> {
     let sprite_cfg = &project.config.sprites;
+    let rotation = select_exporter(project.config.output.data_format).rotation();
+    let mut layout = project.config.layout.clone();
+    if rotation == SpriteRotation::Unsupported {
+        layout.allow_rotation = false;
+    }
     let pack_output = packer
         .pack(PackInput {
             sprites,
-            config: project.config.layout.clone(),
+            config: layout,
             sprite_config: sprite_cfg.clone(),
         })
         .map_err(|e| anyhow::anyhow!("packing failed: {e}"))?;
@@ -186,7 +201,10 @@ fn build_sheet(
         let dst = buf_ptr as *mut u8;
 
         if ps.placement.rotated {
-            let rotated = image::imageops::rotate90(rgba);
+            let rotated = match rotation {
+                SpriteRotation::CounterClockwise => image::imageops::rotate270(rgba),
+                _ => image::imageops::rotate90(rgba),
+            };
             let src_raw = rotated.as_raw();
             for row in 0..dh {
                 unsafe {
@@ -505,12 +523,8 @@ pub fn write_output(
         _ => Box::new(PngCompressor),
     };
 
-    let exporter: Box<dyn Exporter> = match out_cfg.data_format {
-        DataFormat::JsonArray => Box::new(JsonArrayExporter),
-        DataFormat::Phaser3 => Box::new(Phaser3Exporter),
-        DataFormat::Pixijs => Box::new(PixiJsExporter),
-        DataFormat::JsonHash => Box::new(JsonHashExporter),
-    };
+    let exporter = select_exporter(out_cfg.data_format);
+    let data_ext = exporter.file_extension();
 
     let tex_ext = out_cfg.texture_format.extension();
     let base_name = &out_cfg.name;
@@ -527,10 +541,10 @@ pub fn write_output(
             let fname = fname.to_string_lossy();
             let is_stale_tex = fname.starts_with(&format!("{base_name}-"))
                 && fname.ends_with(&format!(".{tex_ext}"));
-            let is_stale_json = (fname.starts_with(&format!("{base_name}-"))
-                && fname.ends_with(".json"))
-                || fname == format!("{base_name}.json");
-            if is_stale_tex || is_stale_json {
+            let is_stale_data = (fname.starts_with(&format!("{base_name}-"))
+                && fname.ends_with(&format!(".{data_ext}")))
+                || fname == format!("{base_name}.{data_ext}");
+            if is_stale_tex || is_stale_data {
                 let _ = std::fs::remove_file(entry.path());
             }
         }
@@ -592,7 +606,7 @@ pub fn write_output(
     match exporter.combine(&export_inputs) {
         Some(result) => {
             let content = result.context("combined export failed")?;
-            let data_path = out_dir.join(format!("{base_name}.json"));
+            let data_path = out_dir.join(format!("{base_name}.{data_ext}"));
             std::fs::write(&data_path, content.as_bytes()).context("failed to write data file")?;
             file_count += 1;
         }
@@ -604,7 +618,7 @@ pub fn write_output(
                 } else {
                     format!("{base_name}-{i}")
                 };
-                let data_path = out_dir.join(format!("{stem}.json"));
+                let data_path = out_dir.join(format!("{stem}.{data_ext}"));
                 std::fs::write(&data_path, content.as_bytes())
                     .context("failed to write data file")?;
                 file_count += 1;

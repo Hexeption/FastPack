@@ -13,7 +13,8 @@ pub struct AtlasFrame {
     /// Position and size within the atlas texture.
     pub frame: Rect,
 
-    /// `true` if this sprite was rotated 90° clockwise during packing.
+    /// `true` if this sprite was rotated 90° during packing (clockwise unless the
+    /// data format requires counter-clockwise, see `SpriteRotation`).
     pub rotated: bool,
 
     /// `true` if transparent borders were stripped from this sprite.
