@@ -149,6 +149,7 @@
 		"bestArea": "Beste Fl\u00e4che",
 		"bottomLeft": "Unten links",
 		"contactPoint": "Kontaktpunkt",
+		"bestHeuristic": "Beste (alle testen)",
 		"cellWidth": "Zellenbreite",
 		"cellHeight": "Zellenh\u00f6he",
 		"cellSize": "Cell size",

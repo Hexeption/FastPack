@@ -149,6 +149,7 @@
 		"bestArea": "\ucd5c\uc801 \uba74\uc801",
 		"bottomLeft": "\uc67c\ucabd \uc544\ub798",
 		"contactPoint": "\uc811\uc811\uc810",
+		"bestHeuristic": "\ucd5c\uc801 (\ubaa8\ub450 \uc2dc\ub3c4)",
 		"cellWidth": "\uc140 \ub108\ube44",
 		"cellHeight": "\uc140 \ub192\uc774",
 		"cellSize": "Cell size",

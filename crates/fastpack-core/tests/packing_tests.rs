@@ -3,11 +3,13 @@ use fastpack_core::{
         basic::Basic,
         grid::Grid,
         maxrects::MaxRects,
-        packer::{PackInput, Packer},
+        packer::{PackInput, PackOutput, Packer},
     },
     imaging::{alias::detect_aliases, extrude::extrude, trim::trim},
     types::{
-        config::{LayoutConfig, PackMode, SizeConstraint, SpriteConfig, TrimMode},
+        config::{
+            LayoutConfig, MaxRectsHeuristic, PackMode, SizeConstraint, SpriteConfig, TrimMode,
+        },
         rect::{Rect, Size},
         sprite::Sprite,
     },
@@ -842,5 +844,116 @@ fn maxrects_all_placed_ids_are_present() {
         .collect();
     for id in &ids {
         assert!(placed_ids.contains(id), "missing sprite id: {id}");
+    }
+}
+
+// MaxRectsHeuristic::Best
+
+fn mixed_sprites() -> Vec<Sprite> {
+    let dims = [
+        (70, 30),
+        (30, 70),
+        (50, 50),
+        (90, 20),
+        (20, 90),
+        (40, 60),
+        (60, 40),
+        (33, 17),
+        (17, 33),
+        (25, 25),
+        (80, 45),
+        (45, 80),
+    ];
+    dims.iter()
+        .enumerate()
+        .map(|(i, &(w, h))| make_sprite(&format!("s{i}"), w, h))
+        .collect()
+}
+
+fn pack_with(heuristic: MaxRectsHeuristic, sprites: Vec<Sprite>, cfg: LayoutConfig) -> PackOutput {
+    MaxRects { heuristic }
+        .pack(PackInput {
+            sprites,
+            config: cfg,
+            sprite_config: SpriteConfig::default(),
+        })
+        .unwrap()
+}
+
+fn area(out: &PackOutput) -> u64 {
+    out.atlas_size.w as u64 * out.atlas_size.h as u64
+}
+
+#[test]
+fn maxrects_heuristic_best_parses_and_serializes() {
+    assert_eq!(
+        "best".parse::<MaxRectsHeuristic>().unwrap(),
+        MaxRectsHeuristic::Best
+    );
+    assert_eq!(
+        "BEST".parse::<MaxRectsHeuristic>().unwrap(),
+        MaxRectsHeuristic::Best
+    );
+    assert_eq!(
+        serde_json::to_string(&MaxRectsHeuristic::Best).unwrap(),
+        "\"best\""
+    );
+    assert_eq!(
+        serde_json::from_str::<MaxRectsHeuristic>("\"best\"").unwrap(),
+        MaxRectsHeuristic::Best
+    );
+    assert!(!MaxRectsHeuristic::CONCRETE.contains(&MaxRectsHeuristic::Best));
+}
+
+#[test]
+fn maxrects_best_heuristic_matches_smallest_concrete_area() {
+    for mode in [PackMode::Fast, PackMode::Good, PackMode::Best] {
+        let cfg = LayoutConfig {
+            pack_mode: mode,
+            allow_rotation: true,
+            ..fast_layout(256, 256)
+        };
+        let best = pack_with(MaxRectsHeuristic::Best, mixed_sprites(), cfg.clone());
+        assert!(best.overflow.is_empty(), "{mode:?}: best overflowed");
+        let min_concrete = MaxRectsHeuristic::CONCRETE
+            .iter()
+            .map(|&h| pack_with(h, mixed_sprites(), cfg.clone()))
+            .filter(|out| out.overflow.is_empty())
+            .map(|out| area(&out))
+            .min()
+            .unwrap();
+        assert_eq!(area(&best), min_concrete, "{mode:?}");
+    }
+}
+
+#[test]
+fn maxrects_best_heuristic_prefers_fewest_overflow() {
+    // A tight canvas where not everything fits: Best must overflow no more
+    // sprites than any single heuristic does.
+    let cfg = fast_layout(128, 128);
+    let best = pack_with(MaxRectsHeuristic::Best, mixed_sprites(), cfg.clone());
+    let min_overflow = MaxRectsHeuristic::CONCRETE
+        .iter()
+        .map(|&h| pack_with(h, mixed_sprites(), cfg.clone()).overflow.len())
+        .min()
+        .unwrap();
+    assert!(min_overflow > 0, "test needs a canvas that overflows");
+    assert_eq!(best.overflow.len(), min_overflow);
+    assert_eq!(best.placed.len() + best.overflow.len(), 12);
+}
+
+#[test]
+fn maxrects_best_heuristic_places_without_overlap() {
+    let cfg = LayoutConfig {
+        pack_mode: PackMode::Good,
+        allow_rotation: true,
+        ..fast_layout(512, 512)
+    };
+    let out = pack_with(MaxRectsHeuristic::Best, mixed_sprites(), cfg);
+    let rects: Vec<Rect> = out.placed.iter().map(|ps| ps.placement.dest).collect();
+    for i in 0..rects.len() {
+        for j in (i + 1)..rects.len() {
+            assert!(!rects[i].intersects(&rects[j]), "rects {i} and {j} overlap");
+        }
     }
 }

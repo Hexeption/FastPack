@@ -41,6 +41,7 @@ optional = true
 tempfile        = "3"
 criterion       = { version = "0.7", features = ["html_reports"] }
 image.workspace = true
+serde_json.workspace = true
 
 [[bench]]
 name    = "packing"

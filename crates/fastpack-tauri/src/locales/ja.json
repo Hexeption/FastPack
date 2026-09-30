@@ -149,6 +149,7 @@
 		"bestArea": "\u9762\u7a4d\u512a\u5148",
 		"bottomLeft": "\u5de6\u4e0b",
 		"contactPoint": "\u63a5\u89e6\u70b9",
+		"bestHeuristic": "\u6700\u9069 (\u3059\u3079\u3066\u8a66\u884c)",
 		"cellWidth": "\u30bb\u30eb\u5e45",
 		"cellHeight": "\u30bb\u30eb\u9ad8\u3055",
 		"cellSize": "Cell size",

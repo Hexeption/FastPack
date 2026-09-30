@@ -56,7 +56,8 @@ export type AlgorithmConfig =
 				| "best_long_side_fit"
 				| "best_area_fit"
 				| "bottom_left_rule"
-				| "contact_point_rule";
+				| "contact_point_rule"
+				| "best";
 	  }
 	| { type: "polygon" };
 

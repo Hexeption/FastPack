@@ -27,6 +27,8 @@ Sprites that cannot fit in any remaining free rectangle are returned as overflow
 
 **contact-point-rule** — Maximises the perimeter of the placed sprite that borders already-placed sprites or atlas walls. Reduces internal fragmentation. *(Phase 2 — currently falls back to best-area-fit.)*
 
+**best** — Packs with every heuristic above (in parallel) and keeps the result with the fewest overflow sprites, then the smallest atlas area. Ties go to the heuristic listed first. Costs roughly five packs' worth of CPU.
+
 ## `.fpsheet` Fields
 
 ```toml
@@ -48,7 +50,7 @@ force_square    = false
 
 ```
 --algorithm max-rects
---max-rects-heuristic <heuristic>    best-short-side-fit | best-long-side-fit | best-area-fit | bottom-left-rule | contact-point-rule
+--max-rects-heuristic <heuristic>    best-short-side-fit | best-long-side-fit | best-area-fit | bottom-left-rule | contact-point-rule | best
 --allow-rotation                     (flag)
 --shape-padding <n>
 --border-padding <n>
@@ -70,4 +72,4 @@ force_square    = false
 
 ## TexturePacker Compatibility
 
-MaxRects maps directly to TexturePacker's MaxRects algorithm. All five heuristics have the same names (except TexturePacker uses "Best" as a prefix). The `contact-point-rule` heuristic currently uses `best-area-fit` scoring internally; results will differ from TexturePacker's contact point implementation until Phase 2.
+MaxRects maps directly to TexturePacker's MaxRects algorithm. All five heuristics have the same names (except TexturePacker uses "Best" as a prefix). The `contact-point-rule` heuristic currently uses `best-area-fit` scoring internally; results will differ from TexturePacker's contact point implementation until Phase 2. `best` corresponds to TexturePacker's "Best" heuristic.

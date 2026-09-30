@@ -51,11 +51,29 @@ fn pack_sprites(input: PackInput, heuristic: MaxRectsHeuristic) -> PackOutput {
         area_b.cmp(&area_a)
     });
 
-    match cfg.pack_mode {
-        PackMode::Fast => pack_at_width(&sprites, cfg, heuristic, cfg.max_width),
-        PackMode::Good => binary_search_width(&sprites, cfg, heuristic),
-        PackMode::Best => exhaustive_width_search(&sprites, cfg, heuristic),
+    let pack_with = |h: MaxRectsHeuristic| match cfg.pack_mode {
+        PackMode::Fast => pack_at_width(&sprites, cfg, h, cfg.max_width),
+        PackMode::Good => binary_search_width(&sprites, cfg, h),
+        PackMode::Best => exhaustive_width_search(&sprites, cfg, h),
+    };
+
+    if heuristic != MaxRectsHeuristic::Best {
+        return pack_with(heuristic);
     }
+
+    // Run every concrete heuristic and keep the one that places the most
+    // sprites, then yields the smallest atlas. Ties go to the earliest
+    // heuristic in `CONCRETE` (rayon's `min_by_key` keeps the first minimum).
+    MaxRectsHeuristic::CONCRETE
+        .par_iter()
+        .map(|&h| pack_with(h))
+        .min_by_key(|out| {
+            (
+                out.overflow.len(),
+                out.atlas_size.w as u64 * out.atlas_size.h as u64,
+            )
+        })
+        .expect("CONCRETE is non-empty")
 }
 
 /// Minimum canvas width needed to fit the widest sprite (respects rotation).
@@ -279,7 +297,9 @@ fn score(rect: &Rect, fw: u32, fh: u32, heuristic: MaxRectsHeuristic) -> (i64, i
     let lw = (rect.w - fw) as i64;
     let lh = (rect.h - fh) as i64;
     match heuristic {
-        MaxRectsHeuristic::BestShortSideFit => (lw.min(lh), lw.max(lh)),
+        // `Best` is resolved to concrete heuristics in `pack_sprites`; score it
+        // like the default if it ever reaches here.
+        MaxRectsHeuristic::BestShortSideFit | MaxRectsHeuristic::Best => (lw.min(lh), lw.max(lh)),
         MaxRectsHeuristic::BestLongSideFit => (lw.max(lh), lw.min(lh)),
         MaxRectsHeuristic::BestAreaFit | MaxRectsHeuristic::ContactPointRule => {
             let waste = (rect.w * rect.h - fw * fh) as i64;

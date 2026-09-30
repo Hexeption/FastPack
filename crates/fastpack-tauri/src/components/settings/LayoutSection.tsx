@@ -154,6 +154,7 @@ export default function LayoutSection({ project, update }: SectionProps) {
 							<SelectItem value="contact_point_rule">
 								{t("layout.contactPoint")}
 							</SelectItem>
+							<SelectItem value="best">{t("layout.bestHeuristic")}</SelectItem>
 						</SelectContent>
 					</Select>
 				</Row>

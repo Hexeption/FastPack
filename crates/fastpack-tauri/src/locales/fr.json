@@ -149,6 +149,7 @@
 		"bestArea": "Meilleure surface",
 		"bottomLeft": "En bas \u00e0 gauche",
 		"contactPoint": "Point de contact",
+		"bestHeuristic": "Meilleur (tout essayer)",
 		"cellWidth": "Largeur de cellule",
 		"cellHeight": "Hauteur de cellule",
 		"cellSize": "Cell size",

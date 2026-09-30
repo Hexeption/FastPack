@@ -172,6 +172,21 @@ pub enum MaxRectsHeuristic {
     BottomLeftRule,
     /// Maximise contact perimeter with already-placed sprites and walls.
     ContactPointRule,
+    /// Try every other heuristic and keep the result with the fewest
+    /// overflowing sprites, then the smallest atlas area.
+    Best,
+}
+
+impl MaxRectsHeuristic {
+    /// Every heuristic that scores placements directly (all except `Best`),
+    /// in tie-break order.
+    pub const CONCRETE: [Self; 5] = [
+        Self::BestShortSideFit,
+        Self::BestLongSideFit,
+        Self::BestAreaFit,
+        Self::BottomLeftRule,
+        Self::ContactPointRule,
+    ];
 }
 
 impl std::str::FromStr for MaxRectsHeuristic {
@@ -183,6 +198,7 @@ impl std::str::FromStr for MaxRectsHeuristic {
             "best-area-fit" | "baf" => Ok(Self::BestAreaFit),
             "bottom-left-rule" | "blr" => Ok(Self::BottomLeftRule),
             "contact-point-rule" | "cpr" => Ok(Self::ContactPointRule),
+            "best" => Ok(Self::Best),
             _ => Err(format!("unknown maxrects heuristic: {s}")),
         }
     }

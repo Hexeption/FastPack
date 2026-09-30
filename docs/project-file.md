@@ -155,7 +155,7 @@ type      = "max_rects"
 heuristic = "best_short_side_fit"
 ```
 
-Available heuristics: `best_short_side_fit`, `best_long_side_fit`, `best_area_fit`, `bottom_left_rule`, `contact_point_rule`.
+Available heuristics: `best_short_side_fit`, `best_long_side_fit`, `best_area_fit`, `bottom_left_rule`, `contact_point_rule`, `best` (tries all of them and keeps the smallest atlas).
 
 See [maxrects.md](algorithms/maxrects.md) for details.
 
