@@ -7,7 +7,7 @@ use crate::{
     error::FormatError,
     exporter::{ExportInput, Exporter},
     smartupdate,
-    text::{fmt_f32, fmt_num, upright_size, xml_escape},
+    text::{fmt_f32, fmt_num, image_name, upright_size, xml_escape},
 };
 
 /// Exports atlas metadata as a Cocos2d-x property list (plist format 3).
@@ -34,7 +34,7 @@ impl Exporter for Cocos2dExporter {
 }
 
 fn frame_name(id: &str) -> String {
-    format!("{id}.png")
+    image_name(id)
 }
 
 fn export_plist(input: &ExportInput<'_>) -> String {

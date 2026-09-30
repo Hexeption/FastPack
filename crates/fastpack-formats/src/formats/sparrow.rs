@@ -4,7 +4,7 @@ use crate::{
     error::FormatError,
     exporter::{ExportInput, Exporter},
     smartupdate,
-    text::{fmt_f32, upright_size, xml_escape},
+    text::{fmt_f32, image_name, upright_size, xml_escape},
 };
 
 /// Exports atlas metadata in Starling / Sparrow `TextureAtlas` XML format.
@@ -54,7 +54,7 @@ fn export_xml(input: &ExportInput<'_>) -> String {
         let _ = write!(
             out,
             "    <SubTexture name=\"{}\" x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\"",
-            xml_escape(&format!("{}.png", frame.id)),
+            xml_escape(&image_name(&frame.id)),
             r.x,
             r.y,
             r.w,

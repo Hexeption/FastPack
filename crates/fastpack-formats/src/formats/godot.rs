@@ -4,7 +4,7 @@ use crate::{
     error::FormatError,
     exporter::{ExportInput, Exporter, SpriteRotation},
     smartupdate,
-    text::upright_size,
+    text::{image_name, upright_size},
 };
 
 /// Exports atlas metadata as a Godot 4 `.tpsheet`, the JSON format read by
@@ -54,7 +54,7 @@ fn build_output(inputs: &[ExportInput<'_>]) -> Result<String, FormatError> {
             let src = frame.source_size;
             let sss = frame.sprite_source_size;
             sprites.push(Sprite {
-                filename: format!("{}.png", frame.id),
+                filename: image_name(&frame.id),
                 region: Rect {
                     x: frame.frame.x as i64,
                     y: frame.frame.y as i64,

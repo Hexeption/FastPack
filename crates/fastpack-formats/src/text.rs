@@ -39,3 +39,36 @@ pub(crate) fn upright_size(frame: &AtlasFrame) -> (u32, u32) {
         (frame.frame.w, frame.frame.h)
     }
 }
+
+/// Frame name with an image extension, as cocos2d, Sparrow and Godot expect.
+///
+/// Appends `.png` unless the name already ends in an image extension, which it
+/// does when the project keeps source file extensions in sprite names.
+pub(crate) fn image_name(id: &str) -> String {
+    const IMAGE_EXTENSIONS: &[&str] = &[
+        "png", "jpg", "jpeg", "webp", "bmp", "tga", "tif", "tiff", "gif",
+    ];
+    let has_ext = id
+        .rsplit_once('.')
+        .filter(|(stem, _)| !stem.is_empty() && !stem.ends_with('/'))
+        .is_some_and(|(_, ext)| IMAGE_EXTENSIONS.contains(&ext.to_ascii_lowercase().as_str()));
+    if has_ext {
+        id.to_string()
+    } else {
+        format!("{id}.png")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::image_name;
+
+    #[test]
+    fn image_name_appends_png_only_when_missing() {
+        assert_eq!(image_name("hero/run_01"), "hero/run_01.png");
+        assert_eq!(image_name("hero/run_01.png"), "hero/run_01.png");
+        assert_eq!(image_name("ui/Button.JPG"), "ui/Button.JPG");
+        assert_eq!(image_name("v1.2"), "v1.2.png");
+        assert_eq!(image_name("dir/.png"), "dir/.png.png");
+    }
+}
