@@ -347,6 +347,8 @@ pub enum DataFormat {
     Phaser3,
     /// PixiJS sprite sheet format.
     Pixijs,
+    /// Cocos2d-x property list (plist format 3).
+    Cocos2d,
 }
 
 /// Output file format and path settings.

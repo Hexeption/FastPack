@@ -14,7 +14,12 @@ export type ScaleMode =
 	| "scale3x"
 	| "hq2x"
 	| "eagle";
-export type DataFormat = "json_hash" | "json_array" | "phaser3" | "pixijs";
+export type DataFormat =
+	| "json_hash"
+	| "json_array"
+	| "phaser3"
+	| "pixijs"
+	| "cocos2d";
 export type TextureFormat =
 	| "png"
 	| "jpeg"

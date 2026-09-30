@@ -106,6 +106,28 @@ fn pack_with_phaser3_format_produces_textures_key() {
     );
 }
 
+#[test]
+fn pack_with_cocos2d_format_writes_plist() {
+    let out = tempfile::tempdir().expect("tempdir");
+    binary()
+        .args([
+            "pack",
+            fixtures_dir().to_str().unwrap(),
+            "--output",
+            out.path().to_str().unwrap(),
+            "--name",
+            "atlas",
+            "--data-format",
+            "cocos2d",
+        ])
+        .status()
+        .expect("failed to start fastpack");
+
+    assert!(!out.path().join("atlas.json").exists());
+    let content = std::fs::read_to_string(out.path().join("atlas.plist")).unwrap();
+    assert!(content.contains("<key>frames</key>"));
+}
+
 // pack subcommand — error paths
 
 #[test]

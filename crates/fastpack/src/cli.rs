@@ -296,6 +296,8 @@ pub enum DataFormatArg {
     Phaser3,
     /// PixiJS sprite sheet format.
     Pixijs,
+    /// Cocos2d-x property list (plist format 3).
+    Cocos2d,
 }
 
 impl From<DataFormatArg> for DataFormat {
@@ -305,6 +307,7 @@ impl From<DataFormatArg> for DataFormat {
             DataFormatArg::JsonArray => DataFormat::JsonArray,
             DataFormatArg::Phaser3 => DataFormat::Phaser3,
             DataFormatArg::Pixijs => DataFormat::Pixijs,
+            DataFormatArg::Cocos2d => DataFormat::Cocos2d,
         }
     }
 }

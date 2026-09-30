@@ -118,6 +118,7 @@ export default function OutputSection({ project, update, save }: SectionProps) {
 						<SelectItem value="json_array">{t("output.jsonArray")}</SelectItem>
 						<SelectItem value="phaser3">{t("output.phaser3")}</SelectItem>
 						<SelectItem value="pixijs">{t("output.pixijs")}</SelectItem>
+						<SelectItem value="cocos2d">{t("output.cocos2d")}</SelectItem>
 					</SelectContent>
 				</Select>
 			</Row>

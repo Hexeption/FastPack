@@ -6,8 +6,8 @@ use fastpack_core::types::{
 use fastpack_formats::{
     exporter::{ExportInput, Exporter},
     formats::{
-        json_array::JsonArrayExporter, json_hash::JsonHashExporter, phaser3::Phaser3Exporter,
-        pixijs::PixiJsExporter,
+        cocos2d::Cocos2dExporter, json_array::JsonArrayExporter, json_hash::JsonHashExporter,
+        phaser3::Phaser3Exporter, pixijs::PixiJsExporter,
     },
     polygon::build_mesh,
 };
@@ -687,4 +687,178 @@ fn polygon_fan_triangulation_covers_all_vertices() {
         mesh.triangles,
         vec![[0, 1, 2], [0, 2, 3], [0, 3, 4], [0, 4, 5]]
     );
+}
+// Cocos2dExporter
+
+/// Return the text from `<key>{key}</key>` up to the next `</dict>`.
+fn plist_dict<'a>(plist: &'a str, key: &str) -> &'a str {
+    let start = plist
+        .find(&format!("<key>{key}</key>"))
+        .unwrap_or_else(|| panic!("missing key {key}"));
+    let rest = &plist[start..];
+    let end = rest.find("</dict>").expect("unterminated dict");
+    &rest[..end]
+}
+
+/// Return the `<string>` value that follows `<key>{key}</key>` in `body`.
+fn plist_string<'a>(body: &'a str, key: &str) -> &'a str {
+    let start = body
+        .find(&format!("<key>{key}</key>"))
+        .unwrap_or_else(|| panic!("missing key {key}"));
+    let rest = &body[start..];
+    let open = rest.find("<string>").unwrap() + "<string>".len();
+    let close = rest.find("</string>").unwrap();
+    &rest[open..close]
+}
+
+#[test]
+fn cocos2d_output_is_plist_with_frames_and_metadata() {
+    let atlas = make_atlas(vec![make_frame("hero", 0, 0, 64, 64)]);
+    let out = Cocos2dExporter.export(&export_input(&atlas)).unwrap();
+    assert!(out.starts_with("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"));
+    assert!(out.contains("<plist version=\"1.0\">"));
+    assert!(out.contains("<key>frames</key>"));
+    assert!(out.contains("<key>metadata</key>"));
+    assert!(out.trim_end().ends_with("</plist>"));
+}
+
+#[test]
+fn cocos2d_frame_names_have_png_suffix() {
+    let atlas = make_atlas(vec![make_frame("ui/button", 0, 0, 32, 32)]);
+    let out = Cocos2dExporter.export(&export_input(&atlas)).unwrap();
+    assert!(out.contains("<key>ui/button.png</key>"));
+}
+
+#[test]
+fn cocos2d_frame_rect_strings() {
+    let atlas = make_atlas(vec![make_frame("s", 10, 20, 64, 48)]);
+    let out = Cocos2dExporter.export(&export_input(&atlas)).unwrap();
+    let frame = plist_dict(&out, "s.png");
+    assert_eq!(plist_string(frame, "textureRect"), "{{10,20},{64,48}}");
+    assert_eq!(plist_string(frame, "spriteSize"), "{64,48}");
+    assert_eq!(plist_string(frame, "spriteSourceSize"), "{64,48}");
+    assert_eq!(plist_string(frame, "spriteOffset"), "{0,0}");
+    assert!(frame.contains("<key>textureRotated</key>\n                <false/>"));
+}
+
+#[test]
+fn cocos2d_trimmed_offset_is_centre_relative_y_up() {
+    let mut frame = make_frame("s", 0, 0, 20, 10);
+    frame.trimmed = true;
+    // 20x10 content at (4, 2) inside a 40x40 source.
+    frame.sprite_source_size = SourceRect {
+        x: 4,
+        y: 2,
+        w: 20,
+        h: 10,
+    };
+    frame.source_size = Size { w: 40, h: 40 };
+    let atlas = make_atlas(vec![frame]);
+    let out = Cocos2dExporter.export(&export_input(&atlas)).unwrap();
+    let frame = plist_dict(&out, "s.png");
+    // x: 4 + 10 - 20 = -6; y: 20 - (2 + 5) = 13.
+    assert_eq!(plist_string(frame, "spriteOffset"), "{-6,13}");
+    assert_eq!(plist_string(frame, "spriteSourceSize"), "{40,40}");
+    assert_eq!(plist_string(frame, "spriteSize"), "{20,10}");
+}
+
+#[test]
+fn cocos2d_odd_offset_keeps_half_pixels() {
+    let mut frame = make_frame("s", 0, 0, 4, 4);
+    frame.trimmed = true;
+    frame.source_size = Size { w: 5, h: 5 };
+    let atlas = make_atlas(vec![frame]);
+    let out = Cocos2dExporter.export(&export_input(&atlas)).unwrap();
+    assert_eq!(
+        plist_string(plist_dict(&out, "s.png"), "spriteOffset"),
+        "{-0.5,0.5}"
+    );
+}
+
+#[test]
+fn cocos2d_rotated_frame_uses_upright_size() {
+    // Packed footprint is 64 wide x 32 tall; the sprite itself is 32x64.
+    let mut frame = make_frame("s", 2, 4, 64, 32);
+    frame.rotated = true;
+    frame.sprite_source_size = SourceRect {
+        x: 0,
+        y: 0,
+        w: 32,
+        h: 64,
+    };
+    frame.source_size = Size { w: 32, h: 64 };
+    let atlas = make_atlas(vec![frame]);
+    let out = Cocos2dExporter.export(&export_input(&atlas)).unwrap();
+    let frame = plist_dict(&out, "s.png");
+    assert_eq!(plist_string(frame, "textureRect"), "{{2,4},{32,64}}");
+    assert_eq!(plist_string(frame, "spriteSize"), "{32,64}");
+    assert!(frame.contains("<key>textureRotated</key>\n                <true/>"));
+}
+
+#[test]
+fn cocos2d_aliases_fold_into_canonical_frame() {
+    let mut copy = make_frame("copy", 0, 0, 32, 32);
+    copy.alias_of = Some("original".to_string());
+    let atlas = make_atlas(vec![make_frame("original", 0, 0, 32, 32), copy]);
+    let out = Cocos2dExporter.export(&export_input(&atlas)).unwrap();
+    assert!(!out.contains("<key>copy.png</key>"));
+    let frame = plist_dict(&out, "original.png");
+    assert!(frame.contains("<string>copy.png</string>"));
+}
+
+#[test]
+fn cocos2d_alias_without_canonical_on_sheet_is_standalone() {
+    let mut copy = make_frame("copy", 0, 0, 32, 32);
+    copy.alias_of = Some("elsewhere".to_string());
+    let atlas = make_atlas(vec![copy]);
+    let out = Cocos2dExporter.export(&export_input(&atlas)).unwrap();
+    assert!(out.contains("<key>copy.png</key>"));
+}
+
+#[test]
+fn cocos2d_pivot_written_as_y_up_anchor() {
+    let mut frame = make_frame("s", 0, 0, 32, 32);
+    frame.pivot = Some(Point { x: 0.25, y: 0.0 });
+    let atlas = make_atlas(vec![frame]);
+    let out = Cocos2dExporter.export(&export_input(&atlas)).unwrap();
+    assert_eq!(
+        plist_string(plist_dict(&out, "s.png"), "anchor"),
+        "{0.25,1}"
+    );
+}
+
+#[test]
+fn cocos2d_metadata_values() {
+    let atlas = make_atlas(vec![make_frame("s", 0, 0, 32, 32)]);
+    let out = Cocos2dExporter.export(&export_input(&atlas)).unwrap();
+    let meta = plist_dict(&out, "metadata");
+    assert!(meta.contains("<key>format</key>\n            <integer>3</integer>"));
+    assert_eq!(plist_string(meta, "textureFileName"), "atlas.png");
+    assert_eq!(plist_string(meta, "realTextureFileName"), "atlas.png");
+    assert_eq!(plist_string(meta, "size"), "{256,128}");
+    assert_eq!(plist_string(meta, "pixelFormat"), "RGBA8888");
+    assert!(!meta.contains("smartupdate"));
+}
+
+#[test]
+fn cocos2d_hide_name_adds_smartupdate() {
+    let atlas = make_atlas(vec![make_frame("s", 0, 0, 32, 32)]);
+    let out = Cocos2dExporter.export(&hidden_input(&atlas)).unwrap();
+    let meta = plist_dict(&out, "metadata");
+    assert_smartupdate_format(&Value::String(
+        plist_string(meta, "smartupdate").to_string(),
+    ));
+}
+
+#[test]
+fn cocos2d_escapes_xml_in_names() {
+    let atlas = make_atlas(vec![make_frame("a&b<c>", 0, 0, 8, 8)]);
+    let out = Cocos2dExporter.export(&export_input(&atlas)).unwrap();
+    assert!(out.contains("<key>a&amp;b&lt;c&gt;.png</key>"));
+}
+
+#[test]
+fn cocos2d_format_id_and_extension() {
+    assert_eq!(Cocos2dExporter.format_id(), "cocos2d");
+    assert_eq!(Cocos2dExporter.file_extension(), "plist");
 }

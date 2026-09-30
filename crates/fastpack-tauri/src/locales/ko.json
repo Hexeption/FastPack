@@ -126,6 +126,7 @@
 		"jsonArray": "JSON Array",
 		"phaser3": "Phaser 3",
 		"pixijs": "PixiJS",
+		"cocos2d": "Cocos2d-x plist",
 		"quality": "\ud488\uc9c8",
 		"pathPrefix": "\uacbd\ub85c \uc811\ub450\uc0ac",
 		"pathPrefixPlaceholder": "textures/",

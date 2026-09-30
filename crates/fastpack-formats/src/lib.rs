@@ -11,3 +11,4 @@ pub mod exporter;
 pub mod formats;
 pub mod polygon;
 pub mod smartupdate;
+pub(crate) mod text;

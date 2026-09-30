@@ -146,6 +146,7 @@ filter = "**/*.png"
 - `json_array` — Same structure but frames as an array, each entry with a `filename` field.
 - `phaser3` — Single JSON file with a `textures` array. Compatible with `scene.load.multiatlas()`.
 - `pixijs` — JSON Hash format compatible with PixiJS sprite sheet loaders.
+- `cocos2d` — Cocos2d-x property list (plist format 3). Frame names carry a `.png` suffix, as TexturePacker writes them for `SpriteFrameCache`.
 
 ## Building from Source
 

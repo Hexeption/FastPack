@@ -126,6 +126,7 @@
 		"jsonArray": "JSON Array",
 		"phaser3": "Phaser 3",
 		"pixijs": "PixiJS",
+		"cocos2d": "Cocos2d-x plist",
 		"quality": "Calidad",
 		"pathPrefix": "Prefijo de ruta",
 		"pathPrefixPlaceholder": "textures/",
