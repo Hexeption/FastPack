@@ -36,7 +36,7 @@ pub fn bleed_image(img: &mut RgbaImage) {
 
     // `done[i]` is true once pixel `i` holds a valid colour: either it was
     // visible to begin with, or it was filled by an earlier ring.
-    let mut done: Vec<bool> = buf.chunks_exact(4).map(|p| p[3] != 0).collect();
+    let mut done: Vec<bool> = buf.as_chunks::<4>().0.iter().map(|p| p[3] != 0).collect();
 
     // Offsets for the 8-neighbourhood.
     const NEIGHBOURS: [(isize, isize); 8] = [

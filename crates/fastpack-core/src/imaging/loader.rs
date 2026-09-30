@@ -119,7 +119,7 @@ fn decode_svg(path: &Path) -> Result<DynamicImage, CoreError> {
 
 #[cfg(feature = "svg")]
 fn demultiply_alpha(data: &mut [u8]) {
-    for pixel in data.chunks_exact_mut(4) {
+    for pixel in data.as_chunks_mut::<4>().0 {
         let a = pixel[3];
         if a == 0 {
             pixel[0] = 0;

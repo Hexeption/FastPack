@@ -76,10 +76,10 @@ pub fn run(project_path: Option<PathBuf>) -> anyhow::Result<()> {
             }
         })
         .on_window_event(|window, event| {
-            if let tauri::WindowEvent::Destroyed = event {
-                if let Some(state) = window.try_state::<Mutex<AppState>>() {
-                    state.lock().unwrap().windows.remove(window.label());
-                }
+            if let tauri::WindowEvent::Destroyed = event
+                && let Some(state) = window.try_state::<Mutex<AppState>>()
+            {
+                state.lock().unwrap().windows.remove(window.label());
             }
         })
         .setup(|_app| {
