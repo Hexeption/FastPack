@@ -39,7 +39,8 @@ use fastpack_formats::{
     exporter::{ExportInput, Exporter, SpriteRotation},
     formats::{
         cocos2d::Cocos2dExporter, json_array::JsonArrayExporter, json_hash::JsonHashExporter,
-        phaser3::Phaser3Exporter, pixijs::PixiJsExporter, sparrow::SparrowExporter,
+        libgdx::LibGdxExporter, phaser3::Phaser3Exporter, pixijs::PixiJsExporter,
+        sparrow::SparrowExporter,
     },
 };
 use rayon::prelude::*;
@@ -158,6 +159,7 @@ fn select_exporter(data_format: DataFormat) -> Box<dyn Exporter> {
         DataFormat::Phaser3 => Box::new(Phaser3Exporter),
         DataFormat::Pixijs => Box::new(PixiJsExporter),
         DataFormat::JsonHash => Box::new(JsonHashExporter),
+        DataFormat::Libgdx => Box::new(LibGdxExporter),
         DataFormat::Sparrow => Box::new(SparrowExporter),
         DataFormat::Cocos2d => Box::new(Cocos2dExporter),
     }

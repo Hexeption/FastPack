@@ -20,7 +20,8 @@ export type DataFormat =
 	| "phaser3"
 	| "pixijs"
 	| "cocos2d"
-	| "sparrow";
+	| "sparrow"
+	| "libgdx";
 export type TextureFormat =
 	| "png"
 	| "jpeg"

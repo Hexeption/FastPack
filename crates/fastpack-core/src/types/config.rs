@@ -351,6 +351,8 @@ pub enum DataFormat {
     Cocos2d,
     /// Starling / Sparrow TextureAtlas XML.
     Sparrow,
+    /// libGDX TextureAtlas text format.
+    Libgdx,
 }
 
 /// Output file format and path settings.

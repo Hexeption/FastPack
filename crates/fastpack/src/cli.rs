@@ -300,6 +300,8 @@ pub enum DataFormatArg {
     Cocos2d,
     /// Starling / Sparrow TextureAtlas XML.
     Sparrow,
+    /// libGDX TextureAtlas text format.
+    Libgdx,
 }
 
 impl From<DataFormatArg> for DataFormat {
@@ -311,6 +313,7 @@ impl From<DataFormatArg> for DataFormat {
             DataFormatArg::Pixijs => DataFormat::Pixijs,
             DataFormatArg::Cocos2d => DataFormat::Cocos2d,
             DataFormatArg::Sparrow => DataFormat::Sparrow,
+            DataFormatArg::Libgdx => DataFormat::Libgdx,
         }
     }
 }

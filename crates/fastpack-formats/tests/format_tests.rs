@@ -4,10 +4,11 @@ use fastpack_core::types::{
     sprite::NinePatch,
 };
 use fastpack_formats::{
-    exporter::{ExportInput, Exporter},
+    exporter::{ExportInput, Exporter, SpriteRotation},
     formats::{
         cocos2d::Cocos2dExporter, json_array::JsonArrayExporter, json_hash::JsonHashExporter,
-        phaser3::Phaser3Exporter, pixijs::PixiJsExporter, sparrow::SparrowExporter,
+        libgdx::LibGdxExporter, phaser3::Phaser3Exporter, pixijs::PixiJsExporter,
+        sparrow::SparrowExporter,
     },
     polygon::build_mesh,
 };
@@ -975,4 +976,137 @@ fn sparrow_hide_name_adds_smartupdate_comment() {
 fn sparrow_format_id_and_extension() {
     assert_eq!(SparrowExporter.format_id(), "sparrow");
     assert_eq!(SparrowExporter.file_extension(), "xml");
+}
+
+// LibGdxExporter
+
+/// Return the lines of the region named `name`, up to the next non-field line.
+fn atlas_region(atlas: &str, name: &str) -> Vec<String> {
+    let mut lines = atlas.lines().skip_while(|l| *l != name);
+    assert!(lines.next().is_some(), "missing region {name}");
+    lines
+        .take_while(|l| l.contains(':'))
+        .map(str::to_string)
+        .collect()
+}
+
+#[test]
+fn libgdx_page_header() {
+    let atlas = make_atlas(vec![make_frame("hero", 0, 0, 64, 64)]);
+    let out = LibGdxExporter.export(&export_input(&atlas)).unwrap();
+    assert!(out.starts_with(
+        "atlas.png\nsize: 256, 128\nformat: RGBA8888\nfilter: Linear, Linear\nrepeat: none\n"
+    ));
+}
+
+#[test]
+fn libgdx_untrimmed_region_has_only_bounds() {
+    let atlas = make_atlas(vec![make_frame("ui/button", 10, 20, 64, 48)]);
+    let out = LibGdxExporter.export(&export_input(&atlas)).unwrap();
+    assert_eq!(atlas_region(&out, "ui/button"), ["bounds: 10, 20, 64, 48"]);
+}
+
+#[test]
+fn libgdx_trimmed_region_offsets_measured_from_bottom() {
+    let mut frame = make_frame("s", 0, 0, 20, 10);
+    frame.trimmed = true;
+    // 20x10 content at (4, 2) inside a 40x30 source: 18px stripped below.
+    frame.sprite_source_size = SourceRect {
+        x: 4,
+        y: 2,
+        w: 20,
+        h: 10,
+    };
+    frame.source_size = Size { w: 40, h: 30 };
+    let atlas = make_atlas(vec![frame]);
+    let out = LibGdxExporter.export(&export_input(&atlas)).unwrap();
+    assert_eq!(
+        atlas_region(&out, "s"),
+        ["bounds: 0, 0, 20, 10", "offsets: 4, 18, 40, 30"]
+    );
+}
+
+#[test]
+fn libgdx_rotated_region_uses_upright_bounds() {
+    // The sprite is 32x64 upright and occupies 64x32 in the texture.
+    let mut frame = make_frame("s", 2, 4, 64, 32);
+    frame.rotated = true;
+    frame.sprite_source_size = SourceRect {
+        x: 0,
+        y: 0,
+        w: 32,
+        h: 64,
+    };
+    frame.source_size = Size { w: 32, h: 64 };
+    let atlas = make_atlas(vec![frame]);
+    let out = LibGdxExporter.export(&export_input(&atlas)).unwrap();
+    assert_eq!(
+        atlas_region(&out, "s"),
+        ["bounds: 2, 4, 32, 64", "rotate: true"]
+    );
+}
+
+#[test]
+fn libgdx_rotates_counter_clockwise() {
+    assert_eq!(LibGdxExporter.rotation(), SpriteRotation::CounterClockwise);
+}
+
+#[test]
+fn libgdx_nine_patch_writes_split_left_right_top_bottom() {
+    let mut frame = make_frame("panel", 0, 0, 32, 32);
+    frame.nine_patch = Some(NinePatch {
+        top: 3,
+        right: 2,
+        bottom: 4,
+        left: 1,
+    });
+    let atlas = make_atlas(vec![frame]);
+    let out = LibGdxExporter.export(&export_input(&atlas)).unwrap();
+    assert_eq!(
+        atlas_region(&out, "panel"),
+        ["bounds: 0, 0, 32, 32", "split: 1, 2, 3, 4"]
+    );
+}
+
+#[test]
+fn libgdx_combine_writes_one_page_per_sheet() {
+    let a = make_atlas(vec![make_frame("a", 0, 0, 8, 8)]);
+    let b = make_atlas(vec![make_frame("b", 0, 0, 8, 8)]);
+    let inputs = [
+        export_input(&a),
+        ExportInput {
+            texture_filename: "atlas1.png".to_string(),
+            ..export_input(&b)
+        },
+    ];
+    let out = LibGdxExporter.combine(&inputs).unwrap().unwrap();
+    let pages: Vec<&str> = out.split("\n\n").collect();
+    assert_eq!(pages.len(), 2);
+    assert!(pages[0].starts_with("atlas.png\n"));
+    assert!(pages[0].contains("\na\n"));
+    assert!(pages[1].starts_with("atlas1.png\n"));
+    assert!(pages[1].contains("\nb\n"));
+}
+
+#[test]
+fn libgdx_maps_pixel_formats_libgdx_lacks() {
+    let atlas = make_atlas(vec![make_frame("s", 0, 0, 8, 8)]);
+    let input = ExportInput {
+        pixel_format: "Alpha8".to_string(),
+        ..export_input(&atlas)
+    };
+    let out = LibGdxExporter.export(&input).unwrap();
+    assert!(out.contains("\nformat: Alpha\n"));
+}
+
+#[test]
+fn libgdx_rejects_names_with_colon() {
+    let atlas = make_atlas(vec![make_frame("bad:name", 0, 0, 8, 8)]);
+    assert!(LibGdxExporter.export(&export_input(&atlas)).is_err());
+}
+
+#[test]
+fn libgdx_format_id_and_extension() {
+    assert_eq!(LibGdxExporter.format_id(), "libgdx");
+    assert_eq!(LibGdxExporter.file_extension(), "atlas");
 }
