@@ -51,7 +51,9 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          shared-key: "release-${{ matrix.target }}"
+          # Include the runner image: artifacts built on another Ubuntu release
+          # (different glibc) are not reusable and break the build (E0463).
+          shared-key: "release-${{ matrix.os }}-${{ matrix.target }}"
           cache-on-failure: "true"
 
       - name: system deps (Linux)
