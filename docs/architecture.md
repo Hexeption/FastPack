@@ -8,7 +8,7 @@ FastPack processes sprites in nine sequential stages. Each stage operates on the
 
 **Load** — Load each source file and normalize it to straight-alpha RGBA8. PNG, JPEG, BMP, TGA, WebP, and TIFF are handled by the `image` crate. SVG files are rasterized at their natural viewport size using `resvg` (requires the `svg` feature). PSD files are flattened to a single RGBA layer using `psd` (requires the `psd` feature). Loading runs in parallel via `rayon`. A 64-bit FxHash of the raw pixel bytes is computed here and stored on the `Sprite` for later alias detection.
 
-**Pre-process** — Apply per-sprite transformations in parallel: trim transparent borders, compute convex hull polygons (when `TrimMode::Polygon` is active), and extrude border pixels. Results update the `Sprite`'s `trim_rect` and `image` fields.
+**Pre-process** — Apply per-sprite transformations in parallel: trim transparent borders, compute convex hull polygons (when `TrimMode::Polygon` is active), extrude border pixels, and optionally bleed edge colours into fully transparent pixels (alpha bleeding). Results update the `Sprite`'s `trim_rect` and `image` fields.
 
 **Dedup** — Group sprites by `content_hash`. Within each group, pixel-compare candidates to confirm they are identical. Duplicate sprites get their `alias_of` field set to the canonical sprite ID and are excluded from packing. They still appear in the exported data file pointing at the canonical frame.
 

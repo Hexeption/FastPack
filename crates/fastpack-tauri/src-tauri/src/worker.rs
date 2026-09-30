@@ -23,7 +23,7 @@ use fastpack_core::{
         maxrects::MaxRects,
         packer::{PackInput, Packer},
     },
-    imaging::{alias::detect_aliases, dither, extrude, loader, premultiply, trim},
+    imaging::{alias::detect_aliases, bleed, dither, extrude, loader, premultiply, trim},
     types::{
         atlas::{AtlasFrame, PackedAtlas},
         config::{AlgorithmConfig, DataFormat, Project},
@@ -304,6 +304,10 @@ fn run_pack_impl(project: &Project) -> Result<WorkerOutput> {
         sprites
             .par_iter_mut()
             .for_each(|s| extrude::extrude(s, sprite_cfg.extrude));
+    }
+
+    if sprite_cfg.alpha_bleed {
+        sprites.par_iter_mut().for_each(bleed::alpha_bleed);
     }
 
     let sprite_count = sprites.len();

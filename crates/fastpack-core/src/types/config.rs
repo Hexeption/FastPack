@@ -275,6 +275,11 @@ pub struct SpriteConfig {
     pub trim_margin: u32,
     /// Border pixel repetition count to prevent texture bleeding.
     pub extrude: u32,
+    /// Copy the colour of visible edge pixels into neighbouring fully
+    /// transparent pixels (alpha stays 0) to avoid dark fringes when the
+    /// atlas is sampled with bilinear filtering ("Reduce border artifacts").
+    #[serde(default)]
+    pub alpha_bleed: bool,
     /// Width must be divisible by this value (0 = disabled).
     pub common_divisor_x: u32,
     /// Height must be divisible by this value (0 = disabled).
@@ -292,6 +297,7 @@ impl Default for SpriteConfig {
             trim_threshold: 1,
             trim_margin: 0,
             extrude: 0,
+            alpha_bleed: false,
             common_divisor_x: 0,
             common_divisor_y: 0,
             detect_aliases: true,

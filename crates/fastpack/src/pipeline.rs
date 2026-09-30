@@ -15,7 +15,7 @@ use fastpack_core::{
         maxrects::MaxRects,
         packer::{PackInput, PackOutput, Packer, PlacedSprite},
     },
-    imaging::{alias::detect_aliases, dither, extrude, loader, premultiply, scale, trim},
+    imaging::{alias::detect_aliases, bleed, dither, extrude, loader, premultiply, scale, trim},
     types::{
         atlas::{AtlasFrame, PackedAtlas},
         config::{DataFormat, LayoutConfig, ScaleVariant, SpriteConfig, SpriteOverride},
@@ -153,6 +153,11 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
         for s in &mut sprites {
             extrude::extrude(s, sprite_cfg.extrude);
         }
+    }
+
+    // 3.6. Alpha bleed (reduce border artifacts)
+    if sprite_cfg.alpha_bleed {
+        sprites.par_iter_mut().for_each(bleed::alpha_bleed);
     }
 
     let sprite_count = sprites.len();

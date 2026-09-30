@@ -34,6 +34,8 @@ fastpack pack <INPUT>... [OPTIONS]
 
 `--pack-mode <fast|good|best>` (default: `good`) — Compression effort. `fast` skips oxipng. `good` runs oxipng at preset 3. `best` runs oxipng at preset 6.
 
+`--alpha-bleed` — Reduce border artifacts: fill fully transparent pixels with the colour of the nearest visible pixels (alpha unchanged) to avoid dark fringes under bilinear filtering. With `--project`, enables it in addition to the project setting.
+
 ### Example
 
 ```

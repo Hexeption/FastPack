@@ -15,6 +15,7 @@ Texture atlas packer written in Rust. Ships as a Tauri desktop app and a headles
 - MaxRects (5 heuristics), Grid, and Basic strip algorithms
 - Trim modes: None, Trim, Crop, CropKeepPos, Polygon (convex hull)
 - Extrusion, rotation, nine-patch metadata, pivot points
+- Reduce border artifacts (alpha bleeding) — fills transparent pixels with neighbouring colours to avoid dark fringes under bilinear filtering
 - Alias detection — deduplicates pixel-identical sprites
 - Multipack — overflow sprites across multiple sheets
 - Multi-resolution scale variants with per-variant suffix
@@ -107,6 +108,7 @@ shape_padding = 2
 trim_mode = "trim"
 trim_threshold = 1
 extrude = 0
+alpha_bleed = false
 detect_aliases = true
 
 [algorithm]

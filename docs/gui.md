@@ -57,7 +57,7 @@ The settings panel has four collapsible sections.
 
 **Layout** controls max width/height, optional fixed width/height, size constraint (Any/Power of 2/Multiple of 4/Word aligned), force square toggle, allow rotation toggle, border padding, shape padding, algorithm (Grid/Basic/MaxRects/Polygon), MaxRects heuristic, and pack mode (Fast/Good/Best).
 
-**Sprites** controls trim mode (None/Trim/Crop/CropKeepPos/Polygon), trim margin, trim threshold, extrude, common divisors, and alias detection toggle.
+**Sprites** controls trim mode (None/Trim/Crop/CropKeepPos/Polygon), trim margin, trim threshold, extrude, reduce border artifacts (alpha bleed) toggle, common divisors, and alias detection toggle.
 
 **Variants** lists scale variants. Each variant has a scale factor, scale mode (Smooth/Fast/Scale2x/Scale3x/HQ2x — pixel art modes are planned but not yet implemented), and a filename suffix. Add and remove variants with the + and − buttons.
 

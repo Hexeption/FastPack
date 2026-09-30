@@ -107,6 +107,11 @@ pub struct PackArgs {
     #[arg(long, default_value_t = 0)]
     pub extrude: u32,
 
+    /// Bleed edge colours into fully transparent pixels to reduce border
+    /// artifacts under bilinear filtering (alpha is unchanged).
+    #[arg(long)]
+    pub alpha_bleed: bool,
+
     /// Do not deduplicate pixel-identical sprites as aliases.
     #[arg(long, default_value_t = false)]
     pub no_detect_aliases: bool,

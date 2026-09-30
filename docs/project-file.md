@@ -42,6 +42,7 @@ trim_mode      = "trim"
 trim_threshold = 1
 trim_margin    = 0
 extrude        = 0
+alpha_bleed    = false
 detect_aliases = true
 default_pivot  = { x = 0.0, y = 0.0 }
 
@@ -115,6 +116,8 @@ Multiple `[[sources]]` blocks are allowed. Each adds a set of sprites to the pac
 **trim_margin** — transparent pixels kept around the trim edge. Default `0`.
 
 **extrude** — edge pixels to repeat outward before packing. Default `0`. See [extrude.md](features/extrude.md).
+
+**alpha_bleed** — "Reduce border artifacts": copy the colour of visible edge pixels outward into fully transparent pixels (alpha stays 0) so bilinear filtering and mipmapping do not produce dark fringes. Applied after trim and extrude. Has no visible effect on transparent pixels when `premultiply_alpha` is on, since premultiplied output stores them as black anyway. Default `false`. CLI: `--alpha-bleed`.
 
 **detect_aliases** — deduplicate pixel-identical sprites. Default `true`. See [alias-detection.md](features/alias-detection.md).
 

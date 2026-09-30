@@ -227,7 +227,11 @@ fn resolve_pack_fields(args: &cli::PackArgs) -> Result<PackFields> {
             args.output.clone(),
             proj.config.output.name.clone(),
             proj.config.layout.clone(),
-            proj.config.sprites.clone(),
+            {
+                let mut sprites = proj.config.sprites.clone();
+                sprites.alpha_bleed |= args.alpha_bleed;
+                sprites
+            },
             proj.config.sprite_overrides.clone(),
             proj.config.excludes.clone(),
             proj.config.variants.clone(),
@@ -258,6 +262,7 @@ fn resolve_pack_fields(args: &cli::PackArgs) -> Result<PackFields> {
             trim_threshold: args.trim_threshold,
             trim_margin: args.trim_margin,
             extrude: args.extrude,
+            alpha_bleed: args.alpha_bleed,
             common_divisor_x: 0,
             common_divisor_y: 0,
             detect_aliases: !args.no_detect_aliases,
