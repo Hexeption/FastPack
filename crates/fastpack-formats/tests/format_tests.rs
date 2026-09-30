@@ -8,7 +8,7 @@ use fastpack_formats::{
     formats::{
         cocos2d::Cocos2dExporter, json_array::JsonArrayExporter, json_hash::JsonHashExporter,
         libgdx::LibGdxExporter, phaser3::Phaser3Exporter, pixijs::PixiJsExporter,
-        sparrow::SparrowExporter,
+        sparrow::SparrowExporter, spine::SpineExporter,
     },
     polygon::build_mesh,
 };
@@ -1109,4 +1109,88 @@ fn libgdx_rejects_names_with_colon() {
 fn libgdx_format_id_and_extension() {
     assert_eq!(LibGdxExporter.format_id(), "libgdx");
     assert_eq!(LibGdxExporter.file_extension(), "atlas");
+}
+
+// SpineExporter
+
+#[test]
+fn spine_page_header_is_compact() {
+    let atlas = make_atlas(vec![make_frame("hero", 0, 0, 64, 64)]);
+    let out = SpineExporter.export(&export_input(&atlas)).unwrap();
+    assert!(out.starts_with(
+        "atlas.png\nsize:256,128\nformat:RGBA8888\nfilter:Linear,Linear\nrepeat:none\n"
+    ));
+}
+
+#[test]
+fn spine_region_bounds_and_offsets() {
+    let mut frame = make_frame("body/head", 5, 6, 20, 10);
+    frame.trimmed = true;
+    frame.sprite_source_size = SourceRect {
+        x: 4,
+        y: 2,
+        w: 20,
+        h: 10,
+    };
+    frame.source_size = Size { w: 40, h: 30 };
+    let atlas = make_atlas(vec![frame]);
+    let out = SpineExporter.export(&export_input(&atlas)).unwrap();
+    assert_eq!(
+        atlas_region(&out, "body/head"),
+        ["bounds:5,6,20,10", "offsets:4,18,40,30"]
+    );
+}
+
+#[test]
+fn spine_rotated_region_uses_90_degrees_and_upright_bounds() {
+    let mut frame = make_frame("s", 2, 4, 64, 32);
+    frame.rotated = true;
+    frame.sprite_source_size = SourceRect {
+        x: 0,
+        y: 0,
+        w: 32,
+        h: 64,
+    };
+    frame.source_size = Size { w: 32, h: 64 };
+    let atlas = make_atlas(vec![frame]);
+    let out = SpineExporter.export(&export_input(&atlas)).unwrap();
+    assert_eq!(atlas_region(&out, "s"), ["bounds:2,4,32,64", "rotate:90"]);
+    assert_eq!(SpineExporter.rotation(), SpriteRotation::CounterClockwise);
+}
+
+#[test]
+fn spine_nine_patch_split() {
+    let mut frame = make_frame("panel", 0, 0, 32, 32);
+    frame.nine_patch = Some(NinePatch {
+        top: 3,
+        right: 2,
+        bottom: 4,
+        left: 1,
+    });
+    let atlas = make_atlas(vec![frame]);
+    let out = SpineExporter.export(&export_input(&atlas)).unwrap();
+    assert!(atlas_region(&out, "panel").contains(&"split:1,2,3,4".to_string()));
+}
+
+#[test]
+fn spine_combine_writes_one_page_per_sheet() {
+    let a = make_atlas(vec![make_frame("a", 0, 0, 8, 8)]);
+    let b = make_atlas(vec![make_frame("b", 0, 0, 8, 8)]);
+    let inputs = [
+        export_input(&a),
+        ExportInput {
+            texture_filename: "atlas1.png".to_string(),
+            ..export_input(&b)
+        },
+    ];
+    let out = SpineExporter.combine(&inputs).unwrap().unwrap();
+    let pages: Vec<&str> = out.split("\n\n").collect();
+    assert_eq!(pages.len(), 2);
+    assert!(pages[1].starts_with("atlas1.png\nsize:256,128\n"));
+}
+
+#[test]
+fn spine_format_id_and_extension() {
+    assert_eq!(SpineExporter.format_id(), "spine");
+    assert_eq!(SpineExporter.file_extension(), "atlas");
 }

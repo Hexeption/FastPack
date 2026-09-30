@@ -302,6 +302,8 @@ pub enum DataFormatArg {
     Sparrow,
     /// libGDX TextureAtlas text format.
     Libgdx,
+    /// Spine 4 atlas text format.
+    Spine,
 }
 
 impl From<DataFormatArg> for DataFormat {
@@ -314,6 +316,7 @@ impl From<DataFormatArg> for DataFormat {
             DataFormatArg::Cocos2d => DataFormat::Cocos2d,
             DataFormatArg::Sparrow => DataFormat::Sparrow,
             DataFormatArg::Libgdx => DataFormat::Libgdx,
+            DataFormatArg::Spine => DataFormat::Spine,
         }
     }
 }

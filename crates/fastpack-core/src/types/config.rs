@@ -353,6 +353,8 @@ pub enum DataFormat {
     Sparrow,
     /// libGDX TextureAtlas text format.
     Libgdx,
+    /// Spine 4 atlas text format.
+    Spine,
 }
 
 /// Output file format and path settings.

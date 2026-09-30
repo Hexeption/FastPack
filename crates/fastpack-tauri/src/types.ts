@@ -21,7 +21,8 @@ export type DataFormat =
 	| "pixijs"
 	| "cocos2d"
 	| "sparrow"
-	| "libgdx";
+	| "libgdx"
+	| "spine";
 export type TextureFormat =
 	| "png"
 	| "jpeg"

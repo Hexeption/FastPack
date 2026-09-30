@@ -129,6 +129,7 @@
 		"cocos2d": "Cocos2d-x plist",
 		"sparrow": "Starling / Sparrow XML",
 		"libgdx": "libGDX atlas",
+		"spine": "Spine atlas",
 		"quality": "Qualit\u00e9",
 		"pathPrefix": "Pr\u00e9fixe de chemin",
 		"pathPrefixPlaceholder": "textures/",

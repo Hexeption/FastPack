@@ -7,3 +7,4 @@ pub mod libgdx;
 pub mod phaser3;
 pub mod pixijs;
 pub mod sparrow;
+pub mod spine;

@@ -31,7 +31,7 @@ use fastpack_formats::{
     formats::{
         cocos2d::Cocos2dExporter, json_array::JsonArrayExporter, json_hash::JsonHashExporter,
         libgdx::LibGdxExporter, phaser3::Phaser3Exporter, pixijs::PixiJsExporter,
-        sparrow::SparrowExporter,
+        sparrow::SparrowExporter, spine::SpineExporter,
     },
 };
 use indicatif::{MultiProgress, ParallelProgressIterator};
@@ -397,6 +397,7 @@ fn select_exporter(data_format: DataFormat) -> Box<dyn Exporter> {
         DataFormat::Phaser3 => Box::new(Phaser3Exporter),
         DataFormat::Pixijs => Box::new(PixiJsExporter),
         DataFormat::JsonHash => Box::new(JsonHashExporter),
+        DataFormat::Spine => Box::new(SpineExporter),
         DataFormat::Libgdx => Box::new(LibGdxExporter),
         DataFormat::Sparrow => Box::new(SparrowExporter),
         DataFormat::Cocos2d => Box::new(Cocos2dExporter),

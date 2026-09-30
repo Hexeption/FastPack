@@ -149,6 +149,7 @@ filter = "**/*.png"
 - `cocos2d` — Cocos2d-x property list (plist format 3). Frame names carry a `.png` suffix, as TexturePacker writes them for `SpriteFrameCache`.
 - `sparrow` — Starling / Sparrow `TextureAtlas` XML. Frame names carry a `.png` suffix; rotated sprites are stored 90° clockwise.
 - `libgdx` — libGDX `TextureAtlas` (`.atlas`) using `bounds`/`offsets`/`rotate`, with `split` for nine-patch sprites. Region names have no extension; rotated sprites are stored 90° counter-clockwise, as libGDX expects. Multipack sheets share one file.
+- `spine` — Spine 4 `.atlas`. Same layout as `libgdx` in Spine's compact style (`rotate:90`); region names have no extension. Multipack sheets share one file.
 
 ## Building from Source
 
