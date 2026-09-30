@@ -31,6 +31,13 @@ pub fn build(app: &App) -> tauri::Result<Menu<Wry>> {
         )?)
         .item(&MenuItem::with_id(
             app,
+            "new_window",
+            "New Window",
+            true,
+            Some("CmdOrCtrl+Shift+N"),
+        )?)
+        .item(&MenuItem::with_id(
+            app,
             "open_project",
             "Open Project\u{2026}",
             true,

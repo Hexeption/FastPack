@@ -145,6 +145,8 @@ pub struct AppState {
     pub windows: HashMap<String, WindowState>,
     /// User preferences loaded from disk (shared across all windows).
     pub prefs: Preferences,
+    /// Counter for generating unique window labels.
+    next_window_id: u32,
 }
 
 impl WindowState {
@@ -207,7 +209,11 @@ impl AppState {
         let initial = WindowState::new(project_path, &prefs);
         let mut windows = HashMap::new();
         windows.insert("main".to_string(), initial);
-        Self { windows, prefs }
+        Self {
+            windows,
+            prefs,
+            next_window_id: 1,
+        }
     }
 
     /// Get the window state for the given label, creating a blank project for
@@ -217,6 +223,13 @@ impl AppState {
         self.windows
             .entry(label.to_string())
             .or_insert_with(|| WindowState::new(None, prefs))
+    }
+
+    /// Generate the next unique window label (e.g. "main-1", "main-2").
+    pub fn next_label(&mut self) -> String {
+        let id = self.next_window_id;
+        self.next_window_id += 1;
+        format!("main-{id}")
     }
 }
 

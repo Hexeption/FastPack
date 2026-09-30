@@ -9,3 +9,4 @@ pub mod pack;
 pub mod preferences;
 pub mod project;
 pub mod updater;
+pub mod window;
