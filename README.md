@@ -19,6 +19,7 @@ Texture atlas packer written in Rust. Ships as a Tauri desktop app and a headles
 - Alias detection — deduplicates pixel-identical sprites
 - Multipack — overflow sprites across multiple sheets
 - Multi-resolution scale variants with per-variant suffix
+- TexturePacker-style sprite naming — keep file extensions, prepend folder names
 
 **Export**
 - Data formats: JSON Hash, JSON Array, Phaser 3, PixiJS
@@ -63,6 +64,9 @@ fastpack pack sprites/ --output output/ \
   --allow-rotation \
   --multipack
 
+# TexturePacker-style frame names: sprites/hero/run_01.png → "hero/run_01.png"
+fastpack pack sprites/hero --output output/ --keep-extension --prepend-folder-name
+
 # Load settings from a project file
 fastpack pack --project atlas.fpsheet
 
@@ -77,6 +81,12 @@ fastpack init --output atlas.fpsheet
 ```
 
 Run `fastpack <subcommand> --help` for the full flag list.
+
+Frame names default to the path relative to the source folder without the
+file extension (`run/run_01`). `--keep-extension` keeps the extension and
+`--prepend-folder-name` prepends the source folder's own name; both only change
+the names written to data files. Per-sprite overrides and `excludes` in a
+project file always use the extension-less relative path.
 
 ## Project File
 
@@ -110,6 +120,8 @@ trim_threshold = 1
 extrude = 0
 alpha_bleed = false
 detect_aliases = true
+keep_extension = false      # true: frame names keep ".png" (TexturePacker "Trim sprite names" off)
+prepend_folder_name = false # true: source folder name is prepended ("hero/run_01")
 
 [algorithm]
 type = "max_rects"

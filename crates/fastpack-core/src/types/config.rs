@@ -288,6 +288,16 @@ pub struct SpriteConfig {
     pub detect_aliases: bool,
     /// Pivot applied to sprites that have no per-sprite override.
     pub default_pivot: Point,
+    /// When `true`, exported frame names keep the source file extension
+    /// (e.g. `"run_01.png"`), matching TexturePacker with "Trim sprite names"
+    /// off. Internal sprite ids used by overrides and excludes never include it.
+    #[serde(default)]
+    pub keep_extension: bool,
+    /// When `true`, each source directory's own name is prepended to the
+    /// exported frame names of the sprites found in it (e.g. source
+    /// `assets/hero` yields `"hero/run_01"`). Single-file sources are unaffected.
+    #[serde(default)]
+    pub prepend_folder_name: bool,
 }
 
 impl Default for SpriteConfig {
@@ -302,6 +312,8 @@ impl Default for SpriteConfig {
             common_divisor_y: 0,
             detect_aliases: true,
             default_pivot: Point::default(),
+            keep_extension: false,
+            prepend_folder_name: false,
         }
     }
 }

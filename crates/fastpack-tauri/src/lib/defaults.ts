@@ -45,6 +45,8 @@ export const DEFAULT_PREFS: Preferences = {
 			common_divisor_y: 0,
 			detect_aliases: true,
 			default_pivot: { x: 0, y: 0 },
+			keep_extension: false,
+			prepend_folder_name: false,
 		},
 		output: {
 			name: "atlas",

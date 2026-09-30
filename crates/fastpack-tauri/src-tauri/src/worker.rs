@@ -4,7 +4,10 @@
 //! thread. Produces raw RGBA sheet data that the UI converts to base64 PNG for
 //! preview, or writes compressed textures + data files to disk on publish.
 
-use std::path::{Path, PathBuf};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
 use anyhow::{Context, Result};
 use fastpack_compress::{
@@ -23,7 +26,7 @@ use fastpack_core::{
         maxrects::MaxRects,
         packer::{PackInput, Packer},
     },
-    imaging::{alias::detect_aliases, bleed, dither, extrude, loader, premultiply, trim},
+    imaging::{alias::detect_aliases, bleed, dither, extrude, loader, naming, premultiply, trim},
     types::{
         atlas::{AtlasFrame, PackedAtlas},
         config::{AlgorithmConfig, DataFormat, Project},
@@ -99,24 +102,24 @@ fn is_image(path: &Path) -> bool {
         .unwrap_or(false)
 }
 
-/// Derive a forward-slash sprite ID from a file path relative to its base directory.
-fn file_id(path: &Path, base: &Path) -> String {
-    let rel = path.strip_prefix(base).unwrap_or(path);
-    rel.with_extension("").to_string_lossy().replace('\\', "/")
-}
-
 /// Walk all project source directories and collect `(path, id)` pairs for images,
-/// respecting the exclude list.
-fn collect_images(project: &Project) -> Vec<(PathBuf, String)> {
+/// respecting the exclude list, plus a map from source path to export frame name.
+fn collect_images(project: &Project) -> (Vec<(PathBuf, String)>, HashMap<PathBuf, String>) {
     let excludes: std::collections::HashSet<&str> =
         project.config.excludes.iter().map(|s| s.as_str()).collect();
+    let sprite_cfg = &project.config.sprites;
     let mut paths = Vec::new();
+    let mut names = HashMap::new();
     for source in &project.sources {
         if source.path.is_file() {
             if is_image(&source.path) {
                 let base = source.path.parent().unwrap_or(Path::new(""));
-                let id = file_id(&source.path, base);
+                let id = naming::sprite_id(&source.path, base);
                 if !excludes.contains(id.as_str()) {
+                    names.insert(
+                        source.path.clone(),
+                        naming::sprite_name(&source.path, base, None, sprite_cfg),
+                    );
                     paths.push((source.path.clone(), id));
                 }
             }
@@ -127,15 +130,25 @@ fn collect_images(project: &Project) -> Vec<(PathBuf, String)> {
                 .flatten()
             {
                 if entry.file_type().is_file() && is_image(entry.path()) {
-                    let id = file_id(entry.path(), &source.path);
+                    let id = naming::sprite_id(entry.path(), &source.path);
                     if !excludes.contains(id.as_str()) {
-                        paths.push((entry.path().to_path_buf(), id));
+                        let path = entry.path().to_path_buf();
+                        names.insert(
+                            path.clone(),
+                            naming::sprite_name(
+                                &path,
+                                &source.path,
+                                Some(&source.path),
+                                sprite_cfg,
+                            ),
+                        );
+                        paths.push((path, id));
                     }
                 }
             }
         }
     }
-    paths
+    (paths, names)
 }
 
 /// Pack a list of sprites into a single atlas sheet, returning the composited
@@ -144,6 +157,7 @@ fn build_sheet(
     packer: &dyn Packer,
     sprites: Vec<Sprite>,
     project: &Project,
+    names: &HashMap<PathBuf, String>,
 ) -> Result<(SheetOutput, Vec<Sprite>)> {
     let sprite_cfg = &project.config.sprites;
     let pack_output = packer
@@ -224,7 +238,10 @@ fn build_sheet(
                 h: ps.sprite.original_size.h,
             });
             AtlasFrame {
-                id: ps.placement.sprite_id.clone(),
+                id: names
+                    .get(&ps.sprite.source_path)
+                    .cloned()
+                    .unwrap_or_else(|| ps.placement.sprite_id.clone()),
                 frame: Rect::new(
                     ps.placement.dest.x,
                     ps.placement.dest.y,
@@ -275,7 +292,7 @@ pub fn run_pack(project: &Project) -> Result<WorkerOutput> {
 
 /// Internal pack implementation run inside a dedicated rayon thread pool.
 fn run_pack_impl(project: &Project) -> Result<WorkerOutput> {
-    let paths = collect_images(project);
+    let (paths, names) = collect_images(project);
     if paths.is_empty() {
         anyhow::bail!("no images found in the configured sources");
     }
@@ -348,7 +365,7 @@ fn run_pack_impl(project: &Project) -> Result<WorkerOutput> {
     let mut sheets: Vec<SheetOutput> = Vec::new();
 
     loop {
-        let (sheet, overflow) = build_sheet(packer.as_ref(), remaining, project)?;
+        let (sheet, overflow) = build_sheet(packer.as_ref(), remaining, project, &names)?;
         remaining = overflow;
         sheets.push(sheet);
 
@@ -361,17 +378,25 @@ fn run_pack_impl(project: &Project) -> Result<WorkerOutput> {
         }
     }
 
-    // Build a map from canonical sprite ID to its sheet index and atlas placement.
-    // Done after all sheets are packed so multipack aliases find their canonical
-    // regardless of which sheet it landed on.
-    let canon_map: std::collections::HashMap<String, (usize, u32, u32, u32, u32, bool)> = {
-        let mut m = std::collections::HashMap::new();
+    // Build a map from canonical sprite ID to its sheet index, atlas placement,
+    // and export name. Done after all sheets are packed so multipack aliases find
+    // their canonical regardless of which sheet it landed on. Keyed by internal id
+    // (`FrameInfo::id`) because `alias_of` holds ids, not export names.
+    type CanonEntry = (usize, u32, u32, u32, u32, bool, String);
+    let canon_map: HashMap<String, CanonEntry> = {
+        let mut m = HashMap::new();
         for (sheet_idx, sheet) in sheets.iter().enumerate() {
-            for af in &sheet.atlas_frames {
+            for (fi, af) in sheet.frames.iter().zip(&sheet.atlas_frames) {
                 m.insert(
-                    af.id.clone(),
+                    fi.id.clone(),
                     (
-                        sheet_idx, af.frame.x, af.frame.y, af.frame.w, af.frame.h, af.rotated,
+                        sheet_idx,
+                        af.frame.x,
+                        af.frame.y,
+                        af.frame.w,
+                        af.frame.h,
+                        af.rotated,
+                        af.id.clone(),
                     ),
                 );
             }
@@ -383,9 +408,10 @@ fn run_pack_impl(project: &Project) -> Result<WorkerOutput> {
     let mut pending: Vec<(usize, FrameInfo, AtlasFrame)> = Vec::new();
     for alias in &base_aliases {
         let canon_id = alias.alias_of.as_deref().unwrap_or("");
-        let Some(&(sheet_idx, x, y, w, h, rotated)) = canon_map.get(canon_id) else {
+        let Some((sheet_idx, x, y, w, h, rotated, canon_name)) = canon_map.get(canon_id) else {
             continue;
         };
+        let (sheet_idx, x, y, w, h, rotated) = (*sheet_idx, *x, *y, *w, *h, *rotated);
         let trimmed = alias.trim_rect.is_some();
         let sprite_source_size = match &alias.trim_rect {
             Some(tr) => SourceRect {
@@ -413,7 +439,10 @@ fn run_pack_impl(project: &Project) -> Result<WorkerOutput> {
                 alias_of: alias.alias_of.clone(),
             },
             AtlasFrame {
-                id: alias.id.clone(),
+                id: names
+                    .get(&alias.source_path)
+                    .cloned()
+                    .unwrap_or_else(|| alias.id.clone()),
                 frame: Rect::new(x, y, w, h),
                 rotated,
                 trimmed,
@@ -422,7 +451,7 @@ fn run_pack_impl(project: &Project) -> Result<WorkerOutput> {
                 polygon: alias.polygon.clone(),
                 nine_patch: alias.nine_patch,
                 pivot: alias.pivot,
-                alias_of: alias.alias_of.clone(),
+                alias_of: Some(canon_name.clone()),
             },
         ));
     }

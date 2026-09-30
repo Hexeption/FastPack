@@ -222,16 +222,16 @@ fn resolve_pack_fields(args: &cli::PackArgs) -> Result<PackFields> {
         } else {
             args.inputs.clone()
         };
+        let mut sprite_config = proj.config.sprites.clone();
+        sprite_config.keep_extension |= args.keep_extension;
+        sprite_config.prepend_folder_name |= args.prepend_folder_name;
+        sprite_config.alpha_bleed |= args.alpha_bleed;
         Ok((
             inputs,
             args.output.clone(),
             proj.config.output.name.clone(),
             proj.config.layout.clone(),
-            {
-                let mut sprites = proj.config.sprites.clone();
-                sprites.alpha_bleed |= args.alpha_bleed;
-                sprites
-            },
+            sprite_config,
             proj.config.sprite_overrides.clone(),
             proj.config.excludes.clone(),
             proj.config.variants.clone(),
@@ -267,6 +267,8 @@ fn resolve_pack_fields(args: &cli::PackArgs) -> Result<PackFields> {
             common_divisor_y: 0,
             detect_aliases: !args.no_detect_aliases,
             default_pivot: Point::default(),
+            keep_extension: args.keep_extension,
+            prepend_folder_name: args.prepend_folder_name,
         };
         let variant = ScaleVariant {
             scale: args.scale,

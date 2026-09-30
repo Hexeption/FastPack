@@ -15,7 +15,9 @@ use fastpack_core::{
         maxrects::MaxRects,
         packer::{PackInput, PackOutput, Packer, PlacedSprite},
     },
-    imaging::{alias::detect_aliases, bleed, dither, extrude, loader, premultiply, scale, trim},
+    imaging::{
+        alias::detect_aliases, bleed, dither, extrude, loader, naming, premultiply, scale, trim,
+    },
     types::{
         atlas::{AtlasFrame, PackedAtlas},
         config::{DataFormat, LayoutConfig, ScaleVariant, SpriteConfig, SpriteOverride},
@@ -107,7 +109,7 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
     let mp = MultiProgress::new();
 
     // 1. Collect
-    let mut paths = collect_images(&args.inputs);
+    let (mut paths, names) = collect_images(&args.inputs, &args.sprite_config);
     if !args.excludes.is_empty() {
         let excludes: std::collections::HashSet<&str> =
             args.excludes.iter().map(|s| s.as_str()).collect();
@@ -266,8 +268,13 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
             } else {
                 &[]
             };
-            let packed =
-                build_packed_atlas(&pack_output, sheet_aliases, &args.name, args.default_pivot);
+            let packed = build_packed_atlas(
+                &pack_output,
+                sheet_aliases,
+                &args.name,
+                args.default_pivot,
+                &names,
+            );
 
             // 8. Compress
             let compress_pb = progress::spinner(&mp, "Compressing...");
@@ -399,13 +406,23 @@ fn select_compressor(texture_format: TextureFormat) -> Box<dyn Compressor> {
     }
 }
 
-fn collect_images(inputs: &[PathBuf]) -> Vec<(PathBuf, String)> {
+/// Collect `(path, id)` pairs for every image in `inputs`, plus a map from
+/// source path to the frame name written to data files.
+fn collect_images(
+    inputs: &[PathBuf],
+    sprite_cfg: &SpriteConfig,
+) -> (Vec<(PathBuf, String)>, HashMap<PathBuf, String>) {
     let mut paths = Vec::new();
+    let mut names = HashMap::new();
     for input in inputs {
         if input.is_file() {
             if is_image(input) {
                 let base = input.parent().unwrap_or(Path::new(""));
-                paths.push((input.clone(), file_id(input, base)));
+                names.insert(
+                    input.clone(),
+                    naming::sprite_name(input, base, None, sprite_cfg),
+                );
+                paths.push((input.clone(), naming::sprite_id(input, base)));
             }
         } else {
             for entry in WalkDir::new(input)
@@ -414,13 +431,18 @@ fn collect_images(inputs: &[PathBuf]) -> Vec<(PathBuf, String)> {
                 .flatten()
             {
                 if entry.file_type().is_file() && is_image(entry.path()) {
-                    let id = file_id(entry.path(), input);
-                    paths.push((entry.path().to_path_buf(), id));
+                    let path = entry.path().to_path_buf();
+                    names.insert(
+                        path.clone(),
+                        naming::sprite_name(&path, input, Some(input), sprite_cfg),
+                    );
+                    let id = naming::sprite_id(&path, input);
+                    paths.push((path, id));
                 }
             }
         }
     }
-    paths
+    (paths, names)
 }
 
 fn is_image(path: &Path) -> bool {
@@ -428,11 +450,6 @@ fn is_image(path: &Path) -> bool {
         .and_then(|e| e.to_str())
         .map(|e| IMAGE_EXTENSIONS.contains(&e.to_lowercase().as_str()))
         .unwrap_or(false)
-}
-
-fn file_id(path: &Path, base: &Path) -> String {
-    let rel = path.strip_prefix(base).unwrap_or(path);
-    rel.with_extension("").to_string_lossy().replace('\\', "/")
 }
 
 fn compose(placed: &[PlacedSprite], atlas_size: &Size) -> image::DynamicImage {
@@ -467,7 +484,16 @@ fn build_packed_atlas(
     aliases: &[Sprite],
     name: &str,
     default_pivot: Option<Point>,
+    names: &HashMap<PathBuf, String>,
 ) -> PackedAtlas {
+    // Export name for a sprite; falls back to its internal id.
+    let export_name = |sprite: &Sprite| {
+        names
+            .get(&sprite.source_path)
+            .cloned()
+            .unwrap_or_else(|| sprite.id.clone())
+    };
+
     let mut frames: Vec<AtlasFrame> = pack_output
         .placed
         .iter()
@@ -491,7 +517,7 @@ fn build_packed_atlas(
             };
 
             AtlasFrame {
-                id: ps.placement.sprite_id.clone(),
+                id: export_name(sprite),
                 frame: Rect {
                     x: dest.x,
                     y: dest.y,
@@ -510,11 +536,13 @@ fn build_packed_atlas(
         })
         .collect();
 
-    // Build id → index map so alias frames can reference the canonical atlas rect.
-    let frame_by_id: std::collections::HashMap<String, usize> = frames
+    // Build internal id → index map so alias frames can reference the canonical
+    // atlas rect. Keyed by sprite id (not export name) because `alias_of` holds ids.
+    let frame_by_id: HashMap<&str, usize> = pack_output
+        .placed
         .iter()
         .enumerate()
-        .map(|(i, f)| (f.id.clone(), i))
+        .map(|(i, ps)| (ps.placement.sprite_id.as_str(), i))
         .collect();
 
     for alias in aliases {
@@ -535,8 +563,9 @@ fn build_packed_atlas(
                     h: alias.original_size.h,
                 },
             };
+            let canon_name = frames[ci].id.clone();
             frames.push(AtlasFrame {
-                id: alias.id.clone(),
+                id: export_name(alias),
                 frame: canon_frame,
                 rotated: canon_rotated,
                 trimmed: alias.trim_rect.is_some(),
@@ -545,7 +574,7 @@ fn build_packed_atlas(
                 polygon: alias.polygon.clone(),
                 nine_patch: alias.nine_patch,
                 pivot: alias.pivot.or(default_pivot),
-                alias_of: alias.alias_of.clone(),
+                alias_of: Some(canon_name),
             });
         }
     }

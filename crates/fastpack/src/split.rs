@@ -29,7 +29,8 @@ pub struct SplitResult {
 ///
 /// Reads the atlas PNG and the JSON Hash data file. For each frame, crops the
 /// atlas region, restores the original canvas size if the sprite was trimmed,
-/// and writes the result to `<output_dir>/<id>.png`. Intermediate directories
+/// and writes the result to `<output_dir>/<id>.png` (a trailing image extension
+/// in the frame name is replaced, not doubled). Intermediate directories
 /// are created as needed.
 pub fn run_split(args: SplitArgs) -> Result<SplitResult> {
     let atlas = image::open(&args.atlas_path)
@@ -85,9 +86,51 @@ pub fn run_split(args: SplitArgs) -> Result<SplitResult> {
     })
 }
 
+/// Image extensions stripped from frame names before appending `.png`, so names
+/// exported with `keep_extension` (e.g. `hero/run_01.png`) do not become `run_01.png.png`.
+const IMAGE_EXTENSIONS: &[&str] = &[
+    "png", "jpg", "jpeg", "bmp", "tga", "webp", "tiff", "tif", "gif", "svg", "psd",
+];
+
 fn output_path_for_id(id: &str, base: &Path) -> PathBuf {
-    let normalized = id.replace('/', std::path::MAIN_SEPARATOR_STR);
+    let stem = match id.rsplit_once('.') {
+        Some((stem, ext))
+            if !stem.is_empty()
+                && !ext.contains('/')
+                && IMAGE_EXTENSIONS.contains(&ext.to_ascii_lowercase().as_str()) =>
+        {
+            stem
+        }
+        _ => id,
+    };
+    let normalized = stem.replace('/', std::path::MAIN_SEPARATOR_STR);
     base.join(format!("{normalized}.png"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn output_path_strips_image_extension() {
+        let base = Path::new("out");
+        assert_eq!(
+            output_path_for_id("hero/run_01.png", base),
+            base.join("hero").join("run_01.png")
+        );
+        assert_eq!(output_path_for_id("icon.JPG", base), base.join("icon.png"));
+    }
+
+    #[test]
+    fn output_path_keeps_non_image_dots() {
+        let base = Path::new("out");
+        assert_eq!(output_path_for_id("run_01", base), base.join("run_01.png"));
+        assert_eq!(output_path_for_id("v1.2", base), base.join("v1.2.png"));
+        assert_eq!(
+            output_path_for_id("a.png/b", base),
+            base.join("a.png").join("b.png")
+        );
+    }
 }
 
 #[derive(Deserialize)]

@@ -95,6 +95,8 @@
 		"divisorXY": "Divisor X/Y",
 		"pivotXY": "Pivote X/Y",
 		"detectAliases": "Detectar alias",
+		"keepExtension": "Mantener extensi\u00f3n",
+		"prependFolderName": "Anteponer nombre de carpeta",
 		"excluded": "Excluidos",
 		"restore": "Restaurar",
 		"zoomToFrame": "Zoom al fotograma",

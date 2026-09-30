@@ -95,6 +95,8 @@
 		"divisorXY": "Divisor X/Y",
 		"pivotXY": "Piv\u00f4 X/Y",
 		"detectAliases": "Detectar apelidos",
+		"keepExtension": "Manter extens\u00e3o",
+		"prependFolderName": "Prefixar nome da pasta",
 		"excluded": "Exclu\u00eddos",
 		"restore": "Restaurar",
 		"zoomToFrame": "Zoom para o frame",

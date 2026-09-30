@@ -116,6 +116,16 @@ pub struct PackArgs {
     #[arg(long, default_value_t = false)]
     pub no_detect_aliases: bool,
 
+    /// Keep the file extension in frame names (e.g. `run_01.png`), like
+    /// TexturePacker with "Trim sprite names" off.
+    #[arg(long)]
+    pub keep_extension: bool,
+
+    /// Prepend each input directory's own name to its frame names
+    /// (e.g. input `assets/hero` yields `hero/run_01`).
+    #[arg(long)]
+    pub prepend_folder_name: bool,
+
     /// Emit additional sheets when sprites overflow the first atlas.
     #[arg(long)]
     pub multipack: bool,

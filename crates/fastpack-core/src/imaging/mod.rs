@@ -9,6 +9,7 @@ pub mod bleed;
 pub mod dither;
 pub mod extrude;
 pub mod loader;
+pub mod naming;
 pub mod ninepatch;
 pub mod pivot;
 pub mod pixel_art;

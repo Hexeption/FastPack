@@ -24,7 +24,7 @@ interface SectionProps {
 	save: (p: Project) => void;
 }
 
-/** Sprite settings: trim mode/threshold/margin, extrude, alpha bleed, common divisors, pivot, and alias detection. */
+/** Sprite settings: trim mode/threshold/margin, extrude, alpha bleed, common divisors, pivot, alias detection, and frame naming. */
 export default function SpriteSection({ project, update }: SectionProps) {
 	const { t } = useTranslation();
 	const sprites = project.sprites;
@@ -170,6 +170,18 @@ export default function SpriteSection({ project, update }: SectionProps) {
 				<Switch
 					checked={sprites.detect_aliases}
 					onCheckedChange={(c) => setSprites({ detect_aliases: c })}
+				/>
+			</Row>
+			<Row label={t("sprites.keepExtension")}>
+				<Switch
+					checked={sprites.keep_extension}
+					onCheckedChange={(c) => setSprites({ keep_extension: c })}
+				/>
+			</Row>
+			<Row label={t("sprites.prependFolderName")}>
+				<Switch
+					checked={sprites.prepend_folder_name}
+					onCheckedChange={(c) => setSprites({ prepend_folder_name: c })}
 				/>
 			</Row>
 		</Section>

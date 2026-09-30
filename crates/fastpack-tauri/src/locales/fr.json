@@ -95,6 +95,8 @@
 		"divisorXY": "Diviseur X/Y",
 		"pivotXY": "Pivot X/Y",
 		"detectAliases": "D\u00e9tecter les alias",
+		"keepExtension": "Conserver l'extension",
+		"prependFolderName": "Pr\u00e9fixer le nom du dossier",
 		"excluded": "Exclus",
 		"restore": "Restaurer",
 		"zoomToFrame": "Zoomer sur la frame",

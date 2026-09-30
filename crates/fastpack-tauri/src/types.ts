@@ -88,6 +88,10 @@ export interface SpriteConfig {
 	common_divisor_y: number;
 	detect_aliases: boolean;
 	default_pivot: Point;
+	/** Keep the file extension in exported frame names (e.g. `run_01.png`). */
+	keep_extension: boolean;
+	/** Prepend each source folder's name to its exported frame names. */
+	prepend_folder_name: boolean;
 }
 
 export interface OutputConfig {

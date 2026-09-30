@@ -95,6 +95,8 @@
 		"divisorXY": "Divisor X/Y",
 		"pivotXY": "Drehpunkt X/Y",
 		"detectAliases": "Aliasse erkennen",
+		"keepExtension": "Dateiendung beibehalten",
+		"prependFolderName": "Ordnernamen voranstellen",
 		"excluded": "Ausgeschlossen",
 		"restore": "Wiederherstellen",
 		"zoomToFrame": "Zum Frame zoomen",

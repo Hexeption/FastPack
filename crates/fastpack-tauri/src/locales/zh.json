@@ -95,6 +95,8 @@
 		"divisorXY": "\u9664\u6570 X/Y",
 		"pivotXY": "\u8f74\u5fc3 X/Y",
 		"detectAliases": "\u68c0\u6d4b\u522b\u540d",
+		"keepExtension": "\u4fdd\u7559\u6587\u4ef6\u6269\u5c55\u540d",
+		"prependFolderName": "\u6dfb\u52a0\u6587\u4ef6\u5939\u540d\u524d\u7f00",
 		"excluded": "\u5df2\u6392\u9664",
 		"restore": "\u6062\u590d",
 		"zoomToFrame": "\u7f29\u653e\u81f3\u5e27",
