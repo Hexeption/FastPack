@@ -6,9 +6,16 @@ use fastpack_core::types::{
 use fastpack_formats::{
     exporter::{ExportInput, Exporter, SpriteRotation},
     formats::{
-        cocos2d::Cocos2dExporter, godot::GodotExporter, json_array::JsonArrayExporter,
-        json_hash::JsonHashExporter, libgdx::LibGdxExporter, phaser3::Phaser3Exporter,
-        pixijs::PixiJsExporter, sparrow::SparrowExporter, spine::SpineExporter,
+        cocos2d::Cocos2dExporter,
+        css::{CssExporter, class_name},
+        godot::GodotExporter,
+        json_array::JsonArrayExporter,
+        json_hash::JsonHashExporter,
+        libgdx::LibGdxExporter,
+        phaser3::Phaser3Exporter,
+        pixijs::PixiJsExporter,
+        sparrow::SparrowExporter,
+        spine::SpineExporter,
     },
     polygon::build_mesh,
 };
@@ -1291,4 +1298,111 @@ fn godot_hide_name_uses_texturepacker_meta() {
 fn godot_format_id_and_extension() {
     assert_eq!(GodotExporter.format_id(), "godot");
     assert_eq!(GodotExporter.file_extension(), "tpsheet");
+}
+
+// CssExporter
+
+/// Return the rule for `.{class}`.
+fn css_rule<'a>(css: &'a str, class: &str) -> &'a str {
+    css.lines()
+        .find(|l| l.starts_with(&format!(".{class} {{")))
+        .unwrap_or_else(|| panic!("missing rule .{class} in:\n{css}"))
+}
+
+#[test]
+fn css_has_base_class_and_sprite_rule() {
+    let atlas = make_atlas(vec![make_frame("hero", 10, 20, 64, 48)]);
+    let out = CssExporter.export(&export_input(&atlas)).unwrap();
+    assert!(css_rule(&out, "sprite").contains("display:inline-block"));
+    assert_eq!(
+        css_rule(&out, "hero"),
+        ".hero {background-image:url(\"atlas.png\"); width:64px; height:48px; background-position:-10px -20px;}"
+    );
+}
+
+#[test]
+fn css_zero_position_has_no_unit() {
+    let atlas = make_atlas(vec![make_frame("a", 0, 0, 8, 8)]);
+    let out = CssExporter.export(&export_input(&atlas)).unwrap();
+    assert!(css_rule(&out, "a").contains("background-position:0 0;"));
+}
+
+#[test]
+fn css_class_names_are_sanitised() {
+    assert_eq!(class_name("ui/button"), "ui-button");
+    assert_eq!(class_name("icons/star 01.v2"), "icons-star-01-v2");
+    assert_eq!(class_name("1up"), "_1up");
+    assert_eq!(class_name("-1"), "_-1");
+    assert_eq!(class_name("-"), "_-");
+    assert_eq!(class_name(""), "_");
+    assert_eq!(class_name("héro"), "h-ro");
+    assert_eq!(class_name("under_score-dash"), "under_score-dash");
+}
+
+#[test]
+fn css_duplicate_class_names_get_suffixes() {
+    let atlas = make_atlas(vec![
+        make_frame("a/b", 0, 0, 8, 8),
+        make_frame("a-b", 8, 0, 8, 8),
+        make_frame("sprite", 16, 0, 8, 8),
+    ]);
+    let out = CssExporter.export(&export_input(&atlas)).unwrap();
+    assert!(css_rule(&out, "a-b").contains("background-position:0 0;"));
+    assert!(css_rule(&out, "a-b-2").contains("background-position:-8px 0;"));
+    // The shared base class name is reserved.
+    assert!(css_rule(&out, "sprite-2").contains("background-position:-16px 0;"));
+}
+
+#[test]
+fn css_disables_rotation_and_rejects_rotated_frames() {
+    assert_eq!(CssExporter.rotation(), SpriteRotation::Unsupported);
+    let mut frame = make_frame("s", 0, 0, 32, 16);
+    frame.rotated = true;
+    let atlas = make_atlas(vec![frame]);
+    assert!(CssExporter.export(&export_input(&atlas)).is_err());
+}
+
+#[test]
+fn css_combine_references_each_sheet_image() {
+    let a = make_atlas(vec![make_frame("a", 0, 0, 8, 8)]);
+    let b = make_atlas(vec![make_frame("b", 0, 0, 8, 8)]);
+    let inputs = [
+        export_input(&a),
+        ExportInput {
+            texture_filename: "atlas1.png".to_string(),
+            ..export_input(&b)
+        },
+    ];
+    let out = CssExporter.combine(&inputs).unwrap().unwrap();
+    assert!(css_rule(&out, "a").contains("url(\"atlas.png\")"));
+    assert!(css_rule(&out, "b").contains("url(\"atlas1.png\")"));
+}
+
+#[test]
+fn css_escapes_image_url() {
+    let atlas = make_atlas(vec![make_frame("a", 0, 0, 8, 8)]);
+    let input = ExportInput {
+        texture_filename: "my \"atlas\".png".to_string(),
+        ..export_input(&atlas)
+    };
+    let out = CssExporter.export(&input).unwrap();
+    assert!(out.contains("url(\"my \\\"atlas\\\".png\")"));
+}
+
+#[test]
+fn css_hide_name_adds_smartupdate_comment() {
+    let atlas = make_atlas(vec![make_frame("a", 0, 0, 8, 8)]);
+    let out = CssExporter.export(&hidden_input(&atlas)).unwrap();
+    assert!(out.contains("created with https://www.codeandweb.com/texturepacker"));
+    let line = out
+        .lines()
+        .find(|l| l.trim_start().starts_with("$TexturePacker"))
+        .unwrap();
+    assert_smartupdate_format(&Value::String(line.trim().to_string()));
+}
+
+#[test]
+fn css_format_id_and_extension() {
+    assert_eq!(CssExporter.format_id(), "css");
+    assert_eq!(CssExporter.file_extension(), "css");
 }

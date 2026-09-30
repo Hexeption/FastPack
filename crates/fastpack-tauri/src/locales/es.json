@@ -131,6 +131,7 @@
 		"libgdx": "libGDX atlas",
 		"spine": "Spine atlas",
 		"godot": "Godot 4 (.tpsheet)",
+		"css": "CSS sprites",
 		"quality": "Calidad",
 		"pathPrefix": "Prefijo de ruta",
 		"pathPrefixPlaceholder": "textures/",

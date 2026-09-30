@@ -23,7 +23,8 @@ export type DataFormat =
 	| "sparrow"
 	| "libgdx"
 	| "spine"
-	| "godot";
+	| "godot"
+	| "css";
 export type TextureFormat =
 	| "png"
 	| "jpeg"

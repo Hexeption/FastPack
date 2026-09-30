@@ -306,6 +306,8 @@ pub enum DataFormatArg {
     Spine,
     /// Godot 4 sprite sheet (.tpsheet) for the TexturePacker importer plugin.
     Godot,
+    /// CSS sprites stylesheet with one class per sprite.
+    Css,
 }
 
 impl From<DataFormatArg> for DataFormat {
@@ -320,6 +322,7 @@ impl From<DataFormatArg> for DataFormat {
             DataFormatArg::Libgdx => DataFormat::Libgdx,
             DataFormatArg::Spine => DataFormat::Spine,
             DataFormatArg::Godot => DataFormat::Godot,
+            DataFormatArg::Css => DataFormat::Css,
         }
     }
 }

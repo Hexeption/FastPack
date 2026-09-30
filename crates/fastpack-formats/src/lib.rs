@@ -1,4 +1,5 @@
-//! Atlas metadata export formats (JSON Hash, JSON Array, Phaser 3, PixiJS).
+//! Atlas metadata export formats (JSON Hash, JSON Array, Phaser 3, PixiJS,
+//! Cocos2d-x, Starling / Sparrow, libGDX, Spine, Godot 4, CSS sprites).
 //!
 //! Each format implements the [`exporter::Exporter`] trait: serialize a
 //! [`PackedAtlas`](fastpack_core::types::atlas::PackedAtlas) into a data file

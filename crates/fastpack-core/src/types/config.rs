@@ -357,6 +357,8 @@ pub enum DataFormat {
     Spine,
     /// Godot 4 sprite sheet (.tpsheet) for the TexturePacker importer plugin.
     Godot,
+    /// CSS sprites stylesheet with one class per sprite.
+    Css,
 }
 
 /// Output file format and path settings.

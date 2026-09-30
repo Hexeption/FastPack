@@ -151,6 +151,7 @@ filter = "**/*.png"
 - `libgdx` — libGDX `TextureAtlas` (`.atlas`) using `bounds`/`offsets`/`rotate`, with `split` for nine-patch sprites. Region names have no extension; rotated sprites are stored 90° counter-clockwise, as libGDX expects. Multipack sheets share one file.
 - `spine` — Spine 4 `.atlas`. Same layout as `libgdx` in Spine's compact style (`rotate:90`); region names have no extension. Multipack sheets share one file.
 - `godot` — Godot 4 `.tpsheet` JSON for CodeAndWeb's TexturePacker importer plugin (`textures[]` with `region`/`margin` per sprite). Multipack sheets share one file. Sprite rotation is disabled because Godot's `AtlasTexture` cannot show rotated regions.
+- `css` — CSS stylesheet with one class per sprite (`<span class="sprite hero"></span>`). Sprite ids become valid, unique class names (`ui/button` → `ui-button`). Multipack sheets share one file. Sprite rotation is disabled; trimmed sprites display at their trimmed size.
 
 ## Building from Source
 

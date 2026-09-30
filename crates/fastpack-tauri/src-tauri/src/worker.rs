@@ -38,9 +38,10 @@ use fastpack_core::{
 use fastpack_formats::{
     exporter::{ExportInput, Exporter, SpriteRotation},
     formats::{
-        cocos2d::Cocos2dExporter, godot::GodotExporter, json_array::JsonArrayExporter,
-        json_hash::JsonHashExporter, libgdx::LibGdxExporter, phaser3::Phaser3Exporter,
-        pixijs::PixiJsExporter, sparrow::SparrowExporter, spine::SpineExporter,
+        cocos2d::Cocos2dExporter, css::CssExporter, godot::GodotExporter,
+        json_array::JsonArrayExporter, json_hash::JsonHashExporter, libgdx::LibGdxExporter,
+        phaser3::Phaser3Exporter, pixijs::PixiJsExporter, sparrow::SparrowExporter,
+        spine::SpineExporter,
     },
 };
 use rayon::prelude::*;
@@ -159,6 +160,7 @@ fn select_exporter(data_format: DataFormat) -> Box<dyn Exporter> {
         DataFormat::Phaser3 => Box::new(Phaser3Exporter),
         DataFormat::Pixijs => Box::new(PixiJsExporter),
         DataFormat::JsonHash => Box::new(JsonHashExporter),
+        DataFormat::Css => Box::new(CssExporter),
         DataFormat::Godot => Box::new(GodotExporter),
         DataFormat::Spine => Box::new(SpineExporter),
         DataFormat::Libgdx => Box::new(LibGdxExporter),
