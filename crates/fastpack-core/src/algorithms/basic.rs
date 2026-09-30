@@ -36,7 +36,7 @@ fn pack_basic(input: PackInput) -> PackOutput {
 
     let mut sprites = input.sprites;
     // Tallest-first minimises wasted space at row ends.
-    sprites.sort_unstable_by(|a, b| b.image.height().cmp(&a.image.height()));
+    sprites.sort_unstable_by_key(|s| std::cmp::Reverse(s.image.height()));
 
     let max_canvas_w = cfg.max_width.saturating_sub(bp * 2);
     let max_canvas_h = cfg.max_height.saturating_sub(bp * 2);
