@@ -91,6 +91,7 @@
 		"trimThreshold": "Seuil de d\u00e9coupe",
 		"trimMargin": "Marge de d\u00e9coupe",
 		"extrude": "Extruder",
+		"alphaBleed": "R\u00e9duire les artefacts de bord",
 		"divisorXY": "Diviseur X/Y",
 		"pivotXY": "Pivot X/Y",
 		"detectAliases": "D\u00e9tecter les alias",

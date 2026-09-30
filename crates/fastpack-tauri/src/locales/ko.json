@@ -91,6 +91,7 @@
 		"trimThreshold": "\ud2b8\ub9bc \uc784\uacc4\uac12",
 		"trimMargin": "\ud2b8\ub9bc \uc5ec\ubc31",
 		"extrude": "\ub3cc\ucd9c",
+		"alphaBleed": "\ud14c\ub450\ub9ac \uc544\ud2f0\ud329\ud2b8 \uc904\uc774\uae30",
 		"divisorXY": "\uc81c\uc218 X/Y",
 		"pivotXY": "\ud53c\ubc97 X/Y",
 		"detectAliases": "\ubcc4\uce6d \uac10\uc9c0",

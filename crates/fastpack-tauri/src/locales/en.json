@@ -91,6 +91,7 @@
 		"trimThreshold": "Trim threshold",
 		"trimMargin": "Trim margin",
 		"extrude": "Extrude",
+		"alphaBleed": "Reduce border artifacts",
 		"divisorXY": "Divisor X/Y",
 		"pivotXY": "Pivot X/Y",
 		"detectAliases": "Detect aliases",

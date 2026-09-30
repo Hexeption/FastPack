@@ -91,6 +91,7 @@
 		"trimThreshold": "Umbral de recorte",
 		"trimMargin": "Margen de recorte",
 		"extrude": "Extruir",
+		"alphaBleed": "Reducir artefactos de borde",
 		"divisorXY": "Divisor X/Y",
 		"pivotXY": "Pivote X/Y",
 		"detectAliases": "Detectar alias",

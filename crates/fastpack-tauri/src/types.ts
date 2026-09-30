@@ -83,6 +83,7 @@ export interface SpriteConfig {
 	trim_threshold: number;
 	trim_margin: number;
 	extrude: number;
+	alpha_bleed: boolean;
 	common_divisor_x: number;
 	common_divisor_y: number;
 	detect_aliases: boolean;

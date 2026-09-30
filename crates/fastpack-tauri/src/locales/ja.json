@@ -91,6 +91,7 @@
 		"trimThreshold": "\u30c8\u30ea\u30e0\u9695\u5024",
 		"trimMargin": "\u30c8\u30ea\u30e0\u4f59\u767d",
 		"extrude": "\u62bc\u3057\u51fa\u3057",
+		"alphaBleed": "\u5883\u754c\u306e\u30a2\u30fc\u30c6\u30a3\u30d5\u30a1\u30af\u30c8\u3092\u8efd\u6e1b",
 		"divisorXY": "\u9664\u6570 X/Y",
 		"pivotXY": "\u30d4\u30dc\u30c3\u30c8 X/Y",
 		"detectAliases": "\u30a8\u30a4\u30ea\u30a2\u30b9\u3092\u691c\u51fa",

@@ -24,7 +24,7 @@ interface SectionProps {
 	save: (p: Project) => void;
 }
 
-/** Sprite settings: trim mode/threshold/margin, extrude, common divisors, pivot, and alias detection. */
+/** Sprite settings: trim mode/threshold/margin, extrude, alpha bleed, common divisors, pivot, and alias detection. */
 export default function SpriteSection({ project, update }: SectionProps) {
 	const { t } = useTranslation();
 	const sprites = project.sprites;
@@ -159,6 +159,12 @@ export default function SpriteSection({ project, update }: SectionProps) {
 						}
 					/>
 				</InputGroup>
+			</Row>
+			<Row label={t("sprites.alphaBleed")}>
+				<Switch
+					checked={sprites.alpha_bleed}
+					onCheckedChange={(c) => setSprites({ alpha_bleed: c })}
+				/>
 			</Row>
 			<Row label={t("sprites.detectAliases")}>
 				<Switch

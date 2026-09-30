@@ -91,6 +91,7 @@
 		"trimThreshold": "Zuschneideschwelle",
 		"trimMargin": "Zuschneidrand",
 		"extrude": "Extrudieren",
+		"alphaBleed": "Randartefakte reduzieren",
 		"divisorXY": "Divisor X/Y",
 		"pivotXY": "Drehpunkt X/Y",
 		"detectAliases": "Aliasse erkennen",

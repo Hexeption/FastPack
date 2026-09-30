@@ -40,6 +40,7 @@ export const DEFAULT_PREFS: Preferences = {
 			trim_threshold: 1,
 			trim_margin: 0,
 			extrude: 0,
+			alpha_bleed: false,
 			common_divisor_x: 0,
 			common_divisor_y: 0,
 			detect_aliases: true,

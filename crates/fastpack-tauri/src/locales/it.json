@@ -91,6 +91,7 @@
 		"trimThreshold": "Soglia ritaglio",
 		"trimMargin": "Margine ritaglio",
 		"extrude": "Estrudi",
+		"alphaBleed": "Riduci artefatti ai bordi",
 		"divisorXY": "Divisore X/Y",
 		"pivotXY": "Perno X/Y",
 		"detectAliases": "Rileva alias",
