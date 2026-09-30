@@ -23,6 +23,7 @@ categories   = ["game-development", "multimedia::images", "command-line-utilitie
 fastpack-core     = { path = "crates/fastpack-core",                 version = "0.29.5" }
 fastpack-formats  = { path = "crates/fastpack-formats",              version = "0.29.5" }
 fastpack-compress = { path = "crates/fastpack-compress",             version = "0.29.5" }
+fastpack          = { path = "crates/fastpack",                      version = "0.29.5" }
 fastpack-tauri    = { path = "crates/fastpack-tauri/src-tauri",      version = "0.29.5" }
 
 # Error handling

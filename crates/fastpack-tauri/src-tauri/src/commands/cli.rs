@@ -2,15 +2,19 @@ use std::path::PathBuf;
 
 const SYMLINK_PATH: &str = "/usr/local/bin/fastpack";
 
+/// Resolve the binary the installed `fastpack` command should point at.
+///
+/// Prefers a standalone `fastpack` CLI next to the app; otherwise the app
+/// binary itself, which dispatches to the CLI when given a subcommand. Inside
+/// an AppImage, `current_exe` lives in a temporary mount, so `$APPIMAGE` is used.
 fn cli_path() -> Result<PathBuf, String> {
+    if let Some(appimage) = std::env::var_os("APPIMAGE") {
+        return Ok(PathBuf::from(appimage));
+    }
     let exe = std::env::current_exe().map_err(|e| format!("failed to get exe path: {e}"))?;
     let dir = exe.parent().ok_or("failed to get exe directory")?;
     let cli = dir.join("fastpack");
-    if cli.exists() {
-        Ok(cli)
-    } else {
-        Err(format!("CLI binary not found at {}", cli.display()))
-    }
+    if cli.exists() { Ok(cli) } else { Ok(exe) }
 }
 
 #[cfg(unix)]

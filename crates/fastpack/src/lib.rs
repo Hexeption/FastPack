@@ -1,5 +1,7 @@
 //! FastPack CLI: pack sprites into atlases, watch for changes, and export data files.
-#![cfg_attr(windows, windows_subsystem = "windows")]
+//!
+//! Exposed as a library so the GUI binary can dispatch to the CLI when it is
+//! launched with a subcommand (e.g. `FastPack.AppImage pack sprites/`).
 mod cli;
 mod error;
 mod pipeline;
@@ -16,7 +18,27 @@ use fastpack_core::types::{
     rect::Point,
 };
 
-fn main() -> Result<()> {
+/// Returns true when `args` (excluding argv\[0\]) should be handled by the CLI
+/// rather than opening the GUI: a known subcommand or a help/version flag.
+pub fn is_cli_invocation<I, S>(args: I) -> bool
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<std::ffi::OsStr>,
+{
+    let Some(first) = args.into_iter().next() else {
+        return false;
+    };
+    let Some(first) = first.as_ref().to_str() else {
+        return false;
+    };
+    matches!(first, "-h" | "--help" | "-V" | "--version" | "help")
+        || cli::Cli::command()
+            .get_subcommands()
+            .any(|c| c.get_name() == first)
+}
+
+/// Parse `std::env::args` and run the requested CLI command.
+pub fn run() -> Result<()> {
     // Re-attach to the parent console so CLI subcommands produce visible
     // output when launched from a terminal even though this is a GUI subsystem binary.
     #[cfg(windows)]

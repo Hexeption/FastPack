@@ -11,6 +11,10 @@ keywords.workspace     = true
 categories.workspace   = true
 readme                 = "../../README.md"
 
+[lib]
+name = "fastpack"
+path = "src/lib.rs"
+
 [[bin]]
 name = "fastpack"
 path = "src/main.rs"
@@ -20,7 +24,6 @@ fastpack-core.workspace     = true
 fastpack-formats.workspace  = true
 fastpack-compress = { workspace = true, features = ["jpeg-turbo", "webp-encode"] }
 image.workspace             = true
-fastpack-tauri.workspace     = true
 thiserror.workspace         = true
 anyhow.workspace            = true
 serde.workspace             = true
