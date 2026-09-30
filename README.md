@@ -40,7 +40,7 @@ Download the desktop app for your platform from the [releases page](https://gith
 - **Windows** — `fastpack-windows-x86_64-setup.exe`
 - **macOS (Apple Silicon)** — `fastpack-macos-aarch64.dmg`
 - **macOS (Intel)** — `fastpack-macos-x86_64.dmg`
-- **Linux** — `fastpack-linux-x86_64.AppImage`
+- **Linux** — `FastPack-x86_64.AppImage`
 
 Or install the CLI from crates.io:
 

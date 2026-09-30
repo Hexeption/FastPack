@@ -20,7 +20,7 @@ jobs:
           - os: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
             label: Linux x86_64
-            artifact: fastpack-linux-x86_64.AppImage
+            artifact: FastPack-x86_64.AppImage
             bundle: appimage
             glob: "appimage/*.AppImage"
           - os: windows-latest
@@ -79,7 +79,27 @@ jobs:
         shell: bash
         run: |
           FILE=$(find target/${{ matrix.target }}/release/bundle/${{ matrix.glob }} | head -1)
-          cp "$FILE" "${{ matrix.artifact }}"
+          if [ "${{ matrix.bundle }}" != "appimage" ]; then
+            cp "$FILE" "${{ matrix.artifact }}"
+            exit 0
+          fi
+
+          # Tauri's AppImage lacks a usable .DirIcon, which the AppImage spec
+          # (and the appimage.github.io catalog) requires. Unpack, add it, repack.
+          chmod +x "$FILE"
+          "$FILE" --appimage-extract >/dev/null
+          ICON=$(grep -m1 '^Icon=' squashfs-root/*.desktop | cut -d= -f2)
+          SRC=$(find squashfs-root/usr/share/icons -type f -name "$ICON.png" -printf '%s %p\n' | sort -n | tail -1 | cut -d' ' -f2-)
+          if [ -z "$SRC" ]; then
+            echo "no icon named $ICON.png found in AppDir" >&2
+            exit 1
+          fi
+          rm -f squashfs-root/.DirIcon
+          cp "$SRC" squashfs-root/.DirIcon
+
+          wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool-x86_64.AppImage
+          ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 ./appimagetool-x86_64.AppImage squashfs-root "${{ matrix.artifact }}"
 
       - uses: actions/upload-artifact@v4
         with:
