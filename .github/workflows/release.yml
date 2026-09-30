@@ -118,12 +118,21 @@ jobs:
 
           wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
           chmod +x appimagetool-x86_64.AppImage
-          ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 ./appimagetool-x86_64.AppImage squashfs-root "${{ matrix.artifact }}"
+          # Embed update information so AppImageUpdate can fetch the latest
+          # (non-prerelease) GitHub release; appimagetool also writes the
+          # matching .zsync file, which is published next to the AppImage.
+          ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 ./appimagetool-x86_64.AppImage \
+            -u "gh-releases-zsync|Hexeption|FastPack|latest|${{ matrix.artifact }}.zsync" \
+            squashfs-root "${{ matrix.artifact }}"
+          test -f "${{ matrix.artifact }}.zsync"
 
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
-          path: ${{ matrix.artifact }}
+          # The .zsync file only exists for the AppImage; missing paths are skipped.
+          path: |
+            ${{ matrix.artifact }}
+            ${{ matrix.artifact }}.zsync
 
   build-macos:
     name: build (macOS)
