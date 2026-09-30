@@ -97,6 +97,11 @@ jobs:
           rm -f squashfs-root/.DirIcon
           cp "$SRC" squashfs-root/.DirIcon
 
+          # linuxdeploy bundles the runner's libwayland-*, which clashes with
+          # newer host Mesa and aborts WebKitGTK with "Could not create default
+          # EGL display: EGL_BAD_PARAMETER". Use the host's copies instead.
+          find squashfs-root -name 'libwayland-*.so*' -print -delete
+
           wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
           chmod +x appimagetool-x86_64.AppImage
           ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 ./appimagetool-x86_64.AppImage squashfs-root "${{ matrix.artifact }}"
