@@ -102,6 +102,16 @@ jobs:
           # EGL display: EGL_BAD_PARAMETER". Use the host's copies instead.
           find squashfs-root -name 'libwayland-*.so*' -print -delete
 
+          # --appimage-extract leaves directories as 0700, and appimagetool makes
+          # everything root-owned, so other users (e.g. the catalog's firejail
+          # sandbox) get "Permission denied" on AppRun. Use standard modes:
+          # 755 for directories and executables, 644 for everything else.
+          chmod -R u=rwX,go=rX squashfs-root
+          if find squashfs-root ! -type l ! -perm -o=r | grep -q .; then
+            echo "AppDir still has files other users cannot read" >&2
+            exit 1
+          fi
+
           wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
           chmod +x appimagetool-x86_64.AppImage
           ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 ./appimagetool-x86_64.AppImage squashfs-root "${{ matrix.artifact }}"
