@@ -1,4 +1,4 @@
-import { listen } from "@tauri-apps/api/event";
+import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { useEffect } from "react";
 import {
 	newProject,
@@ -28,8 +28,9 @@ function resetSelection() {
 /** Listens for native menu events (new, open, save, save-as, theme toggle, preferences) and dispatches the matching store/command actions. */
 export function useMenuEvents() {
 	useEffect(() => {
+		const win = getCurrentWebviewWindow();
 		const unlisteners = Promise.all([
-			listen("menu:new-project", async () => {
+			win.listen("menu:new-project", async () => {
 				const p = await newProject();
 				const s = useStore.getState();
 				s.setProject(p);
@@ -38,7 +39,7 @@ export function useMenuEvents() {
 				resetSelection();
 			}),
 
-			listen("menu:open-project", async () => {
+			win.listen("menu:open-project", async () => {
 				const path = await openFileDialog();
 				if (!path) return;
 				try {
@@ -53,7 +54,7 @@ export function useMenuEvents() {
 				}
 			}),
 
-			listen("menu:save", async () => {
+			win.listen("menu:save", async () => {
 				const { project, projectPath } = useStore.getState();
 				if (!project) return;
 				if (projectPath) {
@@ -69,7 +70,7 @@ export function useMenuEvents() {
 				}
 			}),
 
-			listen("menu:save-as", async () => {
+			win.listen("menu:save-as", async () => {
 				const { project } = useStore.getState();
 				if (!project) return;
 				const path = await saveFileDialog("project.fpsheet");
@@ -80,14 +81,14 @@ export function useMenuEvents() {
 				s.setDirty(false);
 			}),
 
-			listen("menu:toggle-theme", () => {
+			win.listen("menu:toggle-theme", () => {
 				const { prefs } = useStore.getState();
 				const next = { ...prefs, dark_mode: !prefs.dark_mode };
 				useStore.getState().setPrefs(next);
 				savePreferences(next);
 			}),
 
-			listen("menu:preferences", () => {
+			win.listen("menu:preferences", () => {
 				useStore.getState().setPrefsOpen(true);
 			}),
 		]);

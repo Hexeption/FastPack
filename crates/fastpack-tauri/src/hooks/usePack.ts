@@ -1,4 +1,4 @@
-import { listen } from "@tauri-apps/api/event";
+import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { useEffect } from "react";
 import { pack } from "../lib/commands";
 import { now } from "../lib/time";
@@ -17,13 +17,14 @@ export function usePack() {
 	]);
 
 	useEffect(() => {
+		const win = getCurrentWebviewWindow();
 		const unlisteners = Promise.all([
-			listen("pack:started", () => {
+			win.listen("pack:started", () => {
 				setIsPacking(true);
 				appendLog({ level: "info", message: "Packing...", time: now() });
 			}),
 
-			listen<PackFinishedPayload>("pack:finished", ({ payload }) => {
+			win.listen<PackFinishedPayload>("pack:finished", ({ payload }) => {
 				setIsPacking(false);
 				setSheets({
 					sheets: payload.sheets,
@@ -34,7 +35,7 @@ export function usePack() {
 				});
 			}),
 
-			listen<PackFailedPayload>("pack:failed", ({ payload }) => {
+			win.listen<PackFailedPayload>("pack:failed", ({ payload }) => {
 				setIsPacking(false);
 				appendLog({ level: "error", message: payload.error, time: now() });
 			}),

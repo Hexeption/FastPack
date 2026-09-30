@@ -2,92 +2,124 @@ use std::collections::BTreeSet;
 use std::sync::Mutex;
 
 use fastpack_core::types::config::{Project, SourceSpec};
-use tauri::State;
+use tauri::{State, WebviewWindow};
 
-use crate::state::TauriState;
+use crate::state::AppState;
 
 #[tauri::command]
-pub fn new_project(state: State<'_, Mutex<TauriState>>) -> Project {
+pub fn new_project(state: State<'_, Mutex<AppState>>, webview_window: WebviewWindow) -> Project {
     let mut s = state.lock().unwrap();
+    let label = webview_window.label();
     let default_config = s.prefs.default_config.clone();
-    s.project = Project::default();
-    s.project.config = default_config;
-    s.project_path = None;
-    s.dirty = false;
-    s.sheets.clear();
-    s.log_info("New project created.");
-    s.project.clone()
+    let w = s.window_mut(label);
+    w.project = Project::default();
+    w.project.config = default_config;
+    w.project_path = None;
+    w.dirty = false;
+    w.sheets.clear();
+    w.log_info("New project created.");
+    w.project.clone()
 }
 
 #[tauri::command]
-pub fn open_project(state: State<'_, Mutex<TauriState>>, path: String) -> Result<Project, String> {
+pub fn open_project(
+    state: State<'_, Mutex<AppState>>,
+    webview_window: WebviewWindow,
+    path: String,
+) -> Result<Project, String> {
     let text = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
     let project: Project = toml::from_str(&text).map_err(|e| e.to_string())?;
     let mut s = state.lock().unwrap();
-    s.project = project.clone();
-    s.project_path = Some(std::path::PathBuf::from(&path));
-    s.dirty = false;
-    s.sheets.clear();
-    s.log_info(format!("Opened: {path}"));
+    let w = s.window_mut(webview_window.label());
+    w.project = project.clone();
+    w.project_path = Some(std::path::PathBuf::from(&path));
+    w.dirty = false;
+    w.sheets.clear();
+    w.log_info(format!("Opened: {path}"));
     Ok(project)
 }
 
 #[tauri::command]
-pub fn save_project(state: State<'_, Mutex<TauriState>>, path: String) -> Result<(), String> {
+pub fn save_project(
+    state: State<'_, Mutex<AppState>>,
+    webview_window: WebviewWindow,
+    path: String,
+) -> Result<(), String> {
     let mut s = state.lock().unwrap();
-    let text = toml::to_string_pretty(&s.project).map_err(|e| e.to_string())?;
+    let w = s.window_mut(webview_window.label());
+    let text = toml::to_string_pretty(&w.project).map_err(|e| e.to_string())?;
     std::fs::write(&path, text.as_bytes()).map_err(|e| e.to_string())?;
-    s.project_path = Some(std::path::PathBuf::from(&path));
-    s.dirty = false;
-    s.log_info(format!("Saved: {path}"));
+    w.project_path = Some(std::path::PathBuf::from(&path));
+    w.dirty = false;
+    w.log_info(format!("Saved: {path}"));
     Ok(())
 }
 
 #[tauri::command]
-pub fn get_project(state: State<'_, Mutex<TauriState>>) -> Project {
-    state.lock().unwrap().project.clone()
+pub fn get_project(state: State<'_, Mutex<AppState>>, webview_window: WebviewWindow) -> Project {
+    state
+        .lock()
+        .unwrap()
+        .window_mut(webview_window.label())
+        .project
+        .clone()
 }
 
 #[tauri::command]
-pub fn update_project(state: State<'_, Mutex<TauriState>>, project: Project) {
+pub fn update_project(
+    state: State<'_, Mutex<AppState>>,
+    webview_window: WebviewWindow,
+    project: Project,
+) {
     let mut s = state.lock().unwrap();
-    s.project = project;
-    s.dirty = true;
+    let w = s.window_mut(webview_window.label());
+    w.project = project;
+    w.dirty = true;
 }
 
 #[tauri::command]
-pub fn add_source(state: State<'_, Mutex<TauriState>>, path: String) -> Project {
+pub fn add_source(
+    state: State<'_, Mutex<AppState>>,
+    webview_window: WebviewWindow,
+    path: String,
+) -> Project {
     let mut s = state.lock().unwrap();
+    let w = s.window_mut(webview_window.label());
     let pb = std::path::PathBuf::from(&path);
     let canonical = std::fs::canonicalize(&pb).unwrap_or(pb);
 
-    let already_tracked = s.project.sources.iter().any(|src| {
+    let already_tracked = w.project.sources.iter().any(|src| {
         let stored = std::fs::canonicalize(&src.path).unwrap_or_else(|_| src.path.clone());
         canonical.starts_with(&stored)
     });
 
     if !already_tracked {
         let display = canonical.display().to_string();
-        s.project.sources.push(SourceSpec {
+        w.project.sources.push(SourceSpec {
             path: canonical,
             filter: "**/*.png".to_string(),
         });
-        s.dirty = true;
-        s.log_info(format!("Added source: {display}"));
+        w.dirty = true;
+        w.log_info(format!("Added source: {display}"));
     }
 
-    s.project.clone()
+    w.project.clone()
 }
 
 #[tauri::command]
-pub fn remove_source(state: State<'_, Mutex<TauriState>>, index: usize) -> Project {
+pub fn remove_source(
+    state: State<'_, Mutex<AppState>>,
+    webview_window: WebviewWindow,
+    index: usize,
+) -> Project {
     let mut s = state.lock().unwrap();
-    if index < s.project.sources.len() {
-        let removed = s.project.sources.remove(index);
-        s.dirty = true;
-        s.log_info(format!("Removed source: {}", removed.path.display()));
+    let w = s.window_mut(webview_window.label());
+    if index < w.project.sources.len() {
+        let removed = w.project.sources.remove(index);
+        w.dirty = true;
+        w.log_info(format!("Removed source: {}", removed.path.display()));
     }
-    s.project.clone()
+    w.project.clone()
 }
 
 #[derive(serde::Serialize)]
@@ -99,10 +131,12 @@ pub struct HandleDropResult {
 
 #[tauri::command]
 pub fn handle_drop(
-    state: State<'_, Mutex<TauriState>>,
+    state: State<'_, Mutex<AppState>>,
+    webview_window: WebviewWindow,
     paths: Vec<String>,
 ) -> Result<HandleDropResult, String> {
     let mut s = state.lock().unwrap();
+    let w = s.window_mut(webview_window.label());
     let mut new_sources: BTreeSet<std::path::PathBuf> = BTreeSet::new();
 
     for raw in &paths {
@@ -113,13 +147,13 @@ pub fn handle_drop(
             let text = std::fs::read_to_string(&pb).map_err(|e| e.to_string())?;
             let project: Project = toml::from_str(&text).map_err(|e| e.to_string())?;
             let canon = std::fs::canonicalize(&pb).unwrap_or(pb);
-            s.project = project;
-            s.project_path = Some(canon.clone());
-            s.dirty = false;
-            s.sheets.clear();
-            s.log_info(format!("Opened: {}", canon.display()));
+            w.project = project;
+            w.project_path = Some(canon.clone());
+            w.dirty = false;
+            w.sheets.clear();
+            w.log_info(format!("Opened: {}", canon.display()));
             return Ok(HandleDropResult {
-                project: s.project.clone(),
+                project: w.project.clone(),
                 project_path: Some(canon.display().to_string()),
                 dirty: false,
             });
@@ -146,26 +180,26 @@ pub fn handle_drop(
         .collect();
 
     for path in deduped {
-        let already = s.project.sources.iter().any(|src| {
+        let already = w.project.sources.iter().any(|src| {
             let stored = std::fs::canonicalize(&src.path).unwrap_or_else(|_| src.path.clone());
             path.starts_with(&stored)
         });
         if !already {
             let display = path.display().to_string();
-            s.project.sources.push(SourceSpec {
+            w.project.sources.push(SourceSpec {
                 path,
                 filter: "**/*.png".to_string(),
             });
-            s.dirty = true;
-            s.log_info(format!("Added source: {display}"));
+            w.dirty = true;
+            w.log_info(format!("Added source: {display}"));
         }
     }
 
-    let project_path = s.project_path.as_ref().map(|p| p.display().to_string());
+    let project_path = w.project_path.as_ref().map(|p| p.display().to_string());
 
     Ok(HandleDropResult {
-        project: s.project.clone(),
+        project: w.project.clone(),
         project_path,
-        dirty: s.dirty,
+        dirty: w.dirty,
     })
 }

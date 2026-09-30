@@ -1,4 +1,4 @@
-import { listen } from "@tauri-apps/api/event";
+import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { useEffect } from "react";
 import { now } from "../lib/time";
 import { useStore } from "../store";
@@ -20,18 +20,19 @@ export function usePublish() {
 	const setLog = useStore((s) => s.setLog);
 
 	useEffect(() => {
+		const win = getCurrentWebviewWindow();
 		const unlisteners = Promise.all([
-			listen("publish:started", () => {
+			win.listen("publish:started", () => {
 				setIsPublishing(true);
 				appendLog({ level: "info", message: "Publishing...", time: now() });
 			}),
 
-			listen<PublishFinishedPayload>("publish:finished", ({ payload }) => {
+			win.listen<PublishFinishedPayload>("publish:finished", ({ payload }) => {
 				setIsPublishing(false);
 				setLog(payload.log);
 			}),
 
-			listen<PublishFailedPayload>("publish:failed", ({ payload }) => {
+			win.listen<PublishFailedPayload>("publish:failed", ({ payload }) => {
 				setIsPublishing(false);
 				appendLog({ level: "error", message: payload.error, time: now() });
 			}),

@@ -1,8 +1,10 @@
 //! Shared application state for the Tauri backend.
 //!
-//! Holds the current project, pack results, log history, and watcher handle.
-//! Every Tauri command accesses this through a `Mutex<TauriState>`.
+//! Per-window state is stored in a `HashMap<String, WindowState>` inside
+//! `AppState`, keyed by the Tauri window label. Shared data like preferences
+//! lives directly on `AppState`.
 
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::mpsc;
 
@@ -110,8 +112,9 @@ pub struct WatcherHandle {
     pub stop_tx: mpsc::SyncSender<()>,
 }
 
-/// All runtime state shared across Tauri commands.
-pub struct TauriState {
+/// Per-window runtime state. Each open window has its own project, pack
+/// results, log history, and filesystem watcher.
+pub struct WindowState {
     /// The current project configuration and sources.
     pub project: Project,
     /// Path to the `.fpsheet` file on disk. `None` for unsaved projects.
@@ -130,16 +133,24 @@ pub struct TauriState {
     pub overflow_count: usize,
     /// True while a pack or publish operation runs on a background thread.
     pub is_packing: bool,
-    /// User preferences loaded from disk.
-    pub prefs: Preferences,
     /// Active filesystem watcher for auto-repack. `None` when watch mode is off.
     pub watcher: Option<WatcherHandle>,
 }
 
-impl TauriState {
-    /// Build initial state. If `project_path` is given, load that `.fpsheet` file.
-    pub fn new(project_path: Option<PathBuf>) -> Self {
-        let prefs = Preferences::load();
+/// All runtime state shared across Tauri commands. Per-window state lives in
+/// `windows`, keyed by the Tauri window label. Shared data like preferences
+/// lives directly here.
+pub struct AppState {
+    /// Map of window label → per-window state.
+    pub windows: HashMap<String, WindowState>,
+    /// User preferences loaded from disk (shared across all windows).
+    pub prefs: Preferences,
+}
+
+impl WindowState {
+    /// Build initial state for a new window. If `project_path` is given, load
+    /// that `.fpsheet` file.
+    pub fn new(project_path: Option<PathBuf>, prefs: &Preferences) -> Self {
         let mut state = Self {
             project: Project {
                 config: prefs.default_config.clone(),
@@ -154,7 +165,6 @@ impl TauriState {
             alias_count: 0,
             overflow_count: 0,
             is_packing: false,
-            prefs,
             watcher: None,
         };
 
@@ -187,44 +197,65 @@ impl TauriState {
     pub fn log_error(&mut self, msg: impl Into<String>) {
         self.log.push(LogEntry::error(msg));
     }
+}
 
-    /// Convert a raw SheetOutput into SheetData by PNG-encoding the RGBA buffer.
-    pub fn sheet_to_data(sheet: &SheetOutput) -> SheetData {
-        use base64::Engine;
-        use image::{ImageBuffer, Rgba};
+impl AppState {
+    /// Build initial app state. Creates one window ("main") with the given
+    /// optional project path.
+    pub fn new(project_path: Option<PathBuf>) -> Self {
+        let prefs = Preferences::load();
+        let initial = WindowState::new(project_path, &prefs);
+        let mut windows = HashMap::new();
+        windows.insert("main".to_string(), initial);
+        Self { windows, prefs }
+    }
 
-        let img: ImageBuffer<Rgba<u8>, _> =
-            ImageBuffer::from_raw(sheet.width, sheet.height, sheet.rgba.clone())
-                .expect("valid rgba buffer");
+    /// Get the window state for the given label, creating a blank project for
+    /// windows that have not been seen yet.
+    pub fn window_mut(&mut self, label: &str) -> &mut WindowState {
+        let prefs = &self.prefs;
+        self.windows
+            .entry(label.to_string())
+            .or_insert_with(|| WindowState::new(None, prefs))
+    }
+}
 
-        let mut png_bytes: Vec<u8> = Vec::new();
-        img.write_to(
-            &mut std::io::Cursor::new(&mut png_bytes),
-            image::ImageFormat::Png,
-        )
-        .expect("png encode");
+/// Convert a raw [`SheetOutput`] into [`SheetData`] by PNG-encoding the RGBA buffer.
+pub fn sheet_to_data(sheet: &SheetOutput) -> SheetData {
+    use base64::Engine;
+    use image::{ImageBuffer, Rgba};
 
-        let png_b64 = base64::engine::general_purpose::STANDARD.encode(&png_bytes);
+    let img: ImageBuffer<Rgba<u8>, _> =
+        ImageBuffer::from_raw(sheet.width, sheet.height, sheet.rgba.clone())
+            .expect("valid rgba buffer");
 
-        let frames = sheet
-            .frames
-            .iter()
-            .map(|f| FrameData {
-                id: f.id.clone(),
-                src_path: f.src_path.clone(),
-                x: f.x,
-                y: f.y,
-                w: f.w,
-                h: f.h,
-                alias_of: f.alias_of.clone(),
-            })
-            .collect();
+    let mut png_bytes: Vec<u8> = Vec::new();
+    img.write_to(
+        &mut std::io::Cursor::new(&mut png_bytes),
+        image::ImageFormat::Png,
+    )
+    .expect("png encode");
 
-        SheetData {
-            width: sheet.width,
-            height: sheet.height,
-            png_b64,
-            frames,
-        }
+    let png_b64 = base64::engine::general_purpose::STANDARD.encode(&png_bytes);
+
+    let frames = sheet
+        .frames
+        .iter()
+        .map(|f| FrameData {
+            id: f.id.clone(),
+            src_path: f.src_path.clone(),
+            x: f.x,
+            y: f.y,
+            w: f.w,
+            h: f.h,
+            alias_of: f.alias_of.clone(),
+        })
+        .collect();
+
+    SheetData {
+        width: sheet.width,
+        height: sheet.height,
+        png_b64,
+        frames,
     }
 }

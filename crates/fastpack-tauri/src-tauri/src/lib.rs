@@ -14,7 +14,7 @@ use std::path::PathBuf;
 ///
 /// `project_path` is the optional `.fpsheet` file to open on startup.
 pub fn run(project_path: Option<PathBuf>) -> anyhow::Result<()> {
-    let app_state = state::TauriState::new(project_path);
+    let app_state = state::AppState::new(project_path);
 
     tauri::Builder::default()
         .manage(std::sync::Mutex::new(app_state))
