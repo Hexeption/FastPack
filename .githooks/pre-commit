@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# Run the same checks as .github/workflows/ci.yml before every commit.
+# Enable with: git config core.hooksPath .githooks
+# Skip once (not recommended): git commit --no-verify
+set -euo pipefail
+
+staged=$(git diff --cached --name-only --diff-filter=ACMRD)
+
+# The Tauri CLI refuses to build when the tauri crate and @tauri-apps/* npm
+# packages differ in major.minor, which breaks the release workflow.
+if grep -qE '(Cargo\.lock|package\.json|pnpm-lock\.yaml)$' <<<"$staged"; then
+    crate=$(git show :Cargo.lock | awk '/^name = "tauri"$/ {getline; gsub(/"/, "", $3); print $3}')
+    for pkg in api cli; do
+        npm=$(git show :crates/fastpack-tauri/pnpm-lock.yaml |
+            sed -n "s/^  '@tauri-apps\/$pkg@\([0-9.]*\)':.*/\1/p" | head -1)
+        if [ "${crate%.*}" != "${npm%.*}" ]; then
+            echo "pre-commit: tauri crate is $crate but @tauri-apps/$pkg is $npm; match major.minor." >&2
+            exit 1
+        fi
+    done
+fi
+
+# Only Rust/Cargo changes can break the CI checks below.
+if ! grep -qE '(\.rs|Cargo\.(toml|lock))$' <<<"$staged"; then
+    exit 0
+fi
+
+# CI runs the latest stable toolchain, whose clippy may have newer lints.
+if command -v rustup >/dev/null 2>&1; then
+    # `rustup check` exits 100 when any toolchain (e.g. nightly) has an update.
+    newer=$({ rustup check 2>/dev/null || true; } |
+        sed -n 's/^stable-.* update available: .* -> \([0-9.]*\).*/\1/p')
+    if [ -n "$newer" ]; then
+        echo "pre-commit: Rust stable $newer is available and CI uses it." >&2
+        echo "pre-commit: run 'rustup update stable' and commit again." >&2
+        exit 1
+    fi
+fi
+
+run() {
+    echo "pre-commit: $*" >&2
+    "$@"
+}
+
+run cargo fmt --all -- --check
+run cargo clippy --workspace --all-targets --all-features -- -D warnings
+run cargo test --workspace

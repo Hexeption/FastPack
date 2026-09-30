@@ -136,7 +136,7 @@ filter = "**/*.png"
 
 ## Building from Source
 
-Requires Rust 1.85+.
+Requires Rust 1.90+.
 
 **CLI only:**
 
@@ -158,6 +158,16 @@ pnpm tauri build
 ```
 
 The installer is placed under `src-tauri/target/release/bundle/`.
+
+**Contributing:**
+
+Enable the pre-commit hook, which runs the same checks as CI (`cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`) and blocks the commit if any fail:
+
+```sh
+git config core.hooksPath .githooks
+```
+
+CI uses the latest stable Rust, so the hook also asks you to `rustup update stable` when you are behind.
 
 ## License
 
