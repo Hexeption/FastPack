@@ -22,7 +22,8 @@ export type DataFormat =
 	| "cocos2d"
 	| "sparrow"
 	| "libgdx"
-	| "spine";
+	| "spine"
+	| "godot";
 export type TextureFormat =
 	| "png"
 	| "jpeg"

@@ -130,6 +130,7 @@
 		"sparrow": "Starling / Sparrow XML",
 		"libgdx": "libGDX atlas",
 		"spine": "Spine atlas",
+		"godot": "Godot 4 (.tpsheet)",
 		"quality": "\ud488\uc9c8",
 		"pathPrefix": "\uacbd\ub85c \uc811\ub450\uc0ac",
 		"pathPrefixPlaceholder": "textures/",

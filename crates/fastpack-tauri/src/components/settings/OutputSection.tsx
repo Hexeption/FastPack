@@ -122,6 +122,7 @@ export default function OutputSection({ project, update, save }: SectionProps) {
 						<SelectItem value="sparrow">{t("output.sparrow")}</SelectItem>
 						<SelectItem value="libgdx">{t("output.libgdx")}</SelectItem>
 						<SelectItem value="spine">{t("output.spine")}</SelectItem>
+						<SelectItem value="godot">{t("output.godot")}</SelectItem>
 					</SelectContent>
 				</Select>
 			</Row>

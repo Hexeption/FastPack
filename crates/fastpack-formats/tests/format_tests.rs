@@ -6,9 +6,9 @@ use fastpack_core::types::{
 use fastpack_formats::{
     exporter::{ExportInput, Exporter, SpriteRotation},
     formats::{
-        cocos2d::Cocos2dExporter, json_array::JsonArrayExporter, json_hash::JsonHashExporter,
-        libgdx::LibGdxExporter, phaser3::Phaser3Exporter, pixijs::PixiJsExporter,
-        sparrow::SparrowExporter, spine::SpineExporter,
+        cocos2d::Cocos2dExporter, godot::GodotExporter, json_array::JsonArrayExporter,
+        json_hash::JsonHashExporter, libgdx::LibGdxExporter, phaser3::Phaser3Exporter,
+        pixijs::PixiJsExporter, sparrow::SparrowExporter, spine::SpineExporter,
     },
     polygon::build_mesh,
 };
@@ -1193,4 +1193,102 @@ fn spine_combine_writes_one_page_per_sheet() {
 fn spine_format_id_and_extension() {
     assert_eq!(SpineExporter.format_id(), "spine");
     assert_eq!(SpineExporter.file_extension(), "atlas");
+}
+
+// GodotExporter
+
+#[test]
+fn godot_output_has_textures_and_meta() {
+    let atlas = make_atlas(vec![make_frame("hero", 0, 0, 64, 64)]);
+    let json: Value =
+        serde_json::from_str(&GodotExporter.export(&export_input(&atlas)).unwrap()).unwrap();
+    let textures = json["textures"].as_array().unwrap();
+    assert_eq!(textures.len(), 1);
+    assert_eq!(textures[0]["image"], "atlas.png");
+    assert_eq!(textures[0]["size"]["w"], 256);
+    assert_eq!(textures[0]["size"]["h"], 128);
+    assert_eq!(json["meta"]["app"], "FastPack");
+}
+
+#[test]
+fn godot_sprite_region_and_zero_margin() {
+    let atlas = make_atlas(vec![make_frame("ui/button", 10, 20, 64, 48)]);
+    let json: Value =
+        serde_json::from_str(&GodotExporter.export(&export_input(&atlas)).unwrap()).unwrap();
+    let sprite = &json["textures"][0]["sprites"][0];
+    assert_eq!(sprite["filename"], "ui/button.png");
+    assert_eq!(
+        sprite["region"],
+        serde_json::json!({"x": 10, "y": 20, "w": 64, "h": 48})
+    );
+    assert_eq!(
+        sprite["margin"],
+        serde_json::json!({"x": 0, "y": 0, "w": 0, "h": 0})
+    );
+}
+
+#[test]
+fn godot_trimmed_sprite_margin_restores_source_size() {
+    let mut frame = make_frame("s", 0, 0, 20, 10);
+    frame.trimmed = true;
+    frame.sprite_source_size = SourceRect {
+        x: 4,
+        y: 2,
+        w: 20,
+        h: 10,
+    };
+    frame.source_size = Size { w: 40, h: 30 };
+    let atlas = make_atlas(vec![frame]);
+    let json: Value =
+        serde_json::from_str(&GodotExporter.export(&export_input(&atlas)).unwrap()).unwrap();
+    assert_eq!(
+        json["textures"][0]["sprites"][0]["margin"],
+        serde_json::json!({"x": 4, "y": 2, "w": 20, "h": 20})
+    );
+}
+
+#[test]
+fn godot_disables_rotation_and_rejects_rotated_frames() {
+    assert_eq!(GodotExporter.rotation(), SpriteRotation::Unsupported);
+    let mut frame = make_frame("s", 0, 0, 32, 16);
+    frame.rotated = true;
+    let atlas = make_atlas(vec![frame]);
+    assert!(GodotExporter.export(&export_input(&atlas)).is_err());
+}
+
+#[test]
+fn godot_combine_lists_every_sheet() {
+    let a = make_atlas(vec![make_frame("a", 0, 0, 8, 8)]);
+    let b = make_atlas(vec![make_frame("b", 0, 0, 8, 8)]);
+    let inputs = [
+        export_input(&a),
+        ExportInput {
+            texture_filename: "atlas1.png".to_string(),
+            ..export_input(&b)
+        },
+    ];
+    let json: Value =
+        serde_json::from_str(&GodotExporter.combine(&inputs).unwrap().unwrap()).unwrap();
+    let textures = json["textures"].as_array().unwrap();
+    assert_eq!(textures.len(), 2);
+    assert_eq!(textures[1]["image"], "atlas1.png");
+    assert_eq!(textures[1]["sprites"][0]["filename"], "b.png");
+}
+
+#[test]
+fn godot_hide_name_uses_texturepacker_meta() {
+    let atlas = make_atlas(vec![make_frame("a", 0, 0, 8, 8)]);
+    let json: Value =
+        serde_json::from_str(&GodotExporter.export(&hidden_input(&atlas)).unwrap()).unwrap();
+    assert_eq!(
+        json["meta"]["app"],
+        "https://www.codeandweb.com/texturepacker"
+    );
+    assert_smartupdate_format(&json["meta"]["smartupdate"]);
+}
+
+#[test]
+fn godot_format_id_and_extension() {
+    assert_eq!(GodotExporter.format_id(), "godot");
+    assert_eq!(GodotExporter.file_extension(), "tpsheet");
 }

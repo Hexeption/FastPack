@@ -304,6 +304,8 @@ pub enum DataFormatArg {
     Libgdx,
     /// Spine 4 atlas text format.
     Spine,
+    /// Godot 4 sprite sheet (.tpsheet) for the TexturePacker importer plugin.
+    Godot,
 }
 
 impl From<DataFormatArg> for DataFormat {
@@ -317,6 +319,7 @@ impl From<DataFormatArg> for DataFormat {
             DataFormatArg::Sparrow => DataFormat::Sparrow,
             DataFormatArg::Libgdx => DataFormat::Libgdx,
             DataFormatArg::Spine => DataFormat::Spine,
+            DataFormatArg::Godot => DataFormat::Godot,
         }
     }
 }

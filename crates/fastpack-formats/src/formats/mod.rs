@@ -1,6 +1,7 @@
 //! Built-in export format implementations.
 
 pub mod cocos2d;
+pub mod godot;
 pub mod json_array;
 pub mod json_hash;
 pub mod libgdx;

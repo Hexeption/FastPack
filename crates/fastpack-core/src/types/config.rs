@@ -355,6 +355,8 @@ pub enum DataFormat {
     Libgdx,
     /// Spine 4 atlas text format.
     Spine,
+    /// Godot 4 sprite sheet (.tpsheet) for the TexturePacker importer plugin.
+    Godot,
 }
 
 /// Output file format and path settings.
