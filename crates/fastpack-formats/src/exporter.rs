@@ -12,6 +12,9 @@ pub struct ExportInput<'a> {
 
     /// Pixel format string written into the data file (e.g. `"RGBA8888"`).
     pub pixel_format: String,
+
+    /// When `true`, the output meta block uses TexturePacker-compatible branding.
+    pub hide_name: bool,
 }
 
 /// Common interface for all export format writers.

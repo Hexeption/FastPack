@@ -3,6 +3,7 @@ use serde::Serialize;
 use crate::{
     error::FormatError,
     exporter::{ExportInput, Exporter},
+    smartupdate,
 };
 
 /// Exports atlas metadata in TexturePacker-compatible JSON Array format.
@@ -55,11 +56,13 @@ fn export_json_array(input: &ExportInput<'_>) -> Result<String, FormatError> {
         })
         .collect();
 
+    let (app, version, smartupdate) = smartupdate::meta_branding(input, "1.0");
+
     let output = Output {
         frames,
         meta: Meta {
-            app: "FastPack",
-            version: "1.0",
+            app,
+            version,
             image: &input.texture_filename,
             format: &input.pixel_format,
             size: WH {
@@ -67,6 +70,7 @@ fn export_json_array(input: &ExportInput<'_>) -> Result<String, FormatError> {
                 h: atlas.size.h,
             },
             scale: atlas.scale.to_string(),
+            smartupdate,
         },
     };
 
@@ -122,4 +126,6 @@ struct Meta<'a> {
     format: &'a str,
     size: WH,
     scale: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    smartupdate: Option<String>,
 }

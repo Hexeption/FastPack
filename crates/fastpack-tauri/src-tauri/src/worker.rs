@@ -550,6 +550,7 @@ pub fn write_output(
             atlas,
             texture_filename: fname.clone(),
             pixel_format: out_cfg.pixel_format.to_string(),
+            hide_name: out_cfg.hide_name,
         })
         .collect();
 

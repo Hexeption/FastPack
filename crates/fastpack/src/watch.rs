@@ -41,6 +41,8 @@ pub struct WatchArgs {
     pub premultiply_alpha: bool,
     /// Sprite IDs excluded from packing.
     pub excludes: Vec<String>,
+    /// When `true`, the output meta block uses TexturePacker-compatible branding.
+    pub hide_name: bool,
 }
 
 /// Run the watch loop. Packs immediately on start, then watches all input
@@ -97,6 +99,7 @@ fn run_once(args: &WatchArgs) -> Result<()> {
         pixel_format: args.pixel_format,
         premultiply_alpha: args.premultiply_alpha,
         excludes: args.excludes.clone(),
+        hide_name: args.hide_name,
     })?;
 
     let alias_note = if result.alias_count > 0 {

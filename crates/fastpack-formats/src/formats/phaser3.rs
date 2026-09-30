@@ -3,6 +3,7 @@ use serde::Serialize;
 use crate::{
     error::FormatError,
     exporter::{ExportInput, Exporter},
+    smartupdate,
 };
 
 /// Exports atlas metadata in Phaser 3 multi-atlas format.
@@ -47,11 +48,17 @@ fn build_output(inputs: &[ExportInput<'_>]) -> Result<String, FormatError> {
         })
         .collect();
 
+    let (app, version, smartupdate) = match inputs.first() {
+        Some(first) => smartupdate::meta_branding(first, "3.0"),
+        None => ("FastPack", "3.0", None),
+    };
+
     let output = Output {
         textures,
         meta: Meta {
-            app: "FastPack",
-            version: "3.0",
+            app,
+            version,
+            smartupdate,
         },
     };
 
@@ -139,4 +146,6 @@ struct WH {
 struct Meta {
     app: &'static str,
     version: &'static str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    smartupdate: Option<String>,
 }

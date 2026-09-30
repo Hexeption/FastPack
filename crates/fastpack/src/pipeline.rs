@@ -72,6 +72,8 @@ pub struct PackArgs {
     pub premultiply_alpha: bool,
     /// Sprite IDs excluded from packing.
     pub excludes: Vec<String>,
+    /// When `true`, the output meta block uses TexturePacker-compatible branding.
+    pub hide_name: bool,
 }
 
 /// Per-sheet output produced by a pack run.
@@ -314,6 +316,7 @@ pub fn run_pack(args: PackArgs) -> Result<PackResult> {
                 atlas,
                 texture_filename: fname.clone(),
                 pixel_format: args.pixel_format.to_string(),
+                hide_name: args.hide_name,
             })
             .collect();
 

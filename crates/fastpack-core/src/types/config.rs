@@ -336,6 +336,10 @@ pub struct OutputConfig {
     pub texture_path_prefix: String,
     /// When `true`, overflow sprites are packed into additional sheets.
     pub multipack: bool,
+    /// When `true`, the output meta block uses TexturePacker-compatible branding
+    /// (app URL, version "3.0", and a SmartUpdate hash) instead of FastPack identifiers.
+    #[serde(default)]
+    pub hide_name: bool,
 }
 
 impl Default for OutputConfig {
@@ -350,6 +354,7 @@ impl Default for OutputConfig {
             quality: 95,
             texture_path_prefix: String::new(),
             multipack: false,
+            hide_name: false,
         }
     }
 }

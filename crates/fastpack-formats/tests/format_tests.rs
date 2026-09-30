@@ -41,6 +41,31 @@ fn export_input(atlas: &PackedAtlas) -> ExportInput<'_> {
         atlas,
         texture_filename: "atlas.png".to_string(),
         pixel_format: "RGBA8888".to_string(),
+        hide_name: false,
+    }
+}
+
+fn hidden_input(atlas: &PackedAtlas) -> ExportInput<'_> {
+    ExportInput {
+        hide_name: true,
+        ..export_input(atlas)
+    }
+}
+
+fn assert_smartupdate_format(value: &Value) {
+    let s = value.as_str().expect("smartupdate should be a string");
+    let inner = s
+        .strip_prefix("$TexturePacker:SmartUpdate:")
+        .and_then(|rest| rest.strip_suffix('$'))
+        .unwrap_or_else(|| panic!("unexpected smartupdate wrapper: {s}"));
+    let hashes: Vec<&str> = inner.split(':').collect();
+    assert_eq!(hashes.len(), 3, "expected three hashes in {s}");
+    for h in hashes {
+        assert_eq!(h.len(), 32);
+        assert!(
+            h.chars()
+                .all(|c| c.is_ascii_hexdigit() && !c.is_ascii_uppercase())
+        );
     }
 }
 
@@ -125,6 +150,38 @@ fn json_hash_meta_app_is_fastpack() {
     let json: Value =
         serde_json::from_str(&JsonHashExporter.export(&export_input(&atlas)).unwrap()).unwrap();
     assert_eq!(json["meta"]["app"], "FastPack");
+}
+
+#[test]
+fn json_hash_meta_has_no_smartupdate_by_default() {
+    let atlas = make_atlas(vec![make_frame("a", 0, 0, 8, 8)]);
+    let json: Value =
+        serde_json::from_str(&JsonHashExporter.export(&export_input(&atlas)).unwrap()).unwrap();
+    assert!(json["meta"].get("smartupdate").is_none());
+}
+
+#[test]
+fn json_hash_hide_name_uses_texturepacker_meta() {
+    let atlas = make_atlas(vec![make_frame("a", 0, 0, 8, 8)]);
+    let json: Value =
+        serde_json::from_str(&JsonHashExporter.export(&hidden_input(&atlas)).unwrap()).unwrap();
+    assert_eq!(
+        json["meta"]["app"],
+        "https://www.codeandweb.com/texturepacker"
+    );
+    assert_eq!(json["meta"]["version"], "3.0");
+    assert_smartupdate_format(&json["meta"]["smartupdate"]);
+}
+
+#[test]
+fn smartupdate_changes_when_frames_change() {
+    let a = make_atlas(vec![make_frame("a", 0, 0, 8, 8)]);
+    let b = make_atlas(vec![make_frame("a", 8, 0, 8, 8)]);
+    let ja: Value =
+        serde_json::from_str(&JsonHashExporter.export(&hidden_input(&a)).unwrap()).unwrap();
+    let jb: Value =
+        serde_json::from_str(&JsonHashExporter.export(&hidden_input(&b)).unwrap()).unwrap();
+    assert_ne!(ja["meta"]["smartupdate"], jb["meta"]["smartupdate"]);
 }
 
 #[test]
@@ -332,6 +389,18 @@ fn phaser3_meta_app_is_fastpack() {
 }
 
 #[test]
+fn phaser3_hide_name_uses_texturepacker_meta() {
+    let atlas = make_atlas(vec![make_frame("a", 0, 0, 8, 8)]);
+    let json: Value =
+        serde_json::from_str(&Phaser3Exporter.export(&hidden_input(&atlas)).unwrap()).unwrap();
+    assert_eq!(
+        json["meta"]["app"],
+        "https://www.codeandweb.com/texturepacker"
+    );
+    assert_smartupdate_format(&json["meta"]["smartupdate"]);
+}
+
+#[test]
 fn phaser3_combine_two_sheets_produces_two_textures() {
     let atlas1 = make_atlas(vec![make_frame("a", 0, 0, 32, 32)]);
     let atlas2 = PackedAtlas {
@@ -345,11 +414,13 @@ fn phaser3_combine_two_sheets_produces_two_textures() {
         atlas: &atlas1,
         texture_filename: "atlas.png".to_string(),
         pixel_format: "RGBA8888".to_string(),
+        hide_name: false,
     };
     let input2 = ExportInput {
         atlas: &atlas2,
         texture_filename: "atlas1.png".to_string(),
         pixel_format: "RGBA8888".to_string(),
+        hide_name: false,
     };
     let combined = Phaser3Exporter
         .combine(&[input1, input2])

@@ -71,6 +71,7 @@ pub fn run() -> Result<()> {
                 texture_format,
                 pixel_format,
                 premultiply_alpha,
+                hide_name,
             ) = resolve_pack_fields(&args)?;
 
             let default_pivot = match (args.pivot_x, args.pivot_y) {
@@ -93,6 +94,7 @@ pub fn run() -> Result<()> {
                 pixel_format,
                 premultiply_alpha,
                 excludes,
+                hide_name,
             })?;
 
             let alias_note = if result.alias_count > 0 {
@@ -142,6 +144,7 @@ pub fn run() -> Result<()> {
                 texture_format,
                 pixel_format,
                 premultiply_alpha,
+                hide_name,
             ) = resolve_pack_fields(&args)?;
 
             let default_pivot = match (args.pivot_x, args.pivot_y) {
@@ -164,6 +167,7 @@ pub fn run() -> Result<()> {
                 pixel_format,
                 premultiply_alpha,
                 excludes,
+                hide_name,
             })?;
             Ok(())
         }
@@ -201,7 +205,8 @@ type PackFields = (
     DataFormat,
     TextureFormat,
     PixelFormat,
-    bool,
+    bool, // premultiply_alpha
+    bool, // hide_name
 );
 
 /// Resolve pack fields from either a project file or bare CLI flags.
@@ -230,6 +235,7 @@ fn resolve_pack_fields(args: &cli::PackArgs) -> Result<PackFields> {
             args.texture_format.clone().into(),
             args.pixel_format.clone().into(),
             args.premultiply_alpha,
+            proj.config.output.hide_name || args.hide_name,
         ))
     } else {
         if args.inputs.is_empty() {
@@ -275,6 +281,7 @@ fn resolve_pack_fields(args: &cli::PackArgs) -> Result<PackFields> {
             args.texture_format.clone().into(),
             args.pixel_format.clone().into(),
             args.premultiply_alpha,
+            args.hide_name,
         ))
     }
 }

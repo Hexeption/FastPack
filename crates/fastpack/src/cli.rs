@@ -150,6 +150,10 @@ pub struct PackArgs {
     /// Premultiply RGB channels by alpha before compression.
     #[arg(long)]
     pub premultiply_alpha: bool,
+
+    /// Use TexturePacker-compatible meta fields (app URL, version "3.0", SmartUpdate hash).
+    #[arg(long)]
+    pub hide_name: bool,
 }
 
 /// Arguments for the `init` subcommand.
