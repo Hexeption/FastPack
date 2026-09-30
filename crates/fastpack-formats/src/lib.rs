@@ -9,4 +9,5 @@
 pub mod error;
 pub mod exporter;
 pub mod formats;
+pub mod polygon;
 pub mod smartupdate;

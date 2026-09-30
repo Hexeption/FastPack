@@ -5,7 +5,11 @@ use fastpack_core::types::{
 };
 use fastpack_formats::{
     exporter::{ExportInput, Exporter},
-    formats::{json_hash::JsonHashExporter, phaser3::Phaser3Exporter, pixijs::PixiJsExporter},
+    formats::{
+        json_array::JsonArrayExporter, json_hash::JsonHashExporter, phaser3::Phaser3Exporter,
+        pixijs::PixiJsExporter,
+    },
+    polygon::build_mesh,
 };
 use serde_json::Value;
 
@@ -20,6 +24,7 @@ fn make_frame(id: &str, x: u32, y: u32, w: u32, h: u32) -> AtlasFrame {
         sprite_source_size: SourceRect { x: 0, y: 0, w, h },
         source_size: Size { w, h },
         polygon: None,
+        extrude: 0,
         nine_patch: None,
         pivot: None,
         alias_of: None,
@@ -496,5 +501,190 @@ fn pixijs_combine_returns_none() {
             .combine(std::slice::from_ref(&input))
             .is_none(),
         "PixiJS should not support combine()"
+    );
+}
+
+// Polygon mesh data
+
+/// A 20×20 source trimmed to an 8×6 rectangle at (3,4), with the closed hull
+/// ring `compute_convex_hull` produces (first vertex repeated at the end).
+fn make_polygon_frame(id: &str, x: u32, y: u32, rotated: bool, extrude: u32) -> AtlasFrame {
+    let (w, h) = (8 + 2 * extrude, 6 + 2 * extrude);
+    let (w, h) = if rotated { (h, w) } else { (w, h) };
+    let pts = [(0.0, 0.0), (8.0, 0.0), (8.0, 6.0), (0.0, 6.0), (0.0, 0.0)];
+    AtlasFrame {
+        rotated,
+        trimmed: true,
+        sprite_source_size: SourceRect {
+            x: 3,
+            y: 4,
+            w: 8,
+            h: 6,
+        },
+        source_size: Size { w: 20, h: 20 },
+        polygon: Some(pts.iter().map(|&(x, y)| Point { x, y }).collect()),
+        extrude,
+        ..make_frame(id, x, y, w, h)
+    }
+}
+
+fn pairs(v: &Value) -> Vec<[i64; 2]> {
+    v.as_array()
+        .expect("expected array")
+        .iter()
+        .map(|p| [p[0].as_i64().unwrap(), p[1].as_i64().unwrap()])
+        .collect()
+}
+
+#[test]
+fn json_hash_polygon_frame_has_mesh() {
+    let atlas = make_atlas(vec![make_polygon_frame("p", 10, 20, false, 1)]);
+    let json: Value =
+        serde_json::from_str(&JsonHashExporter.export(&export_input(&atlas)).unwrap()).unwrap();
+    let f = &json["frames"]["p"];
+    // Closing vertex dropped; vertices offset by spriteSourceSize.
+    assert_eq!(
+        pairs(&f["vertices"]),
+        vec![[3, 4], [11, 4], [11, 10], [3, 10]]
+    );
+    // Atlas coords: frame position + extrude border.
+    assert_eq!(
+        pairs(&f["verticesUV"]),
+        vec![[11, 21], [19, 21], [19, 27], [11, 27]]
+    );
+    assert_eq!(f["triangles"], serde_json::json!([[0, 1, 2], [0, 2, 3]]));
+}
+
+#[test]
+fn json_hash_polygon_rotated_frame_uv() {
+    // Rotated 90° clockwise: the placed rect is 6 wide, 8 tall.
+    let atlas = make_atlas(vec![make_polygon_frame("p", 50, 60, true, 0)]);
+    let json: Value =
+        serde_json::from_str(&JsonHashExporter.export(&export_input(&atlas)).unwrap()).unwrap();
+    let f = &json["frames"]["p"];
+    assert_eq!(
+        pairs(&f["vertices"]),
+        vec![[3, 4], [11, 4], [11, 10], [3, 10]]
+    );
+    // Source top-left lands at the placed rect's top-right, and so on.
+    assert_eq!(
+        pairs(&f["verticesUV"]),
+        vec![[56, 60], [56, 68], [50, 68], [50, 60]]
+    );
+    assert_eq!(f["triangles"], serde_json::json!([[0, 1, 2], [0, 2, 3]]));
+}
+
+#[test]
+fn polygon_rotated_uv_matches_compositor_rotation() {
+    // Cross-check against image::imageops::rotate90, which the compositor uses:
+    // each source pixel's unit square must map onto the same pixel after rotation.
+    let (w, h, e) = (5u32, 3u32, 1u32);
+    let (ew, eh) = (w + 2 * e, h + 2 * e);
+    let mut src = image::RgbaImage::new(ew, eh);
+    for y in 0..eh {
+        for x in 0..ew {
+            src.put_pixel(x, y, image::Rgba([x as u8, y as u8, 0, 255]));
+        }
+    }
+    let rotated = image::imageops::rotate90(&src);
+    for py in 0..h {
+        for px in 0..w {
+            let (x0, y0) = (px as f32, py as f32);
+            let square = vec![
+                Point { x: x0, y: y0 },
+                Point { x: x0 + 1.0, y: y0 },
+                Point {
+                    x: x0 + 1.0,
+                    y: y0 + 1.0,
+                },
+                Point { x: x0, y: y0 + 1.0 },
+            ];
+            let frame = AtlasFrame {
+                rotated: true,
+                polygon: Some(square),
+                extrude: e,
+                ..make_frame("p", 0, 0, eh, ew)
+            };
+            let mesh = build_mesh(&frame).unwrap();
+            let ux = mesh.vertices_uv.iter().map(|p| p[0]).min().unwrap() as u32;
+            let uy = mesh.vertices_uv.iter().map(|p| p[1]).min().unwrap() as u32;
+            let px_rot = rotated.get_pixel(ux, uy);
+            assert_eq!(
+                (px_rot[0] as u32, px_rot[1] as u32),
+                (px + e, py + e),
+                "source pixel ({px},{py}) mapped to wrong atlas pixel"
+            );
+        }
+    }
+}
+
+#[test]
+fn json_hash_non_polygon_frame_omits_mesh() {
+    let atlas = make_atlas(vec![make_frame("s", 0, 0, 32, 32)]);
+    let json: Value =
+        serde_json::from_str(&JsonHashExporter.export(&export_input(&atlas)).unwrap()).unwrap();
+    let f = &json["frames"]["s"];
+    assert!(f.get("vertices").is_none());
+    assert!(f.get("verticesUV").is_none());
+    assert!(f.get("triangles").is_none());
+}
+
+#[test]
+fn json_array_polygon_frame_has_mesh() {
+    let atlas = make_atlas(vec![
+        make_frame("plain", 0, 0, 8, 8),
+        make_polygon_frame("p", 10, 20, false, 1),
+    ]);
+    let json: Value =
+        serde_json::from_str(&JsonArrayExporter.export(&export_input(&atlas)).unwrap()).unwrap();
+    let frames = json["frames"].as_array().unwrap();
+    assert!(frames[0].get("vertices").is_none());
+    let f = &frames[1];
+    assert_eq!(f["filename"], "p");
+    assert_eq!(
+        pairs(&f["vertices"]),
+        vec![[3, 4], [11, 4], [11, 10], [3, 10]]
+    );
+    assert_eq!(
+        pairs(&f["verticesUV"]),
+        vec![[11, 21], [19, 21], [19, 27], [11, 27]]
+    );
+    assert_eq!(f["triangles"], serde_json::json!([[0, 1, 2], [0, 2, 3]]));
+}
+
+#[test]
+fn pixijs_polygon_frame_has_mesh() {
+    let atlas = make_atlas(vec![make_polygon_frame("p", 50, 60, true, 0)]);
+    let json: Value =
+        serde_json::from_str(&PixiJsExporter.export(&export_input(&atlas)).unwrap()).unwrap();
+    let f = &json["frames"]["p"];
+    assert_eq!(pairs(&f["vertices"]).len(), 4);
+    assert_eq!(
+        pairs(&f["verticesUV"]),
+        vec![[56, 60], [56, 68], [50, 68], [50, 60]]
+    );
+    assert_eq!(f["triangles"].as_array().unwrap().len(), 2);
+}
+
+#[test]
+fn polygon_fan_triangulation_covers_all_vertices() {
+    // Hexagon (open ring) -> 4 fan triangles.
+    let hex = [
+        (2.0, 0.0),
+        (6.0, 0.0),
+        (8.0, 3.0),
+        (6.0, 6.0),
+        (2.0, 6.0),
+        (0.0, 3.0),
+    ];
+    let frame = AtlasFrame {
+        polygon: Some(hex.iter().map(|&(x, y)| Point { x, y }).collect()),
+        ..make_frame("h", 0, 0, 8, 6)
+    };
+    let mesh = build_mesh(&frame).unwrap();
+    assert_eq!(mesh.vertices.len(), 6);
+    assert_eq!(
+        mesh.triangles,
+        vec![[0, 1, 2], [0, 2, 3], [0, 3, 4], [0, 4, 5]]
     );
 }

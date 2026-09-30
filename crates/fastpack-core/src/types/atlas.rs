@@ -26,8 +26,15 @@ pub struct AtlasFrame {
     pub source_size: Size,
 
     /// Convex hull polygon vertices (only present for `TrimMode::Polygon`).
+    ///
+    /// Closed ring in trimmed-sprite pixel space: origin at the top-left of the
+    /// trimmed content (`sprite_source_size`), before extrusion and rotation.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub polygon: Option<Vec<Point>>,
+
+    /// Pixels of extruded border on each side of the content inside `frame`.
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub extrude: u32,
 
     /// 9-patch border widths.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -40,6 +47,10 @@ pub struct AtlasFrame {
     /// If present, this frame shares the pixel data of the named sprite.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub alias_of: Option<String>,
+}
+
+fn is_zero(v: &u32) -> bool {
+    *v == 0
 }
 
 /// The result of a single atlas packing pass.

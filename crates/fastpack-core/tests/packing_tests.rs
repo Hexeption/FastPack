@@ -364,6 +364,21 @@ fn trim_polygon_mode_computes_hull() {
         .polygon
         .expect("TrimMode::Polygon must set sprite.polygon");
     assert!(!hull.is_empty(), "hull must have at least one vertex");
+    // Hull is in trimmed-image space and encloses whole pixels, so a fully
+    // opaque 6×6 region spans (0,0)–(6,6).
+    let (min_x, max_x) = hull.iter().fold((f32::MAX, f32::MIN), |(lo, hi), p| {
+        (lo.min(p.x), hi.max(p.x))
+    });
+    let (min_y, max_y) = hull.iter().fold((f32::MAX, f32::MIN), |(lo, hi), p| {
+        (lo.min(p.y), hi.max(p.y))
+    });
+    assert_eq!((min_x, min_y, max_x, max_y), (0.0, 0.0, 6.0, 6.0));
+    // Closed ring of a rectangle: 4 corners plus the repeated first vertex.
+    assert_eq!(hull.len(), 5);
+    assert_eq!(
+        hull.first().map(|p| (p.x, p.y)),
+        hull.last().map(|p| (p.x, p.y))
+    );
 }
 
 #[test]

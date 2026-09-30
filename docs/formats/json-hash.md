@@ -64,6 +64,8 @@ Output for a two-sprite atlas:
 
 **trimmed** is `true` when the sprite was packed with `TrimMode::Trim`, `Crop`, `CropKeepPos`, or `Polygon`. It is `false` for `TrimMode::None`.
 
+**vertices**, **verticesUV**, and **triangles** are present only for frames packed with `TrimMode::Polygon`. `vertices` is the convex hull as `[x, y]` pairs in source-image pixels (the same space as `spriteSourceSize`, so trim offsets are already applied). `verticesUV` holds the same points in atlas-texture pixels, with the frame position, extrude border, and rotation applied. `triangles` lists vertex index triples (a fan from vertex 0) covering the hull. Values are whole pixels.
+
 **meta.scale** reflects the `ScaleVariant.scale` used during packing, serialized as a string (e.g. `"1"`, `"0.5"`, `"2"`).
 
 Frame keys are inserted in atlas frame order (largest-area-first processing order, as produced by the packer). JSON object key ordering is not guaranteed by spec; load-time parsers should treat `frames` as an unordered map.

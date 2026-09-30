@@ -3,6 +3,7 @@ use serde::Serialize;
 use crate::{
     error::FormatError,
     exporter::{ExportInput, Exporter},
+    polygon::{PolygonMesh, build_mesh},
     smartupdate,
 };
 
@@ -52,6 +53,7 @@ fn export_json_array(input: &ExportInput<'_>) -> Result<String, FormatError> {
                 w: frame.source_size.w,
                 h: frame.source_size.h,
             },
+            mesh: build_mesh(frame),
             alias_of: frame.alias_of.clone(),
         })
         .collect();
@@ -92,6 +94,8 @@ struct JsonFrame {
     trimmed: bool,
     sprite_source_size: IRect,
     source_size: WH,
+    #[serde(flatten, skip_serializing_if = "Option::is_none")]
+    mesh: Option<PolygonMesh>,
     #[serde(skip_serializing_if = "Option::is_none")]
     alias_of: Option<String>,
 }

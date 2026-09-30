@@ -60,7 +60,7 @@ When alias detection is on, duplicate sprites carry an `aliasOf` field pointing 
 
 Array order matches atlas packing order (largest-area-first). The order is stable across runs on the same input set.
 
-All field semantics — `frame`, `rotated`, `trimmed`, `spriteSourceSize`, `sourceSize` — match the JSON Hash format. See [json-hash.md](json-hash.md) for field-level descriptions.
+All field semantics — `frame`, `rotated`, `trimmed`, `spriteSourceSize`, `sourceSize`, and the polygon mesh fields `vertices`, `verticesUV`, `triangles` — match the JSON Hash format. See [json-hash.md](json-hash.md) for field-level descriptions.
 
 ## TexturePacker Compatibility
 

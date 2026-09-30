@@ -12,7 +12,7 @@ Trimming removes transparent borders from sprites before packing. Smaller packed
 
 **crop-keep-pos** — Same crop, but the trim offset in the data file may be negative. Used when the sprite's registration point must be held fixed relative to the original canvas even after cropping.
 
-**polygon** — Crops to the bounding box of the convex hull of opaque pixels. The hull vertices are stored in the `polygon` field of each frame in the data file. Engines that support tight mesh rendering can use the hull polygon for collision detection or draw-call culling. Engines that only need the bounding box can ignore the polygon field and treat this mode like `trim`.
+**polygon** — Crops to the bounding box of the convex hull of opaque pixels. The JSON Hash, JSON Array, and PixiJS formats write the hull as a triangulated mesh in TexturePacker's layout: `vertices` (source-image pixels), `verticesUV` (atlas pixels), and `triangles` (vertex index triples). Engines that support mesh rendering can draw only the hull and skip transparent corners. Engines that only need the bounding box can ignore those fields and treat this mode like `trim`. Phaser 3 output does not include the mesh.
 
 ## `.fpsheet` Fields
 
