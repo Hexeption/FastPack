@@ -2,12 +2,13 @@
 
 [![crates.io](https://img.shields.io/crates/v/fastpack.svg)](https://crates.io/crates/fastpack)
 [![CI](https://github.com/Hexeption/FastPack/actions/workflows/ci.yml/badge.svg)](https://github.com/Hexeption/FastPack/actions/workflows/ci.yml)
-[![rustc 1.85+](https://img.shields.io/badge/rustc-1.85%2B-orange.svg)](https://www.rust-lang.org)
+[![rustc 1.90+](https://img.shields.io/badge/rustc-1.90%2B-orange.svg)](https://www.rust-lang.org)
 
 Texture atlas packer written in Rust. Ships as a Tauri desktop app and a headless CLI. Designed as an open-source replacement for TexturePacker.
 
-<img width="800" height="1396" alt="Screenshot 2026-03-07 at 12 47 08 pm" src="https://github.com/user-attachments/assets/fe9df165-6800-465f-801d-b1655536edbf" />
-
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/fe9df165-6800-465f-801d-b1655536edbf" alt="FastPack desktop app showing the sprite list, packed atlas preview, and output settings" />
+</p>
 
 ## Features
 
