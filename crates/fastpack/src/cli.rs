@@ -8,7 +8,12 @@ use fastpack_core::types::{
 
 /// Root CLI entry point parsed by clap.
 #[derive(Debug, Parser)]
-#[command(name = "fastpack", bin_name = "fastpack", version, about = "Texture atlas packer")]
+#[command(
+    name = "fastpack",
+    bin_name = "fastpack",
+    version,
+    about = "Texture atlas packer"
+)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Commands>,
