@@ -127,6 +127,7 @@
 		"phaser3": "Phaser 3",
 		"pixijs": "PixiJS",
 		"cocos2d": "Cocos2d-x plist",
+		"sparrow": "Starling / Sparrow XML",
 		"quality": "Qualit\u00e0",
 		"pathPrefix": "Prefisso percorso",
 		"pathPrefixPlaceholder": "textures/",

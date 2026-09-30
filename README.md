@@ -147,6 +147,7 @@ filter = "**/*.png"
 - `phaser3` — Single JSON file with a `textures` array. Compatible with `scene.load.multiatlas()`.
 - `pixijs` — JSON Hash format compatible with PixiJS sprite sheet loaders.
 - `cocos2d` — Cocos2d-x property list (plist format 3). Frame names carry a `.png` suffix, as TexturePacker writes them for `SpriteFrameCache`.
+- `sparrow` — Starling / Sparrow `TextureAtlas` XML. Frame names carry a `.png` suffix; rotated sprites are stored 90° clockwise.
 
 ## Building from Source
 

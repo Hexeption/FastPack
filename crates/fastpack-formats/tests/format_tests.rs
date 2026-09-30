@@ -7,7 +7,7 @@ use fastpack_formats::{
     exporter::{ExportInput, Exporter},
     formats::{
         cocos2d::Cocos2dExporter, json_array::JsonArrayExporter, json_hash::JsonHashExporter,
-        phaser3::Phaser3Exporter, pixijs::PixiJsExporter,
+        phaser3::Phaser3Exporter, pixijs::PixiJsExporter, sparrow::SparrowExporter,
     },
     polygon::build_mesh,
 };
@@ -861,4 +861,118 @@ fn cocos2d_escapes_xml_in_names() {
 fn cocos2d_format_id_and_extension() {
     assert_eq!(Cocos2dExporter.format_id(), "cocos2d");
     assert_eq!(Cocos2dExporter.file_extension(), "plist");
+}
+
+// SparrowExporter
+
+/// Return the `SubTexture` element whose name attribute is `name`.
+fn sub_texture<'a>(xml: &'a str, name: &str) -> &'a str {
+    let start = xml
+        .find(&format!("<SubTexture name=\"{name}\""))
+        .unwrap_or_else(|| panic!("missing SubTexture {name}"));
+    let rest = &xml[start..];
+    &rest[..rest.find("/>").unwrap() + 2]
+}
+
+#[test]
+fn sparrow_output_has_texture_atlas_root() {
+    let atlas = make_atlas(vec![make_frame("hero", 0, 0, 64, 64)]);
+    let out = SparrowExporter.export(&export_input(&atlas)).unwrap();
+    assert!(out.starts_with("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"));
+    assert!(out.contains("<TextureAtlas imagePath=\"atlas.png\">"));
+    assert!(out.trim_end().ends_with("</TextureAtlas>"));
+    assert!(out.contains("<!-- Created with FastPack -->"));
+}
+
+#[test]
+fn sparrow_untrimmed_frame_has_only_rect_attributes() {
+    let atlas = make_atlas(vec![make_frame("ui/button", 10, 20, 64, 48)]);
+    let out = SparrowExporter.export(&export_input(&atlas)).unwrap();
+    assert_eq!(
+        sub_texture(&out, "ui/button.png"),
+        "<SubTexture name=\"ui/button.png\" x=\"10\" y=\"20\" width=\"64\" height=\"48\"/>"
+    );
+}
+
+#[test]
+fn sparrow_trimmed_frame_has_negative_frame_offsets() {
+    let mut frame = make_frame("s", 0, 0, 20, 10);
+    frame.trimmed = true;
+    frame.sprite_source_size = SourceRect {
+        x: 4,
+        y: 2,
+        w: 20,
+        h: 10,
+    };
+    frame.source_size = Size { w: 40, h: 30 };
+    let atlas = make_atlas(vec![frame]);
+    let out = SparrowExporter.export(&export_input(&atlas)).unwrap();
+    let el = sub_texture(&out, "s.png");
+    assert!(el.contains("frameX=\"-4\" frameY=\"-2\" frameWidth=\"40\" frameHeight=\"30\""));
+}
+
+#[test]
+fn sparrow_rotated_frame_keeps_packed_size() {
+    // The sprite is 32x64 upright and occupies 64x32 in the texture.
+    let mut frame = make_frame("s", 2, 4, 64, 32);
+    frame.rotated = true;
+    frame.sprite_source_size = SourceRect {
+        x: 0,
+        y: 0,
+        w: 32,
+        h: 64,
+    };
+    frame.source_size = Size { w: 32, h: 64 };
+    let atlas = make_atlas(vec![frame]);
+    let out = SparrowExporter.export(&export_input(&atlas)).unwrap();
+    let el = sub_texture(&out, "s.png");
+    assert!(el.contains("width=\"64\" height=\"32\""));
+    assert!(el.contains("rotated=\"true\""));
+    assert!(!el.contains("frameX"), "untrimmed rotated frame: {el}");
+}
+
+#[test]
+fn sparrow_pivot_in_pixels() {
+    let mut frame = make_frame("s", 0, 0, 40, 20);
+    frame.pivot = Some(Point { x: 0.5, y: 1.0 });
+    let atlas = make_atlas(vec![frame]);
+    let out = SparrowExporter.export(&export_input(&atlas)).unwrap();
+    assert!(sub_texture(&out, "s.png").contains("pivotX=\"20\" pivotY=\"20\""));
+}
+
+#[test]
+fn sparrow_aliases_are_separate_sub_textures() {
+    let mut copy = make_frame("copy", 0, 0, 32, 32);
+    copy.alias_of = Some("original".to_string());
+    let atlas = make_atlas(vec![make_frame("original", 0, 0, 32, 32), copy]);
+    let out = SparrowExporter.export(&export_input(&atlas)).unwrap();
+    assert!(out.contains("name=\"original.png\""));
+    assert!(out.contains("name=\"copy.png\""));
+}
+
+#[test]
+fn sparrow_escapes_xml_in_attributes() {
+    let atlas = make_atlas(vec![make_frame("a\"b&c", 0, 0, 8, 8)]);
+    let out = SparrowExporter.export(&export_input(&atlas)).unwrap();
+    assert!(out.contains("name=\"a&quot;b&amp;c.png\""));
+}
+
+#[test]
+fn sparrow_hide_name_adds_smartupdate_comment() {
+    let atlas = make_atlas(vec![make_frame("s", 0, 0, 8, 8)]);
+    let out = SparrowExporter.export(&hidden_input(&atlas)).unwrap();
+    assert!(
+        out.contains(
+            "<!-- Created with TexturePacker https://www.codeandweb.com/texturepacker -->"
+        )
+    );
+    let start = out.find("<!-- $TexturePacker").unwrap() + "<!-- ".len();
+    let end = start + out[start..].find(" -->").unwrap();
+    assert_smartupdate_format(&Value::String(out[start..end].to_string()));
+}
+
+#[test]
+fn sparrow_format_id_and_extension() {
+    assert_eq!(SparrowExporter.format_id(), "sparrow");
+    assert_eq!(SparrowExporter.file_extension(), "xml");
 }

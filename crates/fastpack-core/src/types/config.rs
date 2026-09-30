@@ -349,6 +349,8 @@ pub enum DataFormat {
     Pixijs,
     /// Cocos2d-x property list (plist format 3).
     Cocos2d,
+    /// Starling / Sparrow TextureAtlas XML.
+    Sparrow,
 }
 
 /// Output file format and path settings.

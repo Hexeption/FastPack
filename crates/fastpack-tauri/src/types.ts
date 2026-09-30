@@ -19,7 +19,8 @@ export type DataFormat =
 	| "json_array"
 	| "phaser3"
 	| "pixijs"
-	| "cocos2d";
+	| "cocos2d"
+	| "sparrow";
 export type TextureFormat =
 	| "png"
 	| "jpeg"

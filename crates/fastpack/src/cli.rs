@@ -298,6 +298,8 @@ pub enum DataFormatArg {
     Pixijs,
     /// Cocos2d-x property list (plist format 3).
     Cocos2d,
+    /// Starling / Sparrow TextureAtlas XML.
+    Sparrow,
 }
 
 impl From<DataFormatArg> for DataFormat {
@@ -308,6 +310,7 @@ impl From<DataFormatArg> for DataFormat {
             DataFormatArg::Phaser3 => DataFormat::Phaser3,
             DataFormatArg::Pixijs => DataFormat::Pixijs,
             DataFormatArg::Cocos2d => DataFormat::Cocos2d,
+            DataFormatArg::Sparrow => DataFormat::Sparrow,
         }
     }
 }
